@@ -172,6 +172,26 @@ class OperationsApiTests(unittest.TestCase):
         self.assertEqual(payload["data"]["summary"]["malware_detected_events"], 1)
         self.assertEqual(payload["data"]["limit"], 100)
 
+    def test_sharepoint_audit_summary_endpoint(self):
+        class AuditService(FakeService):
+            def sharepoint_audit_summary(self, limit):
+                return {"status": "READY", "summary": {"total_events": 4, "operations": {"SharingInvitationCreated": 2, "AnonymousLinkCreated": 1, "SharingRevoked": 1}, "latest_event_time": "2026-08-29T10:03:00Z"}, "tenants": [{"tenant_id": 2, "total_events": 4, "operations": {"SharingInvitationCreated": 2, "AnonymousLinkCreated": 1, "SharingRevoked": 1}}], "recent_events": [], "limit": min(limit, 100)}
+        handler = type("SharepointAuditHandler", (OperationsApiHandler,), {"service_factory": staticmethod(AuditService)})
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        thread = threading.Thread(target=server.handle_request)
+        thread.start()
+        connection = HTTPConnection("127.0.0.1", server.server_port)
+        connection.request("GET", "/api/operations/sharepoint/audit-summary?limit=200")
+        response = connection.getresponse()
+        payload = json.loads(response.read())
+        connection.close()
+        thread.join()
+        server.server_close()
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["data"]["summary"]["total_events"], 4)
+        self.assertEqual(payload["data"]["tenants"][0]["tenant_id"], 2)
+        self.assertEqual(payload["data"]["limit"], 100)
+
     def test_inactivity_windows_and_invalid_window(self):
         for days in (30, 60, 90):
             status, payload = self.get("/api/operations/inactivity?days={}".format(days))

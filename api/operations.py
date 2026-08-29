@@ -215,6 +215,15 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 data = service.onedrive_high_value_audit(int(values[0]))
                 self._write(200, _response(data.pop("status", _service_status(data)), data))
                 return
+            if path == BASE_PATH + "/sharepoint/audit-summary":
+                values = parse_qs(parsed.query).get("limit", ["50"])
+                if len(values) != 1 or not values[0].isdigit() or int(values[0]) < 1:
+                    self._write(400, _response("INVALID_LIMIT"))
+                    return
+                service = self._load_service()
+                data = service.sharepoint_audit_summary(int(values[0]))
+                self._write(200, _response(data.pop("status", _service_status(data)), data))
+                return
             if path == BASE_PATH + "/sharepoint/orphaned-sites":
                 service = self._load_service()
                 data = {"sites": service.orphaned_sites()}

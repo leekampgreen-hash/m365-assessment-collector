@@ -398,6 +398,42 @@ class OperationsAnalyticsTests(unittest.TestCase):
         self.assertEqual(result["capacity_usage"], {"low": 1, "medium": 1, "high": 1, "no_data": 1})
         self.assertEqual(result["mailbox_capacity_risk"]["value"], 1)
 
+    def test_sharepoint_audit_summary_counts_operations_per_tenant(self):
+        service = OperationsAnalyticsQueryService({
+            "sharepoint_high_value_audit_event": [
+                {"tenant_id": 2, "audit_record_id": "a1", "event_time": "2026-08-29T10:00:00Z", "event_category": "EXTERNAL_SHARING", "operation": "SharingInvitationCreated", "actor_upn": "alice@example.test", "anonymous_flag": False, "external_flag": True, "site_url": "https://x", "source_file_name": "f", "workload": "SharePoint"},
+                {"tenant_id": 2, "audit_record_id": "a2", "event_time": "2026-08-29T10:01:00Z", "event_category": "EXTERNAL_SHARING", "operation": "AnonymousLinkCreated", "actor_upn": "alice@example.test", "anonymous_flag": True, "external_flag": True, "site_url": "https://x", "source_file_name": "g", "workload": "SharePoint"},
+                {"tenant_id": 2, "audit_record_id": "a3", "event_time": "2026-08-29T10:02:00Z", "event_category": "EXTERNAL_SHARING", "operation": "SharingInvitationCreated", "actor_upn": "bob@example.test", "anonymous_flag": False, "external_flag": False, "site_url": "https://x", "source_file_name": "h", "workload": "SharePoint"},
+                {"tenant_id": 1, "audit_record_id": "a4", "event_time": "2026-08-29T10:03:00Z", "event_category": "EXTERNAL_SHARING", "operation": "SharingRevoked", "actor_upn": "carol@example.test", "anonymous_flag": False, "external_flag": True, "site_url": "https://y", "source_file_name": "i", "workload": "SharePoint"},
+            ],
+        })
+        result = service.sharepoint_audit_summary()
+        self.assertEqual(result["summary"]["total_events"], 4)
+        self.assertEqual(result["summary"]["operations"], {"SharingInvitationCreated": 2, "AnonymousLinkCreated": 1, "SharingRevoked": 1})
+        self.assertEqual(result["summary"]["latest_event_time"], "2026-08-29T10:03:00Z")
+        self.assertEqual(result["tenants"], [
+            {"tenant_id": 1, "total_events": 1, "operations": {"SharingRevoked": 1}},
+            {"tenant_id": 2, "total_events": 3, "operations": {"SharingInvitationCreated": 2, "AnonymousLinkCreated": 1}},
+        ])
+        self.assertEqual(len(result["recent_events"]), 4)
+        self.assertEqual(result["status"], "READY")
+
+    def test_sharepoint_audit_summary_missing_dependency_fails_closed(self):
+        result = OperationsAnalyticsQueryService({}).sharepoint_audit_summary()
+        self.assertEqual(result["status"], "DATA_DEPENDENCY_UNAVAILABLE")
+        self.assertEqual(result["summary"]["total_events"], 0)
+        self.assertEqual(result["tenants"], [])
+
+    def test_sharepoint_audit_summary_bounds_limit(self):
+        rows = [
+            {"tenant_id": 2, "audit_record_id": "a{}".format(i), "event_time": "2026-08-29T10:0{}:00Z".format(i), "event_category": "EXTERNAL_SHARING", "operation": "SharingInvitationCreated", "actor_upn": "a@example.test", "anonymous_flag": False, "external_flag": True, "site_url": "https://x", "source_file_name": "f", "workload": "SharePoint"}
+            for i in range(5)
+        ]
+        result = OperationsAnalyticsQueryService({"sharepoint_high_value_audit_event": rows}).sharepoint_audit_summary(limit=3)
+        self.assertEqual(result["limit"], 3)
+        self.assertEqual(len(result["recent_events"]), 3)
+        self.assertEqual(result["summary"]["total_events"], 5)
+
     def test_from_connection_loads_assignments_and_skus(self):
         class Cursor:
             def __init__(self, sql):

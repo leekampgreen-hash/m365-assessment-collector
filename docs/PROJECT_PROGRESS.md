@@ -1,5 +1,45 @@
 # Project Progress
 
+## SP-P11 SharePoint audit analytics and API (PASS)
+
+**Task:** `SP-P11-SHAREPOINT-AUDIT-ANALYTICS-API-001`
+**Status:** `SP_P11_PASS`
+
+Added the read-only SharePoint high-value audit analytics projection and
+Operations API route over the persisted `core.sharepoint_high_value_audit_event`
+rows (the `G01-020` / SharePoint audit event-history contract). The work follows
+the locked SharePoint high-value audit contract and the accepted OneDrive
+high-value audit analytics/API pattern.
+
+- **Analytics (`analytics/operations.py`):** `OperationsAnalyticsQueryService`
+  now loads `core.sharepoint_high_value_audit_event` (tenant-scoped, newest-first)
+  and exposes `sharepoint_audit_summary(limit=50)`, returning a summary
+  (`total_events`, per-operation counts, `latest_event_time`), per-tenant
+  aggregates, and a bounded `recent_events` detail list. The `limit` is clamped
+  to `[1, 100]`. Fail-closed: with no loaded dependency rows the method reports
+  `status="DATA_DEPENDENCY_UNAVAILABLE"` with empty summary/tenants rather than
+  fabricating results.
+- **API (`api/operations.py`):** new read-only `GET /api/operations/sharepoint/audit-summary?limit=...`.
+  Invalid/non-numeric/zero `limit` returns HTTP 400 `INVALID_LIMIT`; otherwise the
+  route returns HTTP 200 with the analytics payload and the derived status.
+- **Scope:** read-only analytics + API + focused tests. No Graph collection,
+  permission, migration, persistence, or runtime-deployment source change; no
+  live Microsoft call and no synthetic database mutation.
+- **Tests:** focused analytics/API suites pass **54/54** in
+  `graph-agent-collector-dev`
+  (`python3 -m unittest tests.analytics.test_operations tests.analytics.test_operations_api tests.analytics.test_security_api`).
+  Coverage includes per-tenant operation counting, fail-closed missing dependency,
+  bounded limit, and the `audit-summary` endpoint serialization/validation.
+- **Runtime parity:** `operations-api` rebuilt
+  (`docker compose up -d --build --no-deps operations-api`) and
+  `scripts/check_runtime_parity.py` passes (exit 0) — all five checked production
+  modules MATCH host hashes including the changed `analytics/operations.py` and
+  `api/operations.py`. API `/health` → `{"status":"READY","database":"READY"}`.
+- **SYNTHETIC_RESIDUE:** NONE.
+
+- **Next:** SharePoint follow-up validation / continued SharePoint data
+  workstream as scheduled.
+
 ## SP-P10 SharePoint audit live acceptance
 
 **Status:** `SP_P10_PASS_WITH_LIMITATIONS`

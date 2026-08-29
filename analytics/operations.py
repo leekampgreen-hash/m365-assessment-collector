@@ -185,6 +185,7 @@ class OperationsAnalyticsQueryService:
         self.tables["exchange_mailbox_capacity"] = _rows(rows, "exchange_mailbox_capacity")
         self.tables["onedrive_account_capacity"] = _rows(rows, "onedrive_account_capacity")
         self.tables["onedrive_high_value_audit"] = _rows(rows, "onedrive_high_value_audit")
+        self.tables["sharepoint_high_value_audit_event"] = _rows(rows, "sharepoint_high_value_audit_event")
 
     @classmethod
     def from_connection(cls, connection: Any, tenant_id: int, *, as_of: date | str | None = None):
@@ -196,6 +197,7 @@ class OperationsAnalyticsQueryService:
             "exchange_mailbox_capacity": "SELECT tenant_id, identity_value, user_principal_name, user_ref, identity_is_masked, storage_used, mailbox_capacity, utilization_percent, usage_level, report_refresh_date, last_activity_date FROM analytics.exchange_mailbox_capacity WHERE tenant_id = %s",
             "onedrive_account_capacity": "SELECT tenant_id, entity_key, identity_value, user_ref, identity_is_masked, storage_used, storage_allocated, utilization_percent, usage_level, file_count, report_refresh_date FROM analytics.onedrive_account_capacity WHERE tenant_id = %s",
             "onedrive_high_value_audit": "SELECT tenant_id, audit_record_id, event_time, event_category, operation, actor_upn, anonymous_flag, external_flag, object_display_name, workload FROM analytics.onedrive_high_value_audit WHERE tenant_id = %s ORDER BY event_time DESC, audit_record_id DESC",
+            "sharepoint_high_value_audit_event": "SELECT tenant_id, audit_record_id, event_time, event_category, operation, actor_upn, anonymous_flag, external_flag, site_url, source_file_name, workload FROM core.sharepoint_high_value_audit_event WHERE tenant_id = %s ORDER BY event_time DESC, audit_record_id DESC",
         }
         names.update({name: "SELECT current_rows.* FROM core.usage_{0} current_rows JOIN (SELECT tenant_id, MAX(observed_at) AS observed_at FROM core.usage_{0} WHERE tenant_id = %s GROUP BY tenant_id) newest ON newest.tenant_id = current_rows.tenant_id AND newest.observed_at = current_rows.observed_at WHERE current_rows.tenant_id = %s".format(name) for name in USAGE_TABLES})
         loaded: dict[str, list[dict[str, Any]]] = {}
@@ -482,6 +484,29 @@ class OperationsAnalyticsQueryService:
         details = [{field: row.get(field) for field in ("event_time", "event_category", "operation", "actor_upn", "anonymous_flag", "external_flag", "object_display_name", "workload")} for row in recent]
         status = "READY" if rows or "onedrive_high_value_audit" in self.rows else "DATA_DEPENDENCY_UNAVAILABLE"
         return {"summary": summary, "recent_events": details, "status": status, "limit": bounded}
+
+    def sharepoint_audit_summary(self, limit: int = 50) -> dict[str, Any]:
+        rows = self.tables["sharepoint_high_value_audit_event"]
+        bounded = max(1, min(int(limit), 100))
+        recent = sorted(rows, key=lambda row: (row.get("event_time") or "", str(row.get("audit_record_id") or "")), reverse=True)[:bounded]
+        operations: dict[str, int] = {}
+        tenants: dict[Any, dict[str, Any]] = {}
+        for row in rows:
+            operation = str(row.get("operation") or "")
+            operations[operation] = operations.get(operation, 0) + 1
+            tenant_id = row.get("tenant_id")
+            aggregate = tenants.setdefault(tenant_id, {"tenant_id": tenant_id, "total_events": 0, "operations": {}})
+            aggregate["total_events"] += 1
+            aggregate["operations"][operation] = aggregate["operations"].get(operation, 0) + 1
+        summary = {
+            "total_events": len(rows),
+            "operations": operations,
+            "latest_event_time": max((row.get("event_time") for row in rows if row.get("event_time") is not None), default=None),
+        }
+        tenant_list = sorted(tenants.values(), key=lambda item: item["tenant_id"])
+        details = [{field: row.get(field) for field in ("event_time", "event_category", "operation", "actor_upn", "anonymous_flag", "external_flag", "site_url", "source_file_name", "workload")} for row in recent]
+        status = "READY" if rows or "sharepoint_high_value_audit_event" in self.rows else "DATA_DEPENDENCY_UNAVAILABLE"
+        return {"summary": summary, "tenants": tenant_list, "recent_events": details, "status": status, "limit": bounded}
 
     def sharepoint_user_adoption(self) -> dict[str, Any]:
         rows = self.tables["sharepoint_user_activity"]
