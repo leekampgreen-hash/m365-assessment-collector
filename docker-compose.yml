@@ -29,10 +29,14 @@ services:
       - ./analytics:/workspace/analytics
       - ./api:/workspace/api
       - ./app:/workspace/app
+      - ./agents:/workspace/agents
       - ./collectors:/workspace/collectors
       - ./config:/workspace/config
       - ./data:/workspace/data
+      - ./database:/workspace/database
       - ./docs:/workspace/docs
+      - ./Dockerfile.collector:/workspace/Dockerfile.collector:ro
+      - ./docker-compose.yml:/workspace/docker-compose.yml:ro
       - ./logs:/workspace/logs
       - ./scripts:/workspace/scripts
       - ./tests:/workspace/tests

@@ -40,9 +40,9 @@ class G01_015RegistryAlignmentTests(unittest.TestCase):
             write_event_record(BoundSqlExecutor(c), NormalizedWorkloadRecord("G01-015", PersistenceMode.EVENT, event_row=row))
         self.assertEqual(c.statements, [])
 
-    def test_persistence_event_endpoints_are_only_g01_005_006_014(self):
+    def test_persistence_event_endpoints_exclude_g01_015(self):
         from collectors.persistence.core import _EVENT_ENDPOINTS
-        self.assertEqual(set(_EVENT_ENDPOINTS.keys()), {"G01-005","G01-006","G01-014"})
+        self.assertEqual(set(_EVENT_ENDPOINTS.keys()), {"G01-005","G01-006","G01-014","SP-A01"})
         self.assertNotIn("G01-015", _EVENT_ENDPOINTS)
 
     def test_source_mutation_none_on_rejection(self):

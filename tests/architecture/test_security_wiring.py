@@ -27,7 +27,7 @@ DOCKERFILE_PATH = REPO_ROOT / "Dockerfile.collector"
 def tearDownModule() -> None:
     """Keep Scenario import-isolation tests independent of discovery order."""
     for name in (
-        "collectors.core.auth", "collectors.core.config", "collectors.core.runtime",
+        "collectors.core.auth", "collectors.core.config",
         "collectors.core.transport", "urllib.request",
     ):
         sys.modules.pop(name, None)

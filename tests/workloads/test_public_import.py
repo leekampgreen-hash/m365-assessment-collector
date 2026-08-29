@@ -7,8 +7,7 @@ This module pins the ``import collectors.workloads`` import contract:
 * the two central public symbols the integration layer exposes
   (:class:`WorkloadEntry` and the canonical ``REGISTRY`` mapping) must
   be reachable through the package root;
-* the registry must contain exactly 19 entries, one per
-  ``G01-001..G01-019`` endpoint id;
+* the registry must contain canonical ``G01-001..G01-020`` plus ``SP-A01``;
 * the registry must be import-time validated (no duplicate ids, no
   unknown ids).
 
@@ -34,7 +33,7 @@ from collectors.workloads.registry import (
 )
 
 
-EXPECTED_IDS = tuple("G01-{:03d}".format(index) for index in range(1, 20))
+EXPECTED_IDS = tuple("G01-{:03d}".format(index) for index in range(1, 21)) + ("SP-A01",)
 
 
 class PublicImportRegressionTests(unittest.TestCase):
@@ -58,8 +57,8 @@ class PublicImportRegressionTests(unittest.TestCase):
     def test_registry_is_exported_from_package_root(self):
         self.assertIs(REGISTRY, workloads_pkg.REGISTRY)
 
-    def test_registry_has_exactly_19_entries(self):
-        self.assertEqual(len(REGISTRY), 19)
+    def test_registry_has_expected_entries(self):
+        self.assertEqual(len(REGISTRY), len(EXPECTED_IDS))
 
     def test_registry_ids_match_expected_canonical_set(self):
         self.assertEqual(set(REGISTRY.keys()), set(EXPECTED_IDS))
@@ -84,7 +83,7 @@ class PublicImportRegressionTests(unittest.TestCase):
         for endpoint_id in EXPECTED_IDS:
             self.assertIs(get_entry(endpoint_id), REGISTRY[endpoint_id])
 
-    def test_iter_entries_returns_canonical_19_in_order(self):
+    def test_iter_entries_returns_canonical_ids_in_order(self):
         ids = [entry.endpoint_id for entry in iter_entries()]
         self.assertEqual(ids, list(EXPECTED_IDS))
 
@@ -101,10 +100,9 @@ class PublicImportSmokeTests(unittest.TestCase):
         from collectors.workloads.models import WorkloadEntry as WE
         self.assertTrue(callable(WE))
 
-    def test_import_registry_and_assert_19_entries(self):
-        # Mirrors: python -c "from collectors.workloads.registry import REGISTRY; assert len(REGISTRY) == 19"
+    def test_import_registry_and_assert_expected_entries(self):
         from collectors.workloads.registry import REGISTRY as R
-        self.assertEqual(len(R), 19)
+        self.assertEqual(len(R), len(EXPECTED_IDS))
 
     def test_import_registry_helpers(self):
         # The dispatch helpers exposed by the registry must be importable.

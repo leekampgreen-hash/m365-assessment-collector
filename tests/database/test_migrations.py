@@ -75,6 +75,8 @@ EXPECTED_TABLES = {
     "security.finding_current",
     "core.onedrive_high_value_audit_event",
     "control.collector_checkpoint",
+    "core.sharepoint_tenant_settings",
+    "core.sharepoint_high_value_audit_event",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security"}
@@ -101,6 +103,8 @@ EXPECTED_FILES_IN_ORDER = [
     "018_onedrive_high_value_audit_event.sql",
     "019_collector_checkpoint.sql",
     "020_onedrive_high_value_audit_analytics.sql",
+    "021_sharepoint_tenant_settings.sql",
+    "022_sharepoint_high_value_audit.sql",
 ]
 
 
@@ -265,18 +269,18 @@ class SchemaTests(unittest.TestCase):
 
 
 class TableInventoryTests(unittest.TestCase):
-    def test_exactly_29_create_table_definitions(self) -> None:
+    def test_exactly_51_create_table_definitions(self) -> None:
         sql = _all_sql()
         tables = _extract_create_tables(sql)
         # Sanity: drop any duplicate literal entries but expect no
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            49,
-            f"expected exactly 44 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            51,
+            f"expected exactly 51 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
-    def test_all_29_accepted_table_names_exist(self) -> None:
+    def test_all_accepted_table_names_exist(self) -> None:
         sql = _all_sql()
         tables = {_normalise_unquoted(t) for t in _extract_create_tables(sql)}
         expected = {_normalise_unquoted(t) for t in EXPECTED_TABLES}
@@ -627,7 +631,7 @@ class IndexTests(unittest.TestCase):
             re.IGNORECASE | re.MULTILINE,
         )
         for p in _load_migrations():
-            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql"):
+            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "022_sharepoint_high_value_audit.sql"):
                 continue
             text = p.read_text(encoding="utf-8")
             self.assertNotRegex(
@@ -780,7 +784,7 @@ class DDLSafetyTests(unittest.TestCase):
                 and not line.strip().startswith("--")
             )
             # CREATE TABLE statements are closed by ``);`` lines.
-            expected_close_paren_semicolon = n_create_table + (1 if p.name == "018_onedrive_high_value_audit_event.sql" else 0)
+            expected_close_paren_semicolon = n_create_table + (1 if p.name in ("018_onedrive_high_value_audit_event.sql", "022_sharepoint_high_value_audit.sql") else 0)
             self.assertEqual(
                 expected_close_paren_semicolon,
                 n_close_paren_semicolon,

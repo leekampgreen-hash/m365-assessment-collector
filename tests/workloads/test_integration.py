@@ -884,6 +884,8 @@ def _record_for(endpoint_id: str) -> dict:
         return _role_definition_record()
     if endpoint_id == "G01-019":
         return _role_assignment_record()
+    if endpoint_id == "SP-A01":
+        return {"Id": "sp-audit-1", "CreationTime": "2024-01-02T03:04:05Z", "Workload": "SharePoint", "Operation": "AnonymousLinkCreated"}
     if endpoint_id == "G01-002":
         return {"id": "g-1", "displayName": "Group", "mailEnabled": True,
                 "securityEnabled": False}

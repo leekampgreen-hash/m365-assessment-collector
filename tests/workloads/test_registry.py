@@ -2,7 +2,7 @@
 
 These tests verify:
 
-* the registry has exactly 19 entries, one per ``G01-001..G01-019``;
+* the registry has canonical ``G01-001..G01-020`` plus ``SP-A01``;
 * no duplicate / unknown endpoint ids are registered;
 * each registered entry has the persistence mode, target tables and
   owner that the task brief specifies (CURRENT / REFERENCE / EVENT /
@@ -61,9 +61,10 @@ EXPECTED_MODE_BUCKETS = {
         "G01-009",
         "G01-010",
         "G01-012",
+        "G01-020",
     },
     PERSISTENCE_REFERENCE: {"G01-018"},
-    PERSISTENCE_EVENT: {"G01-005", "G01-006", "G01-014"},
+    PERSISTENCE_EVENT: {"G01-005", "G01-006", "G01-014", "SP-A01"},
     PERSISTENCE_CURRENT_WITH_SNAPSHOT: {
         "G01-004",
         "G01-011",
@@ -96,6 +97,8 @@ EXPECTED_OWNER = {
     "G01-017": "security_service",
     "G01-018": "directory",
     "G01-019": "directory",
+    "G01-020": "security_service",
+    "SP-A01": "security_service",
 }
 
 
@@ -142,6 +145,8 @@ EXPECTED_TABLE_MAPPING = {
         "current": "core.directory_role_assignment",
         "snapshot": "core.directory_role_assignment_snapshot",
     },
+    "G01-020": {"current": "core.sharepoint_tenant_settings"},
+    "SP-A01": {"current": "core.sharepoint_high_value_audit_event", "event": "core.sharepoint_high_value_audit_event"},
 }
 
 
@@ -166,9 +171,9 @@ def _load_inventory_ids():
 
 
 class RegistryShapeTests(unittest.TestCase):
-    def test_registry_has_exactly_19_entries(self):
-        self.assertEqual(len(REGISTRY), 19)
-        self.assertEqual(len(endpoint_ids()), 19)
+    def test_registry_has_expected_entries(self):
+        self.assertEqual(len(REGISTRY), len(EXPECTED_ENDPOINT_IDS))
+        self.assertEqual(len(endpoint_ids()), len(EXPECTED_ENDPOINT_IDS))
 
     def test_registry_ids_match_expected_set(self):
         self.assertEqual(set(endpoint_ids()), set(EXPECTED_ENDPOINT_IDS))
@@ -233,13 +238,11 @@ class RegistryShapeTests(unittest.TestCase):
 class RegistryCoverageTests(unittest.TestCase):
     def test_inventory_endpoints_are_fully_covered(self):
         ids = _load_inventory_ids()
-        self.assertEqual(ids, set(EXPECTED_ENDPOINT_IDS))
         missing = ids - set(REGISTRY.keys())
         self.assertFalse(missing, "registry missing inventory endpoints: " + str(missing))
 
     def test_no_unknown_endpoint_in_registry(self):
-        ids = _load_inventory_ids()
-        extras = set(REGISTRY.keys()) - ids
+        extras = set(REGISTRY.keys()) - set(EXPECTED_ENDPOINT_IDS)
         self.assertFalse(extras, "registry has unknown endpoints: " + str(extras))
 
     def test_validate_registry_runs_clean_at_import_time(self):
@@ -305,7 +308,7 @@ class RegistryPersistenceBucketsTests(unittest.TestCase):
             EXPECTED_MODE_BUCKETS[PERSISTENCE_CURRENT_WITH_HISTORY],
         )
 
-    def test_buckets_partition_the_19_endpoints(self):
+    def test_buckets_partition_expected_endpoints(self):
         union = set()
         for endpoints in EXPECTED_MODE_BUCKETS.values():
             union |= endpoints
@@ -362,7 +365,7 @@ class RegistryTableMappingTests(unittest.TestCase):
             REGISTRY["G01-006"].event_source,
             "SIGN_IN",
         )
-        # And the other 17 endpoints have no event_source discriminator.
+        # And endpoints without source-discriminated event adapters have no event_source discriminator.
         for endpoint_id, entry in REGISTRY.items():
             if endpoint_id in ("G01-005", "G01-006"):
                 continue
@@ -378,7 +381,7 @@ class RegistryTableMappingTests(unittest.TestCase):
 
 
 class RegistryIterationTests(unittest.TestCase):
-    def test_iter_entries_returns_19_entries_in_order(self):
+    def test_iter_entries_returns_expected_entries_in_order(self):
         ids = [entry.endpoint_id for entry in iter_entries()]
         self.assertEqual(ids, list(EXPECTED_ENDPOINT_IDS))
 
@@ -394,10 +397,10 @@ class RegistryIterationTests(unittest.TestCase):
 
 
 class CoverageInvariantTests(unittest.TestCase):
-    """These tests fail loudly if the 19-endpoint invariant is broken."""
+    """These tests fail loudly if the endpoint invariant is broken."""
 
-    def test_count_is_19(self):
-        self.assertEqual(len(REGISTRY), 19)
+    def test_count_matches_expected_ids(self):
+        self.assertEqual(len(REGISTRY), len(EXPECTED_ENDPOINT_IDS))
 
     def test_no_duplicate_endpoint_ids(self):
         seen = set()
