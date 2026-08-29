@@ -1,5 +1,46 @@
 # Project Progress
 
+## SP-P12 SharePoint workload seal / handover
+
+**Task:** `SP-P12-SHAREPOINT-WORKLOAD-SEAL-001`
+**Status:** `SP_P12_SEALED`
+
+`SHAREPOINT_WORKLOAD = SEALED / ACCEPTED`. SP-P03 PASS; SP-P04 PASS; SP-P05
+PASS; SP-P06 PASS; SP-P07 PASS; SP-P08 PASS
+(`sharing_capability: externalUserAndGuestSharing`); SP-P09 PASS; SP-P10
+PASS_WITH_LIMITATIONS (zero-content trial tenant); SP-P11 PASS.
+
+Completed phases: SP-P03 expanded the SharePoint tenant settings collector and
+registered `G01-020`; SP-P04 applied migration 021
+(`core.sharepoint_tenant_settings`); SP-P05 wired the production pipeline with
+integration tests PASS; SP-P06 added orphaned-sites analytics + API; SP-P07 added
+external-sharing analytics + API; SP-P08 confirmed live acceptance with
+`sharing_capability: externalUserAndGuestSharing`; SP-P09 wired the SharePoint
+audit collector and applied migration 022
+(`core.sharepoint_high_value_audit_event`); SP-P10 completed audit live acceptance
+PASS_WITH_LIMITATIONS (zero-content trial tenant, pipeline proven via a controlled
+synthetic real-PostgreSQL proof); SP-P11 closed audit analytics + API with focused
+suites 54/54 PASS.
+
+The durable SharePoint contract is recorded in
+`docs/evidence/SP-P12-SHAREPOINT-WORKLOAD-SEAL-001.md`: tenant settings persisted to
+`core.sharepoint_tenant_settings`, sharing capability locked at
+`externalUserAndGuestSharing`, audit persisted to
+`core.sharepoint_high_value_audit_event` (append/event-history, tenant-scoped,
+idempotent), and the read-only `GET /api/operations/sharepoint/audit-summary` API
+with a `[1, 100]` clamped limit and fail-closed dependency behavior.
+
+Historical blockers from SP-P10's zero-content live window are non-blocking and
+resolved via the controlled synthetic proof. Synthetic residue is NONE. After
+SP-P12, SharePoint is frozen and may be reopened only for a direct production
+regression, formally approved new scope, or an independent blocking
+security/correctness finding.
+
+`SHAREPOINT_WORKLOAD_SEALED: YES`; `NEXT_WORKLOAD: License data workstream`; no
+next-workload implementation is included.
+
+Evidence: `docs/evidence/SP-P12-SHAREPOINT-WORKLOAD-SEAL-001.md`.
+
 ## SP-P11 SharePoint audit analytics and API (PASS)
 
 **Task:** `SP-P11-SHAREPOINT-AUDIT-ANALYTICS-API-001`
