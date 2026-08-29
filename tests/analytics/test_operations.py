@@ -156,6 +156,19 @@ class OperationsAnalyticsTests(unittest.TestCase):
         self.assertEqual(result["total_file_count"]["value"], 5)
         self.assertEqual(result["storage_utilization"]["value"], 0.1)
 
+    def test_orphaned_sites_include_null_and_over_90_days_per_tenant(self):
+        service = OperationsAnalyticsQueryService({
+            "sharepoint_site_usage": [
+                {"tenant_id": 2, "site_id": "recent", "last_activity_date": "2026-08-01"},
+                {"tenant_id": 2, "site_id": "old", "last_activity_date": "2026-05-28"},
+                {"tenant_id": 1, "site_id": "never", "last_activity_date": None},
+            ],
+        }, as_of="2026-08-27")
+        self.assertEqual(service.orphaned_sites(), [
+            {"tenant_id": 1, "site_id": "never", "site_url": None, "display_name": None, "last_activity_date": None},
+            {"tenant_id": 2, "site_id": "old", "site_url": None, "display_name": None, "last_activity_date": "2026-05-28"},
+        ])
+
     def test_sharepoint_utilization_fails_closed_for_missing_allocation(self):
         result = OperationsAnalyticsQueryService({
             "sharepoint_site_usage": [row("site", "2026-08-27", storage_used=10, file_count=1)]

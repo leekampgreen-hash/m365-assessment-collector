@@ -245,6 +245,36 @@ _CURRENT_ENDPOINTS: Mapping[str, tuple[str, tuple[str, ...], tuple[str, ...], st
         "last_observed_at = EXCLUDED.last_observed_at, "
         "retention_class = EXCLUDED.retention_class",
     ),
+    "G01-020": (
+        "core.sharepoint_tenant_settings",
+        (
+            "tenant_id",
+            "source_object_id",
+            "collected_at",
+            "retention_class",
+            "last_observed_at",
+            "sharing_capability",
+            "default_sharing_link_type",
+            "external_user_expiration_required",
+            "external_user_expiration_in_days",
+            "file_anonymous_link_type",
+            "folder_anonymous_link_type",
+            "require_anonymous_links_expire_in_days",
+            "allow_guest_user_sharing",
+        ),
+        ("tenant_id", "source_object_id"),
+        "collected_at = EXCLUDED.collected_at, "
+        "retention_class = EXCLUDED.retention_class, "
+        "last_observed_at = EXCLUDED.last_observed_at, "
+        "sharing_capability = EXCLUDED.sharing_capability, "
+        "default_sharing_link_type = EXCLUDED.default_sharing_link_type, "
+        "external_user_expiration_required = EXCLUDED.external_user_expiration_required, "
+        "external_user_expiration_in_days = EXCLUDED.external_user_expiration_in_days, "
+        "file_anonymous_link_type = EXCLUDED.file_anonymous_link_type, "
+        "folder_anonymous_link_type = EXCLUDED.folder_anonymous_link_type, "
+        "require_anonymous_links_expire_in_days = EXCLUDED.require_anonymous_links_expire_in_days, "
+        "allow_guest_user_sharing = EXCLUDED.allow_guest_user_sharing",
+    ),
 }
 
 

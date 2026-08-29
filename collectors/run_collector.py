@@ -80,6 +80,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--security-rule", help="Registered deterministic Security rule id.")
     parser.add_argument("--onedrive-audit", action="store_true", help="Collect the bounded OneDrive Audit.SharePoint feed.")
     parser.add_argument(
+        "--sharepoint-settings", action="store_true", help="Collect SharePoint tenant settings (G01-020)."
+    )
+    parser.add_argument(
         "--granted-graph-permissions", nargs="*", default=(),
         help="Explicit app permissions granted to this collector identity.",
     )
@@ -156,6 +159,72 @@ def _build_persistence():
     return connection, CollectionWriter(connection, dispatch_persistence)
 
 
+def collect_and_persist_sharepoint_settings(*, tenant_id, transport, connection, spec):
+    """Collect the singleton G01-020 response and persist it through the registry."""
+    from collectors.security import SharePointTenantSettingsCollector
+    from collectors.workloads.registry import normalize_records
+
+    writer = CollectionWriter(connection, dispatch_persistence)
+    collection_run_id = writer.begin_collection_run(
+        tenant_id=tenant_id,
+        endpoint_ids=[spec.endpoint_id],
+    )
+    endpoint_run_id = writer.begin_endpoint_run(
+        collection_run_id=collection_run_id,
+        tenant_id=tenant_id,
+        spec=spec,
+    )
+    result = CollectionResult(endpoint_id=spec.endpoint_id, status="ERROR")
+    try:
+        collected = SharePointTenantSettingsCollector(transport).collect()
+        if collected.error_classification is not None:
+            result.error_classification = collected.error_classification
+            result.error_message = collected.error_classification
+            result.http_status = collected.http_status
+            return result
+        record = {
+            "sharingCapability": collected.raw_sharing_capability,
+            "defaultSharingLinkType": collected.default_sharing_link_type,
+            "externalUserExpirationRequired": collected.external_user_expiration_required,
+            "externalUserExpirationInDays": collected.external_user_expiration_in_days,
+            "fileAnonymousLinkType": collected.file_anonymous_link_type,
+            "folderAnonymousLinkType": collected.folder_anonymous_link_type,
+            "requireAnonymousLinksExpireInDays": collected.require_anonymous_links_expire_in_days,
+            "allowGuestUserSharing": collected.allow_guest_user_sharing,
+        }
+        records = normalize_records(
+            spec.endpoint_id,
+            [record],
+            {
+                "tenant_id": tenant_id,
+                "collection_run_id": collection_run_id,
+                "endpoint_run_id": endpoint_run_id,
+                "observed_at": collected.observation.observed_at,
+            },
+        )
+        from collectors.core.runtime import NormalizedCollection
+        writer.write(NormalizedCollection(
+            endpoint_id=spec.endpoint_id,
+            workload=spec.workload,
+            data_domain=spec.data_domain,
+            collection_timestamp=collected.observation.observed_at,
+            tenant_id=tenant_id,
+            source_metadata={},
+            records=records,
+        ))
+        result = CollectionResult(
+            endpoint_id=spec.endpoint_id,
+            status=PASS,
+            http_status=collected.http_status,
+            rows=1,
+            persisted_rows=1,
+        )
+        return result
+    finally:
+        writer.complete_endpoint_run(endpoint_run_id=endpoint_run_id, result=result)
+        writer.complete_collection_run(collection_run_id=collection_run_id, results=[result])
+
+
 def _dry_run_summary(
     runtime: CollectorRuntime,
     *,
@@ -198,11 +267,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except SystemExit:
         return 2
 
-    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit)
+    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings)
     if selected_count == 0 and not args.dry_run:
-        parser.error("one of --endpoint, --endpoints, or --all is required")
+        parser.error("one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, or --sharepoint-settings is required")
     if selected_count > 1:
-        parser.error("only one of --endpoint, --endpoints, or --all may be provided")
+        parser.error("only one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, or --sharepoint-settings may be provided")
+    if args.sharepoint_settings:
+        args.endpoint = "G01-020"
 
     inventory_path = Path(args.inventory)
     if not inventory_path.exists():
@@ -256,6 +327,36 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 writer.complete_collection_run(collection_run_id=collection_run_id, results=[result])
             print(safe_dumps({"onedrive_audit": metrics}) if args.json else "onedrive audit run complete")
             return 0
+        except Exception as exc:
+            print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)
+            return 3
+    if args.sharepoint_settings and not args.dry_run:
+        try:
+            from collectors.core.config import load_auth_config
+            from collectors.core.transport import GraphTransport
+
+            database_connection, _ = _build_persistence()
+            auth_config = load_auth_config(auth_source)
+            tenant_id = _trusted_tenant_resolver(auth_config, database_connection)
+            runtime = CollectorRuntime(
+                inventory_path=inventory_path,
+                auth_source=auth_source,
+                options=options,
+            )
+            spec = runtime.resolve_selection(endpoint_id="G01-020", endpoint_ids=None, all_enabled=False)[0]
+            transport = runtime.build_transport(runtime.build_token_provider(auth_config).get_token)
+            result = collect_and_persist_sharepoint_settings(
+                tenant_id=tenant_id,
+                transport=transport,
+                connection=database_connection,
+                spec=spec,
+            )
+            payload = {"sharepoint_settings": result.to_dict()}
+            if args.json:
+                print(safe_dumps(payload))
+            else:
+                print("sharepoint settings run complete")
+            return 0 if result.status == PASS else 1
         except Exception as exc:
             print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)
             return 3

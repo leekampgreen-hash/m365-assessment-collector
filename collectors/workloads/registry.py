@@ -45,7 +45,7 @@ from .models import (
 
 
 EXPECTED_ENDPOINT_IDS: Tuple[str, ...] = tuple(
-    "G01-{:03d}".format(index) for index in range(1, 20)
+    "G01-{:03d}".format(index) for index in range(1, 21)
 )
 
 
@@ -479,6 +479,16 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         owner="security_service",
         adapter=_wrap_g07b(g07b_adapters.service_update_messages),
         description="Service Update Messages -- current + versioned history",
+    )
+    entries["G01-020"] = _entry(
+        "G01-020",
+        PERSISTENCE_CURRENT,
+        current_table="core.sharepoint_tenant_settings",
+        workload="SharePoint Tenant Settings",
+        retention_class="REFERENCE",
+        owner="security_service",
+        adapter=_wrap_g07b(g07b_adapters.sharepoint_tenant_settings),
+        description="SharePoint Tenant External Sharing Settings -- CURRENT upsert",
     )
 
     return entries

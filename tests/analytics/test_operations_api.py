@@ -35,6 +35,9 @@ class FakeService:
     def sharepoint_user_adoption(self):
         return {"active_users": {"value": 1, "status": "READY"}}
 
+    def orphaned_sites(self):
+        return [{"tenant_id": 2, "site_id": "site-old", "last_activity_date": None}]
+
     def sharepoint_site_adoption(self):
         return {
             "active_sites": {"value": 2, "status": "READY"},
@@ -120,6 +123,11 @@ class OperationsApiTests(unittest.TestCase):
         status, payload = self.get("/api/operations/data-quality")
         self.assertEqual(status, 200)
         self.assertEqual(payload["limitations"]["sharepoint_site_analytics_status"], "IDENTITY_UNAVAILABLE")
+
+    def test_orphaned_sites_api_exposes_inactive_sites(self):
+        status, payload = self.get("/api/operations/sharepoint/orphaned-sites")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["data"]["sites"][0]["site_id"], "site-old")
 
     def test_sharepoint_site_api_exposes_basic_kpis(self):
         status, payload = self.get("/api/operations/adoption/sharepoint/sites")

@@ -497,6 +497,22 @@ class OperationsAnalyticsQueryService:
             "adoption_rate": _metric(None, rows, status="DATA_DEPENDENCY_UNAVAILABLE", missing="directory denominator not in contract"),
         }
 
+    def orphaned_sites(self) -> list[dict[str, Any]]:
+        rows = self.tables["sharepoint_site_usage"]
+        result = []
+        for row in rows:
+            last_activity = _date(row.get("last_activity_date"))
+            if last_activity is not None and (self.as_of - last_activity).days <= 90:
+                continue
+            result.append({
+                "tenant_id": row.get("tenant_id"),
+                "site_id": row.get("site_id") or row.get("entity_key"),
+                "site_url": row.get("site_url"),
+                "display_name": row.get("display_name") or row.get("site_name"),
+                "last_activity_date": last_activity.isoformat() if last_activity else None,
+            })
+        return sorted(result, key=lambda item: (item["tenant_id"] is None, item["tenant_id"], str(item["site_id"] or "")))
+
     def sharepoint_site_adoption(self) -> dict[str, Any]:
         rows = self.tables["sharepoint_site_usage"]
         usable = [row for row in rows if _onedrive_non_deleted(row)]

@@ -589,6 +589,36 @@ adapt_service_health_issues = service_health_issues
 adapt_service_update_messages = service_update_messages
 
 
+def sharepoint_tenant_settings(
+    records: Iterable[Mapping[str, Any]],
+    lineage: Any = None,
+) -> List[Dict[str, Any]]:
+    """G01-020 SharePoint Tenant Settings -> current-state row.
+    
+    Singleton endpoint; emits one row per run with all external sharing fields.
+    """
+    lineage = normalize_lineage(lineage)
+    out: List[Dict[str, Any]] = []
+    for raw in records:
+        record = dict(raw)
+        # Use a fixed source_object_id for the singleton tenant-level settings.
+        source_object_id = "sharepoint_tenant_settings"
+        common = {
+            "sharing_capability": _as_text(record.get("sharingCapability")),
+            "default_sharing_link_type": _as_text(record.get("defaultSharingLinkType")),
+            "external_user_expiration_required": _as_bool(record.get("externalUserExpirationRequired")),
+            "external_user_expiration_in_days": record.get("externalUserExpirationInDays"),
+            "file_anonymous_link_type": _as_text(record.get("fileAnonymousLinkType")),
+            "folder_anonymous_link_type": _as_text(record.get("folderAnonymousLinkType")),
+            "require_anonymous_links_expire_in_days": record.get("requireAnonymousLinksExpireInDays"),
+            "allow_guest_user_sharing": _as_bool(record.get("allowGuestUserSharing")),
+        }
+        row = _envelope(lineage, source_object_id=source_object_id, extra=common)
+        row["last_observed_at"] = lineage.collected_at
+        out.append(row)
+    return out
+
+
 __all__ = [
     "ENDPOINT_TABLE_MAP",
     "EVENT_SOURCE_DIRECTORY_AUDIT",
@@ -607,4 +637,5 @@ __all__ = [
     "service_health_issues",
     "service_health_overview",
     "service_update_messages",
+    "sharepoint_tenant_settings",
 ]

@@ -46,6 +46,13 @@ class SharePointTenantSettingsResult:
 
     http_status: Optional[int]
     raw_sharing_capability: Optional[str]
+    default_sharing_link_type: Optional[str]
+    external_user_expiration_required: Optional[bool]
+    external_user_expiration_in_days: Optional[int]
+    file_anonymous_link_type: Optional[str]
+    folder_anonymous_link_type: Optional[str]
+    require_anonymous_links_expire_in_days: Optional[int]
+    allow_guest_user_sharing: Optional[bool]
     observation: SecurityObservation
     finding: SecurityFinding
     error_classification: Optional[str] = None
@@ -68,13 +75,29 @@ class SharePointTenantSettingsCollector:
         error_classification: Optional[str] = None
         http_status: Optional[int] = None
 
+        default_sharing_link_type: Optional[str] = None
+        external_user_expiration_required: Optional[bool] = None
+        external_user_expiration_in_days: Optional[int] = None
+        file_anonymous_link_type: Optional[str] = None
+        folder_anonymous_link_type: Optional[str] = None
+        require_anonymous_links_expire_in_days: Optional[int] = None
+        allow_guest_user_sharing: Optional[bool] = None
+
         try:
             response = self.transport.get(SHAREPOINT_SETTINGS_PATH)
             http_status = response.status
             payload = response.payload
-            if isinstance(payload, dict) and isinstance(payload.get("sharingCapability"), str):
-                raw_value = payload["sharingCapability"]
-                source_available = normalize_sharing_capability(raw_value) is not None
+            if isinstance(payload, dict):
+                if isinstance(payload.get("sharingCapability"), str):
+                    raw_value = payload["sharingCapability"]
+                    source_available = normalize_sharing_capability(raw_value) is not None
+                default_sharing_link_type = payload.get("defaultSharingLinkType")
+                external_user_expiration_required = payload.get("externalUserExpirationRequired")
+                external_user_expiration_in_days = payload.get("externalUserExpirationInDays")
+                file_anonymous_link_type = payload.get("fileAnonymousLinkType")
+                folder_anonymous_link_type = payload.get("folderAnonymousLinkType")
+                require_anonymous_links_expire_in_days = payload.get("requireAnonymousLinksExpireInDays")
+                allow_guest_user_sharing = payload.get("allowGuestUserSharing")
             else:
                 error_classification = API_ERROR
         except GraphHttpError as error:
@@ -97,6 +120,13 @@ class SharePointTenantSettingsCollector:
         return SharePointTenantSettingsResult(
             http_status=http_status,
             raw_sharing_capability=raw_value,
+            default_sharing_link_type=default_sharing_link_type,
+            external_user_expiration_required=external_user_expiration_required,
+            external_user_expiration_in_days=external_user_expiration_in_days,
+            file_anonymous_link_type=file_anonymous_link_type,
+            folder_anonymous_link_type=folder_anonymous_link_type,
+            require_anonymous_links_expire_in_days=require_anonymous_links_expire_in_days,
+            allow_guest_user_sharing=allow_guest_user_sharing,
             observation=observation,
             finding=finding,
             error_classification=error_classification,
