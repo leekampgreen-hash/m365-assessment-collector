@@ -1,5 +1,19 @@
 # Project Progress
 
+## DA-P01 Persistence defect closure (PASS)
+
+**Task:** `DA-P01-CLOSE`
+**Status:** `DA-P01 PASS`
+
+Fixed two persistence defects:
+
+- `G01-003`: jsonb serialization fix in `core.py`.
+- `G01-005/006`: missing adapter columns fix.
+
+Authoritative database verification found 1 row in `core.organization` and 3 rows in
+`core.audit_event`. Focused validation passed **125/125 tests**, and runtime parity
+passed.
+
 ## SP-P12 SharePoint workload seal / handover
 
 **Task:** `SP-P12-SHAREPOINT-WORKLOAD-SEAL-001`

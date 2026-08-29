@@ -28,9 +28,11 @@ Do not use Claude for code execution or running tests.
 
 ### Tier 2 — Coding Worker (opencode + selected model)
 
+**Primary coding worker:** **Devstral Medium** (promoted)
+
 | Task Type | Recommended Model | Reason |
 |---|---|---|
-| Write/edit Python code | **Devstral Medium** | Mistral coding agent — less scope drift |
+| Write/edit Python code | **Devstral Medium** | Primary coding worker; Mistral coding agent — less scope drift |
 | Focused pytest fixture | **Devstral Medium** | Same |
 | Error analysis / RCA | **DeepSeek V3.x** | Strong reasoning, low cost |
 | Initial draft / exploration | **Luna (GPT 5.6 Luna)** | Cheap, sufficient for drafts |
