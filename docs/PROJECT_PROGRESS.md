@@ -1,5 +1,22 @@
 # Project Progress
 
+## SP-P10 SharePoint audit live acceptance
+
+**Status:** `SP_P10_PASS_WITH_LIMITATIONS`
+
+SharePoint audit live acceptance completed with a bounded real Management Activity
+invocation against the trial tenant. The live window returned zero content, so no
+new event was created and no candidate classification was naturally encountered.
+The pipeline was proven independently via a controlled synthetic real-Postgres
+proof. Operations proven end-to-end: `SharingInvitationCreated`,
+`AnonymousLinkCreated`, `AnonymousLinkRemoved`, and `SharingRevoked`.
+
+- **Live window:** zero content (trial tenant).
+- **Pipeline proven:** controlled synthetic real-Postgres proof.
+- **Operations proven:** SharingInvitationCreated, AnonymousLinkCreated, AnonymousLinkRemoved, SharingRevoked.
+- **SYNTHETIC_RESIDUE:** NONE.
+- **PARITY:** PASS.
+
 ## SP-P03 through SP-P07 SharePoint progress summary
 
 - **SP-P03:** SharePoint tenant settings expanded and the `G01-020` endpoint wired into the workload registry.
