@@ -52,6 +52,7 @@ from collectors.core.config import (
 )
 from collectors.core.results import safe_dumps
 from collectors.persistence import CollectionWriter, dispatch_persistence, open_database_connection
+from collectors.core.models import CollectionResult, EndpointSpec
 
 
 DEFAULT_INVENTORY = Path("config/api_inventory.json")
@@ -224,16 +225,35 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             database_connection, _ = _build_persistence()
             auth_config = load_auth_config(auth_source)
             tenant_id = _trusted_tenant_resolver(auth_config, database_connection)
-            end = datetime.now(timezone.utc)
-            metrics = collect_and_persist_onedrive_audit(
-                tenant_id=tenant_id,
-                auth_config=auth_config,
-                connection=database_connection,
-                url_open=urlopen,
-                start=end - timedelta(hours=4),
-                end=end,
-                collected_at=end.isoformat(),
+            spec = EndpointSpec(
+                endpoint_id="OD-AUDIT", name="OneDrive Audit.SharePoint",
+                path="", workload="OneDrive", permission="ActivityFeed.Read",
             )
+            writer = CollectionWriter(database_connection, dispatch_persistence)
+            collection_run_id = writer.begin_collection_run(tenant_id=tenant_id, endpoint_ids=[spec.endpoint_id])
+            endpoint_run_id = writer.begin_endpoint_run(
+                collection_run_id=collection_run_id, tenant_id=tenant_id, spec=spec,
+            )
+            end = datetime.now(timezone.utc)
+            try:
+                metrics = collect_and_persist_onedrive_audit(
+                    tenant_id=tenant_id,
+                    auth_config=auth_config,
+                    connection=database_connection,
+                    url_open=urlopen,
+                    start=end - timedelta(hours=4),
+                    end=end,
+                    collected_at=end.isoformat(),
+                    collection_run_id=collection_run_id,
+                    endpoint_run_id=endpoint_run_id,
+                )
+                result = CollectionResult(endpoint_id=spec.endpoint_id, status="PASS", rows=metrics["normalized"], persisted_rows=metrics["persisted"])
+            except Exception:
+                result = CollectionResult(endpoint_id=spec.endpoint_id, status="ERROR", error_classification="SOURCE_FAILURE", error_message="COLLECTION_FAILED")
+                raise
+            finally:
+                writer.complete_endpoint_run(endpoint_run_id=endpoint_run_id, result=result)
+                writer.complete_collection_run(collection_run_id=collection_run_id, results=[result])
             print(safe_dumps({"onedrive_audit": metrics}) if args.json else "onedrive audit run complete")
             return 0
         except Exception as exc:

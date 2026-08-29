@@ -206,6 +206,15 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 data = {"tenant_summary": tenant, "adoption_summary": {"exchange": service.exchange_adoption(), "onedrive": service.onedrive_adoption(), "sharepoint_user": service.sharepoint_user_adoption()}, "license_utilization": service.license_utilization()}
                 self._write(200, _response(_service_status(data), data, quality=_quality(service), limitations={"sharepoint_site_analytics_status": "IDENTITY_UNAVAILABLE"}))
                 return
+            if path == BASE_PATH + "/onedrive/high-value-audit":
+                values = parse_qs(parsed.query).get("limit", ["50"])
+                if len(values) != 1 or not values[0].isdigit() or int(values[0]) < 1:
+                    self._write(400, _response("INVALID_LIMIT"))
+                    return
+                service = self._load_service()
+                data = service.onedrive_high_value_audit(int(values[0]))
+                self._write(200, _response(data.pop("status", _service_status(data)), data))
+                return
             if path == BASE_PATH + "/inactivity":
                 values = parse_qs(parsed.query).get("days", ["30"])
                 if len(values) != 1 or not values[0].isdigit() or int(values[0]) not in VALID_INACTIVITY_WINDOWS:

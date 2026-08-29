@@ -1,3 +1,164 @@
+## OD-P10-ONEDRIVE-WORKLOAD-SEAL-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P10_SEALED`
+- **Scope:** Documentation/handover only. Final OneDrive chain OD-P01 through OD-P09 reconciled; OD-R01 accepted with non-blocking findings. Durable production, hardening, analytics/API, validation, freeze, and SharePoint-next-workload contracts recorded in the seal evidence.
+- **Safety:** No production code, tests, migrations, database, UX, runtime rebuild, or Microsoft 365 calls. Synthetic residue NONE. No token/credit logging.
+- **Closure:** `ONEDRIVE_WORKLOAD_SEALED = YES`; `OPEN_BLOCKERS = NONE`; next planned direction is SharePoint data workstream.
+
+## OD-P09A-ONEDRIVE-AUDIT-ANALYTICS-API-PRODUCTION-VALIDATION-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P09A_PASS_WITH_LIMITATIONS`
+- **Validation:** Migration inventory expectations updated for 019/020; migration 020 applied through the canonical PostgreSQL migrator path and semantic view/runtime grant verified. Operations API runtime was refreshed because parity initially mismatched; final parity passed. Tenant 2 DB summary (3 total, 3 external, 1 anonymous, 0 malware, latest 2026-08-29 07:53:22+00) exactly reconciled with the deployed API and ordered detail.
+- **Tests:** Focused migration and analytics/API suite passed 81/81; deployed API health, existing KPI route, limit clamp, capacity view, and OneDrive audit production-path tests were exercised. No Microsoft 365 call or synthetic fixture used.
+- **Closure:** `ANALYTICS_API_READY = YES`; `OD_P09_CLOSED = YES`; `READY_FOR_OD_R01 = YES`.
+
+## OD-P09-ONEDRIVE-HIGH-VALUE-AUDIT-ANALYTICS-API-CLOSURE-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P09_BLOCKED`
+- **Implementation:** Added migration 020 semantic view, tenant-filtered analytics loading and aggregation, bounded recent detail, and `GET /api/operations/onedrive/high-value-audit?limit=N`.
+- **Validation:** Focused analytics/API tests pass. Migration inventory suite reports stale repository expectations for existing migrations 019/020. PostgreSQL production reconciliation, runtime parity, and capacity regression were not executable in this environment.
+- **Safety:** No Microsoft 365 call, mutation, synthetic fixture, persistence semantic change, or token/credit logging. Synthetic residue NONE.
+- **Closure:** ANALYTICS_API_READY = NO; OD_P09_CLOSED = NO; READY_FOR_OD_R01 = NO.
+
+## OD-P08-ONEDRIVE-AUDIT-BOUNDED-LIVE-ACCEPTANCE-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P08_PASS_WITH_LIMITATIONS`
+- **Validation:** One normal non-dry-run `docker exec graph-agent-collector-dev python -m collectors.run_collector --onedrive-audit --json` invocation completed successfully against the live Management Activity API and real PostgreSQL. The bounded window returned 1 page and zero content/blobs/records; the first durable `onedrive_audit` checkpoint advanced safely.
+- **Post-run:** Historical legitimate audit rows remained 3, duplicate business keys 0, tenant consistency PASS, capacity 26 current / 79 account snapshots / 120 activity snapshots, semantic view available, runtime parity PASS, synthetic residue NONE.
+- **Limitations:** No natural high-value candidate was present in the bounded window, so classification was not re-observed live. CLI JSON does not expose token claims or run IDs; no sensitive values were recorded. No production defect found.
+- **Closure:** LIVE_ACCEPTANCE_READY = YES; OD_P08_CLOSED = YES; READY_FOR_OD_P09 = YES.
+- **Safety:** No Microsoft 365 mutation, sharing fixture creation, malware generation, permission change, subscription change, or capacity mutation.
+
+## OD-P07B-ONEDRIVE-AUDIT-INTEGRATION-MATRIX-RESEAL-001
+
+- **Date:** 2026-08-29
+- **Model:** `bbb/kl/deepseek-v4-flash`
+- **Result:** `OD_P07B_PASS`
+- **Integration setup:** Blocker was a missing `OD_P07_BOOTSTRAP_PASSWORD` env var in `graph-agent-collector-dev`, which caused the OD-P07 matrix suite to be skipped via `SkipTest` in OD-P07A. Classification: TEST_FIXTURE_CONFIGURATION / CONTAINER_ENVIRONMENT (not a production defect). Correction: injected the host-side bootstrap secret into the container at invocation. No production or test source change required.
+- **Validation:** Exact safe-drop defect retest (internal Member + ambiguous) = normalized 0, persisted 0, dropped_out_of_scope 2, malformed 0, checkpoint advanced, PASS. Full OD-P07 matrix 18/18 PASS. Direct OneDrive regression (production_path + transport_retry) 10/10 PASS. Real PostgreSQL verification PASS. Runtime parity carried forward (onedrive_audit SHA `5bb2e5dabbf91f8915f6bfed4cec188edda31e659eda208330584997fe0ee49b`). Synthetic residue NONE; live tenant 3 rows preserved. No new production defect.
+- **Closure:** PRODUCTION_PATH_INTEGRATION_READY = YES; OD_P07_CLOSED = YES; READY_FOR_OD_P08 = YES.
+- **Safety:** No live Microsoft 365 call, no production source change, no synthetic residue, no OD-P06 repeat, no token/credit logging. OD-P08 not started in this task.
+
+## OD-P07A-ONEDRIVE-AUDIT-SAFE-DROP-METRIC-CLASSIFICATION-FIX-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P07A_BLOCKED`
+- **REAL_DEFECT_FOUND:** YES (OD-P07 safe-drop metrics misclassified valid Member/internal and ambiguous sharing as malformed); bounded correction applied only to the terminal metric-counting branch.
+- **Correction:** Normalizer exclusions now increment `records_dropped_out_of_scope`; genuine locked-candidate schema failures remain `SCHEMA_CONTRACT_FAILURE`. No business, persistence, checkpoint, retry, auth, subscription, or normalization decision changed.
+- **Validation:** Targeted OneDrive command ran 10 tests with 1 environment-dependent skip; runtime parity PASS with matching SHA-256 `5bb2e5dabbf91f8915f6bfed4cec188edda31e659eda208330584997fe0ee49b`. Required real-PostgreSQL OD-P07 matrix recheck was blocked by unavailable integration setup.
+- **Safety:** No live Microsoft 365 call, database fixture mutation, synthetic residue, or token/credit logging. OD-P08 not started.
+
+## OD-P07-ONEDRIVE-AUDIT-PRODUCTION-PATH-NEGATIVE-MATRIX-001
+
+- **Date:** 2026-08-29
+- **Model:** `bbb/kl/deepseek-v4-flash`
+- **Result:** `OD_P07_BLOCKED`
+- **Validation:** Validated the full OneDrive high-value audit production path against a bounded positive/negative matrix with a FAKE Management Activity source over the REAL orchestration, normalizer, `CollectionWriter` lifecycle, `control.collector_checkpoint`, audit persistence, and REAL PostgreSQL. Dedicated data-driven suite `tests/integration/test_onedrive_audit_production_path_matrix.py` (18 tests) in `graph-agent-collector-dev`: 17 PASS / 1 FAIL. Positive, safe-drop business outcome, malformed locked-candidate, auth/subscription/source/persistence failure, replay, tenant isolation, lifecycle, and checkpoint matrices PASS with real-PostgreSQL verification; synthetic residue NONE; live tenant rows preserved.
+- **Real defect found (NOT auto-fixed):** `collectors/onedrive_audit.py` metric-counting loop counts valid-but-out-of-scope OneDrive internal/ambiguous sharing as `malformed_records` instead of `records_dropped_out_of_scope`, violating the locked OD-P03 contract and OD-P07 sections 3/13. Business persistence/no-false-success/checkpoint are correct; the single failing gate is this observability mis-classification. Smallest correction recommendation recorded in evidence.
+- **Safety:** No production source changed; no live Management Activity call; no tenant/permission/subscription mutation; no token/credit logging; synthetic residue NONE; the 3 legitimate production OneDrive audit rows preserved.
+
+## OD-P06F-ONEDRIVE-AUDIT-HARDENING-ACCEPTANCE-RESUME-SEAL-001
+
+- **Date:** 2026-08-29
+- **Model:** `bbb/kl/deepseek-v4-flash`
+- **Result:** `OD_P06F_PASS_WITH_LIMITATIONS`
+- **Retest:** All previously blocked RETRY and BLOB gates pass against the corrected transport; `UnboundLocalError` not reproducible. Real-PostgreSQL production-path RUN 1-5 pass (initial/overlap-late-arrival/partial-failure/recovery/stale-writer) with checkpoint no-advance and lineage verified. Restart durability and runtime SHA-256 parity pass. One bounded live read-only dry-run proves the full read-only pipeline with business persistence delta = 0 and checkpoint delta = 0. Failure classification matrix and P05/capacity regression confirmed.
+- **Limitation:** `complete_endpoint_run` records only the closed `CLASSIFICATIONS` vocabulary; a partial-failure control-state was recorded with `API_ERROR` while the actual transport classification (`RETRY_EXHAUSTED`) was proven at the transport boundary. No effect on checkpoint/business/no-false-success/collectibility.
+- **Safety:** No production code changed in this acceptance; TEST-ONLY harnesses used and removed (not committed); synthetic residue is NONE; the 3 legitimate production OneDrive audit rows are preserved; no token/credit logging.
+
+## OD-P06E-ONEDRIVE-AUDIT-DIRECT-TRANSPORT-RETRY-CORRECTION-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P06E_PASS`
+- **Root cause/correction:** Direct `AuditTransportError` binding in `ManagementActivityTransport._get` left `error` unavailable after the exception clause; assigning `error = exc` preserves the original transport failure for retry/classification.
+- **Validation:** Focused direct 429/Retry-After/5xx/auth/source, urllib HTTPError, and timeout regressions pass; existing OneDrive integration suite passes; compile/import and source/runtime SHA-256 parity pass.
+- **Safety:** No live Management Activity call, checkpoint/business-row/tenant/permission mutation, unrelated refactor, or token/credit logging. OD-P06 acceptance was not resumed.
+
+## OD-P06D-ONEDRIVE-AUDIT-HARDENING-ACCEPTANCE-EXECUTION-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P06D_BLOCKED`
+- **Real defect found:** `collectors/onedrive_audit.py` `ManagementActivityTransport._get` (lines 120-124) raises `UnboundLocalError` because `except AuditTransportError as error: pass` deletes `error` before `error.classification` is read. Blocks RETRY (429/Retry-After/5xx/bounded exhaustion) and BLOB (partial-failure/recovery) required scenarios; also blocks RUN 3/RUN 4 production-path scenarios. Reported with exact reproduction; not auto-fixed per task instruction.
+- **Verified pass (unaffected):** window/overlap bounds and 4-hour first-run lookback; checkpoint advance/no-advance and dry-run non-mutation; late-arrival normalization; pagination multi-page/cyclic/bound; non-failure blob multi/duplicate-contentId/malformed; subscription enabled/absent; schema malformed/out-of-scope; timeout bounded-retry.
+- **Safety:** No production code changed; TEST-ONLY harness removed; `test_onedrive_audit_production_path` still passes 3/3; no residue, tenant mutation, or token/credit logging.
+
+## OD-P06C-ONEDRIVE-AUDIT-DATA-HANDLING-PRODUCTION-VALIDATION-SEAL-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P06C_BLOCKED`
+- **Validation:** Applied migration 019 idempotently through `graph_agent_migrator`; real PostgreSQL checkpoint create/read/monotonic/stale/source-scope contract passed; focused collector/persistence/auth regression passed 125/125; SHA-256 source/runtime parity passed for affected artifacts; capacity remained current 26, snapshot 79, semantic view available.
+- **Gaps:** Full A-AA matrix, real PostgreSQL production-path runs 1-5, restart durability capture, and one bounded live read-only dry-run were not executed, so closure gates remain blocked.
+- **Safety:** SQL fixtures were transactional and rolled back; checkpoint residue is none; no tenant mutation, permissions/subscriptions change, or token/credit logging.
+
+## OD-P06B-ONEDRIVE-AUDIT-DURABLE-CHECKPOINT-OVERLAP-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P06B_PASS_WITH_LIMITATIONS`
+- **Implementation:** Added migration 019 and tenant/source-scoped durable checkpoint reads/monotonic advances, bounded four-hour first-run lookback, configurable two-hour overlap, effective-window and checkpoint observability, and read-only dry-run semantics.
+- **Validation:** Fake Management Activity production-path suite passed 3/3; diff checks passed. Full failure/restart/real PostgreSQL matrix was limited by the current host/container test environment. No live acceptance, tenant mutation, or token/credit logging.
+- **Runtime parity:** Source/runtime parity was not re-sealed after this change; bind-mounted deployment requires the OD-P06C parity check.
+
+## OD-P06A-ONEDRIVE-AUDIT-RUNTIME-PARITY-CORRECTION-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P06A_PASS`
+- **Root cause:** `STALE_CONTAINER`; Compose wiring was authoritative and correct: `/opt/docker/graph-agent/collectors` bind-mounted to `/workspace/collectors`. The prior runtime mismatch was resolved by recreating only the collector container.
+- **Validation:** SHA-256 parity passed for `collectors/onedrive_audit.py`, `collectors/run_collector.py`, `collectors/persistence/core.py`, and directly imported `collectors/core/errors.py`. Import/compile smoke passed; service remained running with zero restarts and expected mounts.
+- **Safety:** No Compose/image/business/schema/tenant changes; no live Management Activity collection or token/credit logging.
+
+## OD-P06-ONEDRIVE-AUDIT-DATA-HANDLING-HARDENING-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P06_BLOCKED`
+- **Implementation:** Added bounded UTC windows, defensive pagination, bounded shared-policy retries, Retry-After handling, contentId replay suppression, explicit schema/source failures, subscription verification, and bounded operational counters. No new business event, permission, sharing, UX, analytics, API, or tenant mutation was added.
+- **Validation:** Dedicated existing OneDrive integration suite passed 3/3; Python compilation and diff checks passed. Current runtime parity check reports an existing bind-mounted `collectors/persistence/core.py` mismatch until runtime refresh.
+- **Open items:** Durable checkpoint/watermark semantics, source-history classification mapping, focused OD-P06 matrix, production fixture rerun, parity re-seal, capacity regression, and one post-change bounded live dry-run.
+- **Safety:** No live read or persistence was run after code changes; no synthetic residue or token/credit logging.
+
+## OD-P05G-ONEDRIVE-AUDIT-FINAL-INTEGRATION-CLOSURE-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P05G_PASS_WITH_LIMITATIONS`
+- **Implementation:** Added a dedicated fake-source OneDrive audit production-path suite and corrected malware normalization to emit the persistence-contract value `external_flag=False`.
+- **Validation:** Dedicated suite passed 3/3; focused persistence/auth regression command passed 125/125 in `graph-agent-collector-dev`. Fresh manage.office.com token claims verified audience, tenant, app, and `ActivityFeed.Read`; negative `invalid_scope` gate passed. Current fake-source path no longer reproduces the historical PersistenceError, classified `RESOLVED_BY_CURRENT_WIRING`.
+- **Evidence reused:** OD-P05F live read-only evidence remains valid: 3 content entries, 3 blobs, 197 records, 3 normalized duplicate candidates, and zero persistence delta. No live failure injection was performed; `NOT_REQUIRED_FOR_CLOSURE`. Synthetic residue is none. Fresh relational DB query was limited by unavailable PostgreSQL driver in the collector test process; prior OD-P04B/OD-P05F database evidence remains valid.
+- **Safety:** No tenant mutation, permission change, new share, live failure injection, malware test, or token/credit logging.
+- **Files:** `collectors/onedrive_audit.py`, `tests/integration/test_onedrive_audit_production_path.py`, `docs/PROJECT_PROGRESS.md`, `docs/AI_USAGE_LOG.md`, `docs/evidence/OD-P05G-ONEDRIVE-AUDIT-FINAL-INTEGRATION-CLOSURE-001.md`
+
+## OD-P05F-ONEDRIVE-AUDIT-PRODUCTION-CLOSURE-RECHECK-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P05F_BLOCKED`
+- **Validation:** In `graph-agent-collector-dev`, `python -m unittest tests.persistence.test_core tests.core.test_auth_runtime_cli` passed 122/122. Source/runtime SHA-256 parity passed for all three OD-P05E production files. Bounded production read completed with 3 content entries, 3 blobs, 197 records, 3 normalized duplicate candidates, and zero business-row delta; capacity current remained 26 and the semantic view remained available.
+- **Gaps:** Isolated synthetic production-path PostgreSQL lineage proof, controlled live failure lifecycle proof, and fresh manage.office.com token claim verification remain open. Legacy three rows were not modified and synthetic residue is none.
+- **Safety:** No tenant mutation, permission change, schema change, malware test, synthetic fixture, or token/credit logging.
+
+## OD-P05E-ONEDRIVE-AUDIT-LINEAGE-CONTRACT-CORRECTION-001
+
+- **Date:** 2026-08-29
+- **Model:** `9router/my_ulti`
+- **Result:** `OD_P05E_PASS_WITH_LIMITATIONS`
+- **Implementation:** Reconciled OD-P03 optional nullable `UserId`/`actor_upn` and `RecordType`/`record_type` semantics; added canonical collection/endpoint run creation and lineage threading to the OneDrive production persistence path.
+- **Validation:** Offline focused verification and existing persistence contract coverage targeted; live synthetic PostgreSQL production-path proof and deployed parity were not available. Dry-run remains non-persisting.
+- **Safety:** No tenant mutation, permission change, new source, malware test, or token/credit logging.
+
 ## OD-P05B-ONEDRIVE-AUDIT-COLLECTOR-PRODUCTION-VALIDATION-SEAL-001
 
 - **Date:** 2026-08-29

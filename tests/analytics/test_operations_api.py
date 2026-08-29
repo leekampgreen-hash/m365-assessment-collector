@@ -137,6 +137,25 @@ class OperationsApiTests(unittest.TestCase):
         self.assertEqual(data["total_file_count"]["value"], 4)
         self.assertEqual(data["storage_utilization"]["value"], 0.25)
 
+    def test_onedrive_high_value_audit_endpoint(self):
+        class AuditService(FakeService):
+            def onedrive_high_value_audit(self, limit):
+                return {"status": "READY", "summary": {"total_high_value_events": 3, "external_sharing_events": 2, "anonymous_sharing_events": 1, "malware_detected_events": 1, "latest_event_time": "2026-08-26T00:00:00+00:00"}, "recent_events": [], "limit": min(limit, 100)}
+        handler = type("AuditHandler", (OperationsApiHandler,), {"service_factory": staticmethod(AuditService)})
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        thread = threading.Thread(target=server.handle_request)
+        thread.start()
+        connection = HTTPConnection("127.0.0.1", server.server_port)
+        connection.request("GET", "/api/operations/onedrive/high-value-audit?limit=200")
+        response = connection.getresponse()
+        payload = json.loads(response.read())
+        connection.close()
+        thread.join()
+        server.server_close()
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["data"]["summary"]["malware_detected_events"], 1)
+        self.assertEqual(payload["data"]["limit"], 100)
+
     def test_inactivity_windows_and_invalid_window(self):
         for days in (30, 60, 90):
             status, payload = self.get("/api/operations/inactivity?days={}".format(days))

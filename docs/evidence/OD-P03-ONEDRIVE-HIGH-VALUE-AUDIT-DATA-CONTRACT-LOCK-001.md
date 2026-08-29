@@ -21,8 +21,8 @@ EVENT_GRAIN:
 - evidence: Id present and unique in all 171 retrieved sample records; contentId is transport metadata only
 
 COMMON_FIELDS:
-- required: tenant_id; audit_record_id; event_time (CreationTime); operation (Operation); workload (Workload); record_type (RecordType); actor_upn (UserId); event_category; external_flag; anonymous_flag; collected_at
-- optional: client_ip (ClientIP); object_id (ObjectId); site_url (SiteUrl); source_relative_url (SourceRelativeUrl); source_file_name (SourceFileName); unique_sharing_id (UniqueSharingId); target_user_or_group_name (TargetUserOrGroupName); target_user_or_group_type (TargetUserOrGroupType). Optional fields are nullable and operation-dependent.
+- required: tenant_id; audit_record_id; event_time (CreationTime); operation (Operation); workload (Workload); event_category; external_flag; anonymous_flag; collected_at
+- optional_nullable_source: actor_upn (UserId); record_type (RecordType); client_ip (ClientIP); object_id (ObjectId); site_url (SiteUrl); source_relative_url (SourceRelativeUrl); source_file_name (SourceFileName); unique_sharing_id (UniqueSharingId); target_user_or_group_name (TargetUserOrGroupName); target_user_or_group_type (TargetUserOrGroupType). Optional fields are nullable and operation-dependent.
 - derived: event_category, external_flag, and anonymous_flag from locked operation/structured target semantics only. No fabricated defaults.
 
 ANONYMOUS_SHARING:

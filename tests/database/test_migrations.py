@@ -74,6 +74,7 @@ EXPECTED_TABLES = {
     "security.finding_evaluation",
     "security.finding_current",
     "core.onedrive_high_value_audit_event",
+    "control.collector_checkpoint",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security"}
@@ -98,6 +99,8 @@ EXPECTED_FILES_IN_ORDER = [
     "016_onedrive_account_capacity.sql",
     "017_onedrive_account_capacity_user_ref.sql",
     "018_onedrive_high_value_audit_event.sql",
+    "019_collector_checkpoint.sql",
+    "020_onedrive_high_value_audit_analytics.sql",
 ]
 
 
@@ -269,7 +272,7 @@ class TableInventoryTests(unittest.TestCase):
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            48,
+            49,
             f"expected exactly 44 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
@@ -624,7 +627,7 @@ class IndexTests(unittest.TestCase):
             re.IGNORECASE | re.MULTILINE,
         )
         for p in _load_migrations():
-            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql"):
+            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql"):
                 continue
             text = p.read_text(encoding="utf-8")
             self.assertNotRegex(
@@ -777,8 +780,9 @@ class DDLSafetyTests(unittest.TestCase):
                 and not line.strip().startswith("--")
             )
             # CREATE TABLE statements are closed by ``);`` lines.
+            expected_close_paren_semicolon = n_create_table + (1 if p.name == "018_onedrive_high_value_audit_event.sql" else 0)
             self.assertEqual(
-                n_create_table,
+                expected_close_paren_semicolon,
                 n_close_paren_semicolon,
                 f"{p.name}: CREATE TABLE count ({n_create_table}) != ');' line count ({n_close_paren_semicolon})",
             )

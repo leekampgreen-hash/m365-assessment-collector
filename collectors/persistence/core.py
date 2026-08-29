@@ -335,7 +335,7 @@ _AUDIT_EVENT_CONFLICT: tuple[str, ...] = ("tenant_id", "event_source", "source_o
 
 _ONEDRIVE_AUDIT_COLUMNS: tuple[str, ...] = (
     "tenant_id", "audit_record_id", "event_time", "operation", "workload",
-    "event_category", "external_flag", "anonymous_flag", "collected_at",
+    "record_type", "actor_upn", "event_category", "external_flag", "anonymous_flag", "collected_at",
     "client_ip", "object_id", "site_url", "source_relative_url", "source_file_name",
     "unique_sharing_id", "target_user_or_group_name", "target_user_or_group_type",
     "collection_run_id", "endpoint_run_id", "retention_class",
@@ -381,6 +381,45 @@ def _validate_onedrive_audit_row(row: Mapping[str, Any], trusted_tenant_id: int 
         expected = ("EXTERNAL_SHARING", True, False)
     if (row["event_category"], row["external_flag"], row["anonymous_flag"]) != expected:
         raise PersistenceError("OneDrive audit classification does not match the locked filter contract")
+
+
+def get_onedrive_audit_checkpoint(
+    connection: Connection,
+    *,
+    tenant_id: int,
+    collector_id: str = "onedrive_audit",
+) -> datetime | None:
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT checkpoint_at FROM control.collector_checkpoint "
+        "WHERE tenant_id = %s AND collector_id = %s",
+        (tenant_id, collector_id),
+    )
+    row = cursor.fetchone()
+    return row[0] if row else None
+
+
+def advance_onedrive_audit_checkpoint(
+    connection: Connection,
+    *,
+    tenant_id: int,
+    checkpoint_at: datetime,
+    collector_id: str = "onedrive_audit",
+) -> datetime:
+    if checkpoint_at.tzinfo is None or checkpoint_at.utcoffset() is None:
+        raise PersistenceError("Checkpoint must use UTC")
+    checkpoint_at = checkpoint_at.astimezone(timezone.utc)
+    cursor = connection.cursor()
+    cursor.execute(
+        "INSERT INTO control.collector_checkpoint "
+        "(tenant_id, collector_id, checkpoint_at, updated_at) VALUES (%s, %s, %s, %s) "
+        "ON CONFLICT (tenant_id, collector_id) DO UPDATE SET "
+        "checkpoint_at = EXCLUDED.checkpoint_at, updated_at = EXCLUDED.updated_at "
+        "WHERE control.collector_checkpoint.checkpoint_at < EXCLUDED.checkpoint_at",
+        (tenant_id, collector_id, checkpoint_at, datetime.now(timezone.utc)),
+    )
+    connection.commit()
+    return checkpoint_at
 
 
 def persist_onedrive_high_value_audit_batch(

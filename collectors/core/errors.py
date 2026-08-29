@@ -27,6 +27,11 @@ PASS = "PASS"
 UNKNOWN = "UNKNOWN"
 ENTITY_IDENTITY_UNAVAILABLE = "ENTITY_IDENTITY_UNAVAILABLE"
 PERSISTENCE_ERROR = "PERSISTENCE_ERROR"
+SOURCE_FAILURE = "SOURCE_FAILURE"
+RETRY_EXHAUSTED = "RETRY_EXHAUSTED"
+SCHEMA_CONTRACT_FAILURE = "SCHEMA_CONTRACT_FAILURE"
+SOURCE_HISTORY_UNAVAILABLE = "SOURCE_HISTORY_UNAVAILABLE"
+SUBSCRIPTION_UNAVAILABLE = "SUBSCRIPTION_UNAVAILABLE"
 
 
 CLASSIFICATIONS = (
@@ -67,7 +72,7 @@ def is_retryable(classification: str) -> bool:
     """Auth/permission failures must never be retried in a loop."""
     if classification in (AUTH_FAILURE, PERMISSION_REQUIRED, PASS):
         return False
-    return classification in (THROTTLED, API_ERROR, NETWORK_ERROR)
+    return classification in (THROTTLED, API_ERROR, NETWORK_ERROR, SOURCE_FAILURE)
 
 
 def classify_response(status: Optional[int], exc: Optional[BaseException] = None) -> Tuple[str, bool]:

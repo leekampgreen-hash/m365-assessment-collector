@@ -57,17 +57,17 @@ Important modules include:
 
 ### `database/`
 
-- `database/migrations/` owns ordered, forward-only PostgreSQL DDL migration files. Migration `015_exchange_mailbox_capacity.sql` creates the authoritative analytical VIEW `analytics.exchange_mailbox_capacity` (the single derived-data contract for Exchange mailbox capacity); migration `016_onedrive_account_capacity.sql` creates the authoritative analytical VIEW `analytics.onedrive_account_capacity` (the single derived-data contract for OneDrive account capacity).
+- `database/migrations/` owns ordered, forward-only PostgreSQL DDL migration files. Migration `015_exchange_mailbox_capacity.sql` creates the authoritative analytical VIEW `analytics.exchange_mailbox_capacity` (the single derived-data contract for Exchange mailbox capacity); migration `016_onedrive_account_capacity.sql` creates the authoritative analytical VIEW `analytics.onedrive_account_capacity` (the single derived-data contract for OneDrive account capacity); migration `020_onedrive_high_value_audit_analytics.sql` creates the tenant-scoped `analytics.onedrive_high_value_audit` semantic view.
 - `database/runtime/init/` owns database container bootstrap and runtime initialization scripts. `00-create-graph-agent-database.sh` enables `pgcrypto` so the capacity view can compute the sha256-based tenant-safe `user_ref`.
 - `docs/database-schema-design.md` is the schema design source of truth; migration files materialize that design and must remain aligned with it.
 
 ### `analytics/`
 
-- `analytics/operations.py` owns read-only persisted-row analytics, including the Standard KPI tenant summary projection.
+- `analytics/operations.py` owns read-only persisted-row analytics, including the Standard KPI tenant summary projection and OneDrive high-value audit summary/recent-event projection.
 
 ### `api/`
 
-- `api/operations.py` owns the standard-library read-only Operations API, including `GET /api/operations/kpi`.
+- `api/operations.py` owns the standard-library read-only Operations API, including `GET /api/operations/kpi` and `GET /api/operations/onedrive/high-value-audit`.
 
 ### `scripts/`
 
@@ -79,6 +79,7 @@ Important modules include:
 - Persistence tests are under `tests/persistence/` and cover `collectors/persistence/core.py`, including event and history behavior.
 - Workload tests are under `tests/workloads/`, with directory and security-service subdirectories, and cover registry dispatch plus workload adapters such as `collectors/workloads/security_service/adapters.py`.
 - Integration tests are primarily under `tests/scenario/integration/` and validate cross-component catalog, registry, permission, observability, cleanup, and end-to-end dry-run behavior.
+- OneDrive high-value audit production-path tests live under `tests/integration/`: `test_onedrive_audit_production_path.py` (fake Management Activity source over the real orchestration, normalization, and persistence handoff) and `test_onedrive_audit_production_path_matrix.py` (OD-P07 data-driven positive/negative matrix over the real production orchestration, `CollectionWriter` lifecycle, `control.collector_checkpoint`, and real PostgreSQL). `test_onedrive_audit_transport_retry.py` covers direct Management Activity transport retry/classification.
 - Live or environment-dependent tests are under `tests/scenario/live/` and must be treated separately from offline unit tests.
 
 ### `operations-ui/`
