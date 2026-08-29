@@ -1,0 +1,30 @@
+{
+  "agent_version": "0.1.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-18T17:43:54.284752+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-004",
+      "workload": "Microsoft 365 Licensing",
+      "endpoint_name": "Subscribed SKUs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/subscribedSkus",
+      "auth_type": "application",
+      "permission": "LicenseAssignment.Read.All",
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 3,
+      "pagination_detected": false,
+      "duration_seconds": 0.329,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

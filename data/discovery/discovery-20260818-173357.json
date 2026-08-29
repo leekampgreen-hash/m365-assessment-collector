@@ -1,0 +1,25 @@
+{
+  "agent_version": "0.1.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-18T17:33:57.436779+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-004",
+      "workload": "Microsoft 365 Licensing",
+      "endpoint_name": "Subscribed SKUs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/subscribedSkus",
+      "auth_type": "application",
+      "permission": "LicenseAssignment.Read.All",
+      "http_status": 400,
+      "classification": "API_ERROR",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.348,
+      "graph_error_code": "Request_UnsupportedQuery",
+      "graph_error_message": "This resource does not support custom page sizes. Please retry without a page size argument.",
+      "retry_after": null
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T04:47:50.008388+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-001",
+      "workload": "Entra ID",
+      "endpoint_name": "Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/users",
+      "auth_type": "application",
+      "documented_permissions": [
+        "User.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 4,
+      "total_rows": 39,
+      "pagination_detected": true,
+      "duration_seconds": 3.282,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:51.248644+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-002",
+      "workload": "Entra ID",
+      "endpoint_name": "Groups",
+      "method": "GET",
+      "endpoint_path": "/v1.0/groups",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Group.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 3,
+      "total_rows": 27,
+      "pagination_detected": true,
+      "duration_seconds": 1.24,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:52.632728+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-003",
+      "workload": "Entra ID",
+      "endpoint_name": "Organization",
+      "method": "GET",
+      "endpoint_path": "/v1.0/organization",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Organization.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 1.384,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:52.989926+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-004",
+      "workload": "Microsoft 365 Licensing",
+      "endpoint_name": "Subscribed SKUs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/subscribedSkus",
+      "auth_type": "application",
+      "documented_permissions": [
+        "LicenseAssignment.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 3,
+      "pagination_detected": false,
+      "duration_seconds": 0.357,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:54.311803+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-005",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Directory Audit Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/directoryAudits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.322,
+      "graph_error_code": "Authentication_MSGraphPermissionMissing",
+      "graph_error_message": "The principal does not have required Microsoft Graph permission(s): AuditLog.Read.All to call this API. For more information about Microsoft Graph permissions, please visit https://learn.microsoft.com/graph/permissions-overview.",
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:54.687590+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-006",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Sign-in Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/signIns",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.376,
+      "graph_error_code": "Authentication_MSGraphPermissionMissing",
+      "graph_error_message": "The principal does not have required Microsoft Graph permission(s): AuditLog.Read.All to call this API. For more information about Microsoft Graph permissions, please visit https://learn.microsoft.com/graph/permissions-overview.",
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:55.074307+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-007",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Applications",
+      "method": "GET",
+      "endpoint_path": "/v1.0/applications",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.387,
+      "graph_error_code": "Authorization_RequestDenied",
+      "graph_error_message": "Insufficient privileges to complete the operation.",
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:56.607535+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-008",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Service Principals",
+      "method": "GET",
+      "endpoint_path": "/v1.0/servicePrincipals",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.533,
+      "graph_error_code": "Authorization_RequestDenied",
+      "graph_error_message": "Insufficient privileges to complete the operation.",
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T04:47:58.073591+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-009",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Devices",
+      "method": "GET",
+      "endpoint_path": "/v1.0/devices",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Device.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.466,
+      "graph_error_code": "Authorization_RequestDenied",
+      "graph_error_message": "Insufficient privileges to complete the operation.",
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

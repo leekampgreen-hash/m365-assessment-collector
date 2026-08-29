@@ -1,0 +1,425 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T12:41:51.457361+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-001",
+      "workload": "Entra ID",
+      "endpoint_name": "Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/users",
+      "auth_type": "application",
+      "documented_permissions": [
+        "User.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 4,
+      "total_rows": 39,
+      "pagination_detected": true,
+      "duration_seconds": 1.393,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:41:53.558221+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-002",
+      "workload": "Entra ID",
+      "endpoint_name": "Groups",
+      "method": "GET",
+      "endpoint_path": "/v1.0/groups",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Group.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 3,
+      "total_rows": 27,
+      "pagination_detected": true,
+      "duration_seconds": 2.101,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:41:55.059429+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-003",
+      "workload": "Entra ID",
+      "endpoint_name": "Organization",
+      "method": "GET",
+      "endpoint_path": "/v1.0/organization",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Organization.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 1.501,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:41:55.413158+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-004",
+      "workload": "Microsoft 365 Licensing",
+      "endpoint_name": "Subscribed SKUs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/subscribedSkus",
+      "auth_type": "application",
+      "documented_permissions": [
+        "LicenseAssignment.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 3,
+      "pagination_detected": false,
+      "duration_seconds": 0.354,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:41:59.322729+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-005",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Directory Audit Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/directoryAudits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 4,
+      "total_rows": 308,
+      "pagination_detected": true,
+      "duration_seconds": 3.91,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:31.857330+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-006",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Sign-in Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/signIns",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 6,
+      "total_rows": 55,
+      "pagination_detected": true,
+      "duration_seconds": 32.535,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:32.236247+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-007",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Applications",
+      "method": "GET",
+      "endpoint_path": "/v1.0/applications",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 5,
+      "pagination_detected": false,
+      "duration_seconds": 0.379,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:50.898896+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-008",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Service Principals",
+      "method": "GET",
+      "endpoint_path": "/v1.0/servicePrincipals",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 23,
+      "total_rows": 226,
+      "pagination_detected": true,
+      "duration_seconds": 18.663,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:51.265664+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-009",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Devices",
+      "method": "GET",
+      "endpoint_path": "/v1.0/devices",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Device.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 0.367,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:51.595358+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-010",
+      "workload": "Microsoft Entra ID Governance",
+      "endpoint_name": "Administrative Units",
+      "method": "GET",
+      "endpoint_path": "/v1.0/directory/administrativeUnits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AdministrativeUnit.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.33,
+      "graph_error_code": "Authorization_RequestDenied",
+      "graph_error_message": "Insufficient privileges to complete the operation.",
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:53.593389+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-011",
+      "workload": "Microsoft Entra Conditional Access",
+      "endpoint_name": "Conditional Access Policies",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identity/conditionalAccess/policies",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Policy.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.998,
+      "graph_error_code": "AccessDenied",
+      "graph_error_message": "You cannot perform the requested operation, required scopes are missing in the token.",
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:54.669461+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-012",
+      "workload": "Microsoft Entra Conditional Access",
+      "endpoint_name": "Conditional Access Named Locations",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identity/conditionalAccess/namedLocations",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Policy.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.076,
+      "graph_error_code": "AccessDenied",
+      "graph_error_message": "You cannot perform the requested operation, required scopes are missing in the token.",
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:54.941101+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-013",
+      "workload": "Microsoft Entra ID Protection",
+      "endpoint_name": "Risky Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identityProtection/riskyUsers",
+      "auth_type": "application",
+      "documented_permissions": [
+        "IdentityRiskyUser.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.272,
+      "graph_error_code": "Forbidden",
+      "graph_error_message": "You cannot perform the requested operation, required scopes are missing in the token.",
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:42:55.219272+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-014",
+      "workload": "Microsoft Entra ID Protection",
+      "endpoint_name": "Risk Detections",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identityProtection/riskDetections",
+      "auth_type": "application",
+      "documented_permissions": [
+        "IdentityRiskEvent.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.278,
+      "graph_error_code": "Forbidden",
+      "graph_error_message": "You cannot perform the requested operation, required scopes are missing in the token.",
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

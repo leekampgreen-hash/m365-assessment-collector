@@ -1,0 +1,18 @@
+# Build context exclusions for Dockerfile.collector.
+# secrets/ holds root-owned 0600 files that would otherwise fail the
+# context read; none are needed inside the image (they are injected as
+# Docker secrets at runtime). Keep the build context minimal and clean.
+secrets/
+data/
+logs/
+docs/
+tests/
+scripts/
+app/
+agents/
+operations-ui/
+database/
+*.pyc
+__pycache__/
+.pytest_cache/
+.git/

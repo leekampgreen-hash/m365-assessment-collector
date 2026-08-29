@@ -1,0 +1,45 @@
+{
+  "agent_version": "0.1.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-18T17:18:40.579920+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-001",
+      "workload": "Entra ID",
+      "endpoint_name": "Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/users",
+      "auth_type": "application",
+      "permission": "User.Read.All",
+      "http_status": 400,
+      "classification": "API_ERROR",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.102,
+      "graph_error_code": "BadRequest",
+      "graph_error_message": "Resource not found for the segment 'v1.0'.",
+      "retry_after": null
+    },
+    {
+      "execution_timestamp": "2026-08-18T17:18:40.678094+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-002",
+      "workload": "Entra ID",
+      "endpoint_name": "Groups",
+      "method": "GET",
+      "endpoint_path": "/v1.0/groups",
+      "auth_type": "application",
+      "permission": "Group.Read.All",
+      "http_status": 400,
+      "classification": "API_ERROR",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.098,
+      "graph_error_code": "BadRequest",
+      "graph_error_message": "Resource not found for the segment 'v1.0'.",
+      "retry_after": null
+    }
+  ]
+}

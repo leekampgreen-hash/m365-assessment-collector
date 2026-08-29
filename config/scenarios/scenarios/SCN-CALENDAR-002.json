@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-CALENDAR-002",
+  "name": "Update test calendar event",
+  "description": "test-user-01 updates the subject of a previously created test calendar event. The update is reversible and intended to demonstrate a write-then-update lifecycle for observability correlation.",
+  "domain": "CALENDAR",
+  "action_type": "UPDATE_EVENT",
+  "actor_required": "test-user-01",
+  "peer_actor_required": null,
+  "no_recipient": true,
+  "required_delegated_permissions": ["Calendars.ReadWrite"],
+  "expected_observable_sources": ["G01-006", "G01-005"],
+  "observability_classification": "INDIRECTLY_OBSERVABLE",
+  "correlation_strategy": "Updated subject retains the scenario-correlation token and appends a 'updated' marker.",
+  "correlation_token_field": "event_subject",
+  "cleanup_required": true,
+  "cleanup_behavior": "AUTO_CLEANUP_SUPPORTED",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": false,
+  "permission_pack": "PACK-CALENDAR",
+  "notes": "Only modifies the subject of an event created by SCN-CALENDAR-001. Does not modify other users' events."
+}

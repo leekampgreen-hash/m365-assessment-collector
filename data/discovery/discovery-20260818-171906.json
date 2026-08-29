@@ -1,0 +1,45 @@
+{
+  "agent_version": "0.1.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-18T17:19:05.499811+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-001",
+      "workload": "Entra ID",
+      "endpoint_name": "Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/users",
+      "auth_type": "application",
+      "permission": "User.Read.All",
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 4,
+      "total_rows": 39,
+      "pagination_detected": true,
+      "duration_seconds": 1.618,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null
+    },
+    {
+      "execution_timestamp": "2026-08-18T17:19:06.150149+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-002",
+      "workload": "Entra ID",
+      "endpoint_name": "Groups",
+      "method": "GET",
+      "endpoint_path": "/v1.0/groups",
+      "auth_type": "application",
+      "permission": "Group.Read.All",
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 2,
+      "total_rows": 17,
+      "pagination_detected": true,
+      "duration_seconds": 0.65,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null
+    }
+  ]
+}

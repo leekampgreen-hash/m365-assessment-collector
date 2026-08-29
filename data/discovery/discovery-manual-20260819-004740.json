@@ -1,0 +1,32 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T00:47:40.711439+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-002",
+      "workload": "Entra ID",
+      "endpoint_name": "Groups",
+      "method": "GET",
+      "endpoint_path": "/v1.0/groups",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Group.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 2,
+      "total_rows": 17,
+      "pagination_detected": true,
+      "duration_seconds": 2.673,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

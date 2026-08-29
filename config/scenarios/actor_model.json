@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "description": "Logical actor aliases for scenario execution. UPN resolution is deferred to runtime configuration; no credentials, secrets, or actual UPNs are stored here.",
+  "owner": "G08-B",
+  "model": "actor_alias",
+  "actor_aliases": [
+    {
+      "alias": "test-user-01",
+      "role": "primary_actor",
+      "description": "Primary test user identity used as the source / sender of scenario actions. Expected to hold licenses required for the scenarios it performs (e.g. Exchange Online, OneDrive, Teams).",
+      "license_requirements_hint": [
+        "Exchange Online",
+        "Microsoft 365 Apps",
+        "OneDrive for Business",
+        "Teams"
+      ],
+      "upn_resolution": "DEFERRED_TO_RUNTIME_CONFIG"
+    },
+    {
+      "alias": "test-user-02",
+      "role": "peer_actor",
+      "description": "Secondary test user identity used as the recipient / target of scenario actions. Identical license profile as primary actor.",
+      "license_requirements_hint": [
+        "Exchange Online",
+        "Microsoft 365 Apps",
+        "OneDrive for Business",
+        "Teams"
+      ],
+      "upn_resolution": "DEFERRED_TO_RUNTIME_CONFIG"
+    },
+    {
+      "alias": "test-user-03",
+      "role": "peer_actor",
+      "description": "Optional tertiary test user identity for scenarios that require a third peer. Reserved for future expansion; not currently bound to any scenario in the catalog.",
+      "license_requirements_hint": [
+        "Exchange Online",
+        "Microsoft 365 Apps",
+        "OneDrive for Business"
+      ],
+      "upn_resolution": "DEFERRED_TO_RUNTIME_CONFIG"
+    }
+  ],
+  "invariant": "alias_set_is_closed",
+  "notes": [
+    "Aliases are logical only. Actual UPN object ids and credentials are resolved at runtime by the future integration layer.",
+    "No passwords, secrets, tokens, or actual UPN strings are stored in this file.",
+    "No administrator accounts are modeled as ordinary scenario actors.",
+    "test-user-01 is reserved as the primary actor; test-user-02 is the canonical peer; test-user-03 is reserved."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-AUTH-001",
+  "name": "Operator-driven test user sign-in",
+  "description": "An operator interactively signs in as test-user-01 using the device-code flow. No programmatic Graph action is performed; the value of the scenario is that the resulting sign-in event is collected by G01-006 (signIns) and is directly attributable to the test user.",
+  "domain": "AUTH",
+  "action_type": "INTERACTIVE_SIGNIN",
+  "actor_required": "test-user-01",
+  "peer_actor_required": null,
+  "no_recipient": true,
+  "required_delegated_permissions": [],
+  "expected_observable_sources": ["G01-006"],
+  "observability_classification": "DIRECTLY_OBSERVABLE",
+  "correlation_strategy": "The sign-in event_time is recorded in the scenario evidence record. The correlation token is the (event_time, user_id) pair from G01-006.",
+  "correlation_token_field": "signin_event_id",
+  "cleanup_required": false,
+  "cleanup_behavior": "NO_CLEANUP_REQUIRED",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": true,
+  "permission_pack": "PACK-AUTH",
+  "notes": "This is the only scenario in the initial catalog that is enabled. It requires only the existing User.Read baseline permission. No new permission grant is required. The scenario is observable directly through G01-006."
+}

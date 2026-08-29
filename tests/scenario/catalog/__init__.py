@@ -1,0 +1,1 @@
+# Offline catalog tests for G08-B scenario catalog.

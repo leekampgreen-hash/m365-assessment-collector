@@ -1,0 +1,39 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T13:42:21.672353+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-019",
+      "workload": "Microsoft Entra RBAC",
+      "endpoint_name": "Directory Role Assignments",
+      "method": "GET",
+      "endpoint_path": "/v1.0/roleManagement/directory/roleAssignments",
+      "auth_type": "application",
+      "documented_permissions": [
+        "RoleManagement.Read.Directory"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.338,
+      "graph_error_code": "Authorization_RequestDenied",
+      "graph_error_message": "Insufficient privileges to complete the operation.",
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

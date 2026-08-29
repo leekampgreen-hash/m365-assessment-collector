@@ -1,0 +1,35 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T07:58:24.775315+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-005",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Directory Audit Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/directoryAudits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 4,
+      "total_rows": 308,
+      "pagination_detected": true,
+      "duration_seconds": 3.357,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

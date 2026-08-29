@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Microsoft 365 Operations Intelligence</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Operations control plane</p>
+        <h1>Microsoft 365 Operations Intelligence</h1>
+        <p class="subtitle">Tenant-level view of adoption, activity, and license utilization.</p>
+      </div>
+      <div class="health-wrap"><span id="health-dot" class="dot pending"></span><span id="health-label">Checking analytics service</span></div>
+    </header>
+
+    <div id="error-banner" class="banner error hidden" role="alert"></div>
+    <section class="meta-row" aria-label="Dashboard metadata">
+      <span>Read-only operational snapshot</span><span>As of <strong id="as-of">--</strong></span>
+    </section>
+
+    <div id="loading" class="loading">Loading operational data<span class="pulse">...</span></div>
+    <div id="dashboard" class="hidden">
+      <section id="overview-section">
+        <div class="section-heading"><div><p class="eyebrow">At a glance</p><h2>Overview</h2></div></div>
+        <div id="summary-cards" class="card-grid three"></div>
+      </section>
+      <section id="usage-overview-section">
+        <div class="section-heading"><div><p class="eyebrow">Usage overview</p><h2>Usage</h2></div></div>
+        <div id="usage-summaries" class="card-grid three"></div>
+      </section>
+      <section id="usage-drilldown-section"><div id="usage-detail" class="panel hidden"><div class="section-heading"><div><p class="eyebrow">Usage drilldown</p><h2 id="detail-title">Workload usage</h2></div><button id="back-overview" class="plain-button" type="button">Back to overview</button></div><div id="detail-summary" class="usage-filter-grid"></div><div id="detail-metrics" class="metric-list"></div><div id="detail-users" class="table-wrap"></div></div></section>
+      <section id="entitlements-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Entitlements</p><h2>License</h2></div></div><div id="licenses" class="table-wrap"></div></section>
+
+    </div>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

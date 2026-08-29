@@ -1,0 +1,175 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T12:49:18.205520+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-010",
+      "workload": "Microsoft Entra ID Governance",
+      "endpoint_name": "Administrative Units",
+      "method": "GET",
+      "endpoint_path": "/v1.0/directory/administrativeUnits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AdministrativeUnit.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.502,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:49:18.993637+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-011",
+      "workload": "Microsoft Entra Conditional Access",
+      "endpoint_name": "Conditional Access Policies",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identity/conditionalAccess/policies",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Policy.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 3,
+      "pagination_detected": false,
+      "duration_seconds": 0.788,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:49:19.502103+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-012",
+      "workload": "Microsoft Entra Conditional Access",
+      "endpoint_name": "Conditional Access Named Locations",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identity/conditionalAccess/namedLocations",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Policy.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 4,
+      "pagination_detected": false,
+      "duration_seconds": 0.508,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:49:19.959401+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-013",
+      "workload": "Microsoft Entra ID Protection",
+      "endpoint_name": "Risky Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identityProtection/riskyUsers",
+      "auth_type": "application",
+      "documented_permissions": [
+        "IdentityRiskyUser.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 0.457,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T12:49:20.255309+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-014",
+      "workload": "Microsoft Entra ID Protection",
+      "endpoint_name": "Risk Detections",
+      "method": "GET",
+      "endpoint_path": "/v1.0/identityProtection/riskDetections",
+      "auth_type": "application",
+      "documented_permissions": [
+        "IdentityRiskEvent.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 0.296,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

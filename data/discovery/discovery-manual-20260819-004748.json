@@ -1,0 +1,140 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T00:47:42.690999+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-001",
+      "workload": "Entra ID",
+      "endpoint_name": "Users",
+      "method": "GET",
+      "endpoint_path": "/v1.0/users",
+      "auth_type": "application",
+      "documented_permissions": [
+        "User.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 4,
+      "total_rows": 39,
+      "pagination_detected": true,
+      "duration_seconds": 4.668,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T00:47:45.387440+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-002",
+      "workload": "Entra ID",
+      "endpoint_name": "Groups",
+      "method": "GET",
+      "endpoint_path": "/v1.0/groups",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Group.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 2,
+      "total_rows": 17,
+      "pagination_detected": true,
+      "duration_seconds": 2.696,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T00:47:46.890775+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-003",
+      "workload": "Entra ID",
+      "endpoint_name": "Organization",
+      "method": "GET",
+      "endpoint_path": "/v1.0/organization",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Organization.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 1.503,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T00:47:48.079598+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-004",
+      "workload": "Microsoft 365 Licensing",
+      "endpoint_name": "Subscribed SKUs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/subscribedSkus",
+      "auth_type": "application",
+      "documented_permissions": [
+        "LicenseAssignment.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 3,
+      "pagination_detected": false,
+      "duration_seconds": 1.189,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T00:47:48.482547+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-005",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Directory Audit Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/directoryAudits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 403,
+      "classification": "PERMISSION_REQUIRED",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 0.403,
+      "graph_error_code": "Authentication_MSGraphPermissionMissing",
+      "graph_error_message": "The principal does not have required Microsoft Graph permission(s): AuditLog.Read.All to call this API. For more information about Microsoft Graph permissions, please visit https://learn.microsoft.com/graph/permissions-overview.",
+      "retry_after": null,
+      "token_roles": [
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

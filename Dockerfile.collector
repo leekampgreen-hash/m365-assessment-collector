@@ -1,0 +1,11 @@
+FROM python:3.13-slim
+
+COPY requirements-collector.txt /tmp/requirements-collector.txt
+RUN python -m pip install --no-cache-dir --requirement /tmp/requirements-collector.txt \
+    && rm /tmp/requirements-collector.txt
+
+COPY analytics /workspace/analytics
+COPY capabilities /workspace/capabilities
+COPY api /workspace/api
+COPY collectors /workspace/collectors
+COPY security /workspace/security

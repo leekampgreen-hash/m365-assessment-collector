@@ -1,0 +1,290 @@
+{
+  "agent_version": "0.2.0",
+  "updated_at": "2026-08-19T15:56:08.484946+00:00",
+  "workflow_state": "COMPLETE",
+  "token_roles": [
+    "AdministrativeUnit.Read.All",
+    "Application.Read.All",
+    "AuditLog.Read.All",
+    "Device.Read.All",
+    "Group.Read.All",
+    "IdentityRiskEvent.Read.All",
+    "IdentityRiskyUser.Read.All",
+    "LicenseAssignment.Read.All",
+    "Policy.Read.All",
+    "RoleManagement.Read.Directory",
+    "ServiceHealth.Read.All",
+    "ServiceMessage.Read.All",
+    "User.Read.All"
+  ],
+  "last_batch_execution": "2026-08-19T12:59:28.449309+00:00",
+  "endpoints": [
+    {
+      "id": "G01-001",
+      "key": "users",
+      "endpoint_name": "Users",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:58:21.122645+00:00",
+      "documented_permissions": [
+        "User.Read.All"
+      ],
+      "pages": 4,
+      "total_rows": 39,
+      "retry_after": null
+    },
+    {
+      "id": "G01-002",
+      "key": "groups",
+      "endpoint_name": "Groups",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:58:22.818330+00:00",
+      "documented_permissions": [
+        "Group.Read.All"
+      ],
+      "pages": 2,
+      "total_rows": 17,
+      "retry_after": null
+    },
+    {
+      "id": "G01-003",
+      "key": "organization",
+      "endpoint_name": "Organization",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:58:23.178495+00:00",
+      "documented_permissions": [
+        "Organization.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 1,
+      "retry_after": null
+    },
+    {
+      "id": "G01-004",
+      "key": "subscribedskus",
+      "endpoint_name": "Subscribed SKUs",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:58:23.579123+00:00",
+      "documented_permissions": [
+        "LicenseAssignment.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 3,
+      "retry_after": null
+    },
+    {
+      "id": "G01-005",
+      "key": "directoryauditlogs",
+      "endpoint_name": "Directory Audit Logs",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:58:28.262714+00:00",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "pages": 4,
+      "total_rows": 321,
+      "retry_after": null
+    },
+    {
+      "id": "G01-006",
+      "key": "sign-inlogs",
+      "endpoint_name": "Sign-in Logs",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:03.682327+00:00",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "pages": 6,
+      "total_rows": 55,
+      "retry_after": null
+    },
+    {
+      "id": "G01-007",
+      "key": "applications",
+      "endpoint_name": "Applications",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:04.016987+00:00",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 5,
+      "retry_after": null
+    },
+    {
+      "id": "G01-008",
+      "key": "serviceprincipals",
+      "endpoint_name": "Service Principals",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:22.477925+00:00",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "pages": 22,
+      "total_rows": 216,
+      "retry_after": null
+    },
+    {
+      "id": "G01-009",
+      "key": "devices",
+      "endpoint_name": "Devices",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:23.956977+00:00",
+      "documented_permissions": [
+        "Device.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 1,
+      "retry_after": null
+    },
+    {
+      "id": "G01-010",
+      "key": "administrativeunits",
+      "endpoint_name": "Administrative Units",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:24.317753+00:00",
+      "documented_permissions": [
+        "AdministrativeUnit.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 0,
+      "retry_after": null
+    },
+    {
+      "id": "G01-011",
+      "key": "conditionalaccesspolicies",
+      "endpoint_name": "Conditional Access Policies",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:25.432748+00:00",
+      "documented_permissions": [
+        "Policy.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 3,
+      "retry_after": null
+    },
+    {
+      "id": "G01-012",
+      "key": "conditionalaccessnamedlocations",
+      "endpoint_name": "Conditional Access Named Locations",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:26.254098+00:00",
+      "documented_permissions": [
+        "Policy.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 4,
+      "retry_after": null
+    },
+    {
+      "id": "G01-013",
+      "key": "riskyusers",
+      "endpoint_name": "Risky Users",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:26.558145+00:00",
+      "documented_permissions": [
+        "IdentityRiskyUser.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 1,
+      "retry_after": null
+    },
+    {
+      "id": "G01-014",
+      "key": "riskdetections",
+      "endpoint_name": "Risk Detections",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T12:59:26.930065+00:00",
+      "documented_permissions": [
+        "IdentityRiskEvent.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 1,
+      "retry_after": null
+    },
+    {
+      "id": "G01-015",
+      "key": "servicehealthoverview",
+      "endpoint_name": "Service Health Overview",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T13:47:23.072123+00:00",
+      "documented_permissions": [
+        "ServiceHealth.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 27,
+      "retry_after": null
+    },
+    {
+      "id": "G01-016",
+      "key": "servicehealthissues",
+      "endpoint_name": "Service Health Issues",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T13:47:23.447011+00:00",
+      "documented_permissions": [
+        "ServiceHealth.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 100,
+      "retry_after": null
+    },
+    {
+      "id": "G01-017",
+      "key": "serviceupdatemessages",
+      "endpoint_name": "Service Update Messages",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T13:47:25.328781+00:00",
+      "documented_permissions": [
+        "ServiceMessage.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 100,
+      "retry_after": null
+    },
+    {
+      "id": "G01-018",
+      "key": "directoryroledefinitions",
+      "endpoint_name": "Directory Role Definitions",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T15:56:08.483291+00:00",
+      "documented_permissions": [
+        "RoleManagement.Read.Directory"
+      ],
+      "pages": 1,
+      "total_rows": 145,
+      "retry_after": null
+    },
+    {
+      "id": "G01-019",
+      "key": "directoryroleassignments",
+      "endpoint_name": "Directory Role Assignments",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T13:47:27.168251+00:00",
+      "documented_permissions": [
+        "RoleManagement.Read.Directory"
+      ],
+      "pages": 1,
+      "total_rows": 11,
+      "retry_after": null
+    }
+  ],
+  "permission_groups": []
+}

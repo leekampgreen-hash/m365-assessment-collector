@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "description": "Observability classification of each scenario against the existing G01-001..G01-019 collector inventory. Classifications reflect what the Collector App can observe, NOT what the Scenario Agent App can read directly. No claim is made that scenario actions will be visible in an endpoint the collector does not collect.",
+  "owner": "G08-B",
+  "g01_inventory_id_range": ["G01-001", "G01-019"],
+  "classifications": {
+    "DIRECTLY_OBSERVABLE": "The scenario action is expected to produce a row in a G01 endpoint that the Collector App currently polls. Evidence class: HIGH.",
+    "INDIRECTLY_OBSERVABLE": "The scenario action is expected to produce a related audit or sign-in event captured by G01-005 (directoryAuditLogs) or G01-006 (signIns), or a downstream artifact such as a user/group membership change captured by G01-001/G01-002. Evidence class: MEDIUM.",
+    "NOT_COVERED_BY_CURRENT_G01_INVENTORY": "The scenario action may produce telemetry in workloads the G01 inventory does not currently collect (e.g. Exchange Online mail events, OneDrive file events, Teams chat events). Evidence class: UNSUPPORTED. Treat as not collectible today."
+  },
+  "scenario_observability": [
+    {
+      "scenario_id": "SCN-MAIL-001",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Sending mail from test-user-01 to test-user-02 is expected to produce a sign-in event in G01-006 (signIns) attributable to test-user-01, and possibly a directory audit row in G01-005 if the device code flow itself is recorded. The mail content itself is not collected by G01. UNIFLED Audit Log ingestion is NOT in scope of G01."
+    },
+    {
+      "scenario_id": "SCN-MAIL-002",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Sending mail with deterministic correlation subject is expected to produce a sign-in event in G01-006 attributable to test-user-01. The subject text is not visible to the collector. The correlation is a documentation-only marker, not a G01 field."
+    },
+    {
+      "scenario_id": "SCN-CALENDAR-001",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Creating a calendar event for test-user-01 is expected to produce a sign-in event in G01-006. The event itself is not collected by G01."
+    },
+    {
+      "scenario_id": "SCN-CALENDAR-002",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Updating an existing calendar event is expected to produce a sign-in event in G01-006. The update is not collected by G01."
+    },
+    {
+      "scenario_id": "SCN-CALENDAR-003",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Deleting a test calendar event is expected to produce a sign-in event in G01-006. Cleanup actions are still attributed to the test user."
+    },
+    {
+      "scenario_id": "SCN-FILE-001",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Creating a small file in the actor's OneDrive is expected to produce a sign-in event in G01-006. The file content is not collected by G01."
+    },
+    {
+      "scenario_id": "SCN-FILE-002",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Updating test file metadata/content is expected to produce a sign-in event in G01-006. The metadata change is not collected by G01."
+    },
+    {
+      "scenario_id": "SCN-FILE-003",
+      "classification": "INDIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006", "G01-005"],
+      "notes": "Cleanup of the test artifact is expected to produce a sign-in event in G01-006. The deletion is not collected by G01."
+    },
+    {
+      "scenario_id": "SCN-AUTH-001",
+      "classification": "DIRECTLY_OBSERVABLE",
+      "evidence_endpoints": ["G01-006"],
+      "notes": "Operator-driven sign-in by a test user is expected to produce a row in G01-006 (signIns) with a sign-in event_time close to the scenario run time. This is the most directly observable scenario in the initial catalog."
+    }
+  ],
+  "totals": {
+    "directly_observable": 1,
+    "indirectly_observable": 8,
+    "not_covered": 0
+  },
+  "critical_disclaimer": "Sending mail, creating calendar events, or creating OneDrive files does NOT automatically cause the action to appear in any G01 endpoint. The only event consistently captured by the current G01 inventory is the sign-in event itself (G01-006). All other claims of observability are downstream side-effects at best."
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-FILE-001",
+  "name": "Create small test file in actor OneDrive",
+  "description": "test-user-01 creates a small text file in their own OneDrive root. The file name carries the scenario-correlation token. The file content is a deterministic marker for operator review.",
+  "domain": "FILES",
+  "action_type": "CREATE_FILE",
+  "actor_required": "test-user-01",
+  "peer_actor_required": null,
+  "no_recipient": true,
+  "required_delegated_permissions": ["Files.ReadWrite"],
+  "expected_observable_sources": ["G01-006", "G01-005"],
+  "observability_classification": "INDIRECTLY_OBSERVABLE",
+  "correlation_strategy": "File name carries the scenario-correlation token.",
+  "correlation_token_field": "file_name",
+  "cleanup_required": true,
+  "cleanup_behavior": "AUTO_CLEANUP_SUPPORTED",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": false,
+  "permission_pack": "PACK-FILES",
+  "notes": "Files.ReadWrite is required. The scenario only writes to the actor's own OneDrive; Sites.ReadWrite.All is not required and not requested."
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-CALENDAR-003",
+  "name": "Delete / cleanup test calendar event",
+  "description": "test-user-01 deletes the test calendar event created by SCN-CALENDAR-001 (and optionally updated by SCN-CALENDAR-002). This scenario exists primarily as a cleanup step for the calendar pack; it is reversible only in the sense that the event can be re-created by re-running SCN-CALENDAR-001.",
+  "domain": "CALENDAR",
+  "action_type": "DELETE_EVENT",
+  "actor_required": "test-user-01",
+  "peer_actor_required": null,
+  "no_recipient": true,
+  "required_delegated_permissions": ["Calendars.ReadWrite"],
+  "expected_observable_sources": ["G01-006", "G01-005"],
+  "observability_classification": "INDIRECTLY_OBSERVABLE",
+  "correlation_strategy": "Deletes only the event matching the correlation token from the scenario evidence record. Never deletes events from other scenarios or unrelated calendar entries.",
+  "correlation_token_field": "event_subject",
+  "cleanup_required": false,
+  "cleanup_behavior": "NO_CLEANUP_REQUIRED",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": false,
+  "permission_pack": "PACK-CALENDAR",
+  "notes": "destructive=false because the deletion is scoped to a scenario-created artifact. The risk remains LOW."
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-CALENDAR-001",
+  "name": "Create test calendar event in actor calendar",
+  "description": "test-user-01 creates a short calendar event in their own calendar. The event subject is deterministic and includes a scenario-correlation token. The event is private to test-user-01; no attendees are added.",
+  "domain": "CALENDAR",
+  "action_type": "CREATE_EVENT",
+  "actor_required": "test-user-01",
+  "peer_actor_required": null,
+  "no_recipient": true,
+  "required_delegated_permissions": ["Calendars.ReadWrite"],
+  "expected_observable_sources": ["G01-006", "G01-005"],
+  "observability_classification": "INDIRECTLY_OBSERVABLE",
+  "correlation_strategy": "Event subject carries the scenario-correlation token.",
+  "correlation_token_field": "event_subject",
+  "cleanup_required": true,
+  "cleanup_behavior": "AUTO_CLEANUP_SUPPORTED",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": false,
+  "permission_pack": "PACK-CALENDAR",
+  "notes": "Calendars.ReadWrite is required because the scenario creates events. Calendars.Read alone is insufficient. AUTO_CLEANUP_SUPPORTED indicates that a paired SCN-CALENDAR-003 cleanup scenario can remove the event."
+}

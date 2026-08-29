@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "description": "Logical permission packs for Scenario Agent App. Each pack groups delegated permissions needed to enable a coherent set of scenarios. Packs are additive and least-privilege; no pack is a broad wildcard bundle.",
+  "owner": "G08-B",
+  "current_scenario_app_delegated_permissions": ["User.Read"],
+  "current_scenario_app_consent_state": "individual_user_consent",
+  "packs": [
+    {
+      "pack_id": "PACK-MAIL",
+      "name": "Mail scenario pack",
+      "delegated_permissions": ["Mail.Send"],
+      "scenarios_enabled": ["SCN-MAIL-001", "SCN-MAIL-002"],
+      "least_privilege_notes": "Mail.Send is the minimum scope required to send mail on behalf of the signed-in user. It does not include Mail.Read or Mail.ReadWrite. The scenario design only sends mail; it does not read or delete mailbox content.",
+      "expected_blast_radius": "A signed-in user can send mail from their own mailbox. The blast radius is limited to that mailbox plus the recipients specified by the scenario.",
+      "consent_impact": "Requires new delegated permission grant for the Scenario Agent App. User.Read is not sufficient.",
+      "permission_expansion_required": true,
+      "current_status": "REQUIRED_NOT_GRANTED"
+    },
+    {
+      "pack_id": "PACK-CALENDAR",
+      "name": "Calendar scenario pack",
+      "delegated_permissions": ["Calendars.ReadWrite"],
+      "scenarios_enabled": ["SCN-CALENDAR-001", "SCN-CALENDAR-002", "SCN-CALENDAR-003"],
+      "least_privilege_notes": "Calendars.ReadWrite is required because scenarios create, update, and delete events in the actor's calendar. Calendars.Read alone is insufficient because the calendar actions require write capability.",
+      "expected_blast_radius": "A signed-in user can create, update, and delete events in their own calendar. The blast radius is limited to that calendar and the invited attendees.",
+      "consent_impact": "Requires new delegated permission grant for the Scenario Agent App. User.Read is not sufficient.",
+      "permission_expansion_required": true,
+      "current_status": "REQUIRED_NOT_GRANTED"
+    },
+    {
+      "pack_id": "PACK-FILES",
+      "name": "OneDrive / Files scenario pack",
+      "delegated_permissions": ["Files.ReadWrite"],
+      "scenarios_enabled": ["SCN-FILE-001", "SCN-FILE-002", "SCN-FILE-003"],
+      "least_privilege_notes": "Files.ReadWrite is required because scenarios create, update, and delete files in the actor's OneDrive. Sites.ReadWrite.All is not required because the scenarios only target the actor's own drive.",
+      "expected_blast_radius": "A signed-in user can create, update, and delete small files in their own OneDrive. The blast radius is limited to that drive.",
+      "consent_impact": "Requires new delegated permission grant for the Scenario Agent App. User.Read is not sufficient.",
+      "permission_expansion_required": true,
+      "current_status": "REQUIRED_NOT_GRANTED"
+    },
+    {
+      "pack_id": "PACK-TEAMS",
+      "name": "Teams scenario pack",
+      "delegated_permissions": ["ChatMessage.Send", "ChannelMessage.Send"],
+      "scenarios_enabled": [],
+      "least_privilege_notes": "Reserved for future Teams scenarios. The current catalog does not include a Teams scenario because the G01 read-only inventory does not collect Teams messaging data; observable evidence for a Teams scenario cannot be supported confidently from project evidence.",
+      "expected_blast_radius": "A signed-in user can send chat and channel messages. The blast radius is the chats and channels that the user is a member of.",
+      "consent_impact": "Not required for the current catalog. If a future scenario is added, the pack must be reviewed and the app registration amended.",
+      "permission_expansion_required": false,
+      "current_status": "DEFERRED",
+      "notes": "FLAG: No Teams scenario is enabled in the initial catalog. Do not grant this pack until observability evidence is added to the G01 inventory."
+    },
+    {
+      "pack_id": "PACK-AUTH",
+      "name": "Authentication observation pack",
+      "delegated_permissions": [],
+      "scenarios_enabled": ["SCN-AUTH-001"],
+      "least_privilege_notes": "No additional delegated permissions are required. The sign-in observation scenario is represented as an operator-driven step rather than a programmatic action; observability flows through G01-006 (sign-in logs) which is collected by the Collector App, not the Scenario Agent App.",
+      "expected_blast_radius": "Operator signs in as a test user. The blast radius is a single interactive sign-in event attributed to the test user.",
+      "consent_impact": "No new permission grant required.",
+      "permission_expansion_required": false,
+      "current_status": "NO_EXPANSION_REQUIRED"
+    }
+  ],
+  "additive_policy": "Packs must be activated one at a time. The Scenario Agent App registration is not modified by this task; pack activation must be performed by a separate, approved task.",
+  "wildcard_bundles_excluded": true,
+  "notes": [
+    "No pack contains a broad wildcard scope (e.g. *.ReadWrite.All, Directory.*).",
+    "No pack bundles Mail + Calendar + Files permissions together. Each pack is independent.",
+    "Current registered Scenario Agent App permissions are User.Read only. Any additional permission listed above is REQUIRED_NOT_GRANTED."
+  ]
+}

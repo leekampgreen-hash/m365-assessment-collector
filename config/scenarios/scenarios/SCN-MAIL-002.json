@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-MAIL-002",
+  "name": "Send correlation-tagged test email to peer",
+  "description": "test-user-01 sends a second test email to test-user-02 with a deterministic correlation token in the subject. The token matches a value stored in the scenario evidence record. This scenario is used to validate correlation strategy across run boundaries.",
+  "domain": "MAIL",
+  "action_type": "SEND_MAIL",
+  "actor_required": "test-user-01",
+  "peer_actor_required": "test-user-02",
+  "no_recipient": false,
+  "required_delegated_permissions": ["Mail.Send"],
+  "expected_observable_sources": ["G01-006", "G01-005"],
+  "observability_classification": "INDIRECTLY_OBSERVABLE",
+  "correlation_strategy": "Subject line carries the scenario-correlation token. The token format is the responsibility of the future runner; this scenario declares only that the field exists.",
+  "correlation_token_field": "subject_line",
+  "cleanup_required": true,
+  "cleanup_behavior": "MANUAL_CLEANUP",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": false,
+  "permission_pack": "PACK-MAIL",
+  "notes": "Mail.Send is required. This scenario depends on SCN-MAIL-001's permission grant and exists primarily to exercise the correlation mechanism."
+}

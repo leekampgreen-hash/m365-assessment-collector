@@ -1,0 +1,25 @@
+{
+  "agent_version": "0.1.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-18T17:21:07.880339+00:00",
+      "agent_version": "0.1.0",
+      "inventory_id": "G01-003",
+      "workload": "Entra ID",
+      "endpoint_name": "Organization",
+      "method": "GET",
+      "endpoint_path": "/v1.0/organization",
+      "auth_type": "application",
+      "permission": "Organization.Read.All",
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 1.491,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null
+    }
+  ]
+}

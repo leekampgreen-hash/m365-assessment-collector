@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "SCN-MAIL-001",
+  "name": "Send test email between two test users",
+  "description": "test-user-01 sends a single short test email to test-user-02. The mail body is minimal and deterministic for operator review. This scenario exists to validate that a delegated mail-send action is correctly attributed to test-user-01 in the tenant sign-in log.",
+  "domain": "MAIL",
+  "action_type": "SEND_MAIL",
+  "actor_required": "test-user-01",
+  "peer_actor_required": "test-user-02",
+  "no_recipient": false,
+  "required_delegated_permissions": ["Mail.Send"],
+  "expected_observable_sources": ["G01-006", "G01-005"],
+  "observability_classification": "INDIRECTLY_OBSERVABLE",
+  "correlation_strategy": "Subject line includes a deterministic scenario-correlation token defined by the runtime runner. The token is logged in the scenario evidence record, not in the mail itself.",
+  "correlation_token_field": "subject_prefix",
+  "cleanup_required": true,
+  "cleanup_behavior": "MANUAL_CLEANUP",
+  "destructive": false,
+  "risk": "LOW",
+  "enabled": false,
+  "permission_pack": "PACK-MAIL",
+  "notes": "Mail.Send is required. The Scenario Agent App does NOT currently have Mail.Send; it has only User.Read. The scenario is disabled until the permission is granted by a separate approved task."
+}

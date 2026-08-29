@@ -1,0 +1,201 @@
+services:
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile.collector
+    image: graph-agent-collector:dev
+    container_name: graph-agent-collector-dev
+
+    user: "70:70"
+    working_dir: /workspace
+
+    command:
+      - sh
+      - -c
+      - |
+        umask 0002
+        sleep infinity
+
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: graph_agent
+      PGUSER: graph_agent_runtime
+      PGSSLMODE: disable
+
+    volumes:
+      - ./app:/workspace/app
+      - ./collectors:/workspace/collectors
+      - ./config:/workspace/config
+      - ./data:/workspace/data
+      - ./docs:/workspace/docs
+      - ./logs:/workspace/logs
+      - ./scripts:/workspace/scripts
+      - ./tests:/workspace/tests
+
+    secrets:
+      - source: graph_agent_collector_auth
+        target: /workspace/secrets/collector.env
+      - source: graph_agent_runtime_password
+        target: graph_agent_runtime_password
+
+    restart: unless-stopped
+
+    networks:
+      - graph-agent-net
+
+  operations-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.collector
+    image: graph-agent-collector:dev
+    container_name: graph-agent-operations-api-dev
+
+    user: "70:70"
+    working_dir: /workspace
+
+    command:
+      - python
+      - -m
+      - api.run_api
+
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: graph_agent
+      PGUSER: graph_agent_runtime
+      PGSSLMODE: disable
+      GRAPH_TENANT_DB_ID: "2"
+      API_HOST: 0.0.0.0
+      API_PORT: "8080"
+
+    secrets:
+      - source: graph_agent_runtime_password
+        target: graph_agent_runtime_password
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+    restart: unless-stopped
+
+    networks:
+      - graph-agent-net
+
+  operations-ui:
+    build:
+      context: ./operations-ui
+    image: graph-agent-operations-ui:dev
+    container_name: graph-agent-operations-ui-dev
+
+    ports:
+      - "127.0.0.1:18080:80"
+
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/ >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+    depends_on:
+      operations-api:
+        condition: service_started
+
+    restart: unless-stopped
+
+    networks:
+      - graph-agent-net
+
+  scenario:
+    image: python:3.13-slim
+    container_name: graph-agent-scenario-dev
+
+    user: "1000:1001"
+    working_dir: /workspace
+
+    command:
+      - sh
+      - -c
+      - |
+        umask 0002
+        sleep infinity
+
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    volumes:
+      - ./app:/workspace/app
+      - ./agents:/workspace/agents
+      - ./config:/workspace/config
+      - ./data:/workspace/data
+      - ./docs:/workspace/docs
+      - ./logs:/workspace/logs
+      - ./scripts:/workspace/scripts
+      - ./tests:/workspace/tests
+
+    restart: unless-stopped
+
+    networks:
+      - graph-agent-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: graph-agent-postgres-dev
+
+    environment:
+      POSTGRES_USER: graph_agent_bootstrap
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/graph_agent_postgres_bootstrap_password
+
+    volumes:
+      - graph-agent-postgres-data:/var/lib/postgresql/data
+      - ./database/runtime/init:/docker-entrypoint-initdb.d:ro
+
+    secrets:
+      - graph_agent_postgres_bootstrap_password
+      - graph_agent_migration_password
+      - graph_agent_runtime_password
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graph_agent_bootstrap -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+    restart: unless-stopped
+
+    networks:
+      - graph-agent-net
+
+networks:
+  graph-agent-net:
+    name: graph-agent-net
+
+volumes:
+  graph-agent-postgres-data:
+    name: graph-agent-postgres-data
+
+secrets:
+  graph_agent_collector_auth:
+    file: ./secrets/collector.env
+  graph_agent_postgres_bootstrap_password:
+    file: ./secrets/graph-agent-postgres-bootstrap-password
+  graph_agent_migration_password:
+    file: ./secrets/graph-agent-migration-password
+  graph_agent_runtime_password:
+    file: ./secrets/graph-agent-runtime-password

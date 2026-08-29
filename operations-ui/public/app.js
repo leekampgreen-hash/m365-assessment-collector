@@ -1,0 +1,109 @@
+const $ = (selector) => document.querySelector(selector);
+const metric = (object) => object && typeof object === "object" ? object : {};
+const value = (object) => metric(object).status === "READY" ? metric(object).value : null;
+const display = (object, suffix = "") => { const result = value(object); return result === null || result === undefined ? "Data currently unavailable" : `${result}${suffix}`; };
+const storage = (number) => { if (number === null || number === undefined || number === "") return "Data currently unavailable"; const units = ["B", "KB", "MB", "GB", "TB"]; let value = Number(number); let index = 0; while (Math.abs(value) >= 1024 && index < units.length - 1) { value /= 1024; index += 1; } return `${value.toFixed(index ? 2 : 0)} ${units[index]}`; };
+const source = (object) => metric(object).source_refresh_date ? `Source refreshed ${metric(object).source_refresh_date}` : "Source refresh unavailable";
+const status = (object) => metric(object).status === "READY" ? "Ready" : "Data currently unavailable";
+// Render an explicit primitive (plain number/string) field without metric-object semantics.
+const primitive = (value) => value === null || value === undefined || value === "" ? "Data currently unavailable" : `${value}`;
+// Apply the storage() formatter to a value that may arrive as a metric object or a raw byte number.
+const storageValue = (object) => storage(metric(object).value ?? object);
+const DASHBOARD_FETCH_TIMEOUT_MS = 10000;
+const escapeHtml = (item) => String(item ?? "—").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+
+async function get(path) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DASHBOARD_FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(path, { headers: { Accept: "application/json" }, signal: controller.signal });
+    if (!response.ok) throw new Error("request failed");
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+function setHealth(ready) { $("#health-dot").className = `dot ${ready ? "ready" : "error"}`; $("#health-label").textContent = ready ? "Analytics service healthy" : "Analytics service unavailable"; }
+function showUnavailable() { $("#error-banner").textContent = "Analytics service unavailable"; $("#error-banner").classList.remove("hidden"); }
+function metricCard(label, item) { return `<article class="card"><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${value(item) === null ? "Data currently unavailable" : escapeHtml(display(item))}</div><div class="status ${value(item) === null ? "unavailable" : "ready"}">${status(item)}</div></article>`; }
+function renderSummary(data) { const totalUsers = data.tenant?.total_users; const highCount = Number(data.exchange?.capacity_usage?.high ?? 0); const licenseAttention = data.license_attention_count; const card = (label, number, emphasized) => `<article class="card"><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(number)}</div><div class="status ${emphasized ? "unavailable" : "ready"}">${emphasized ? "Attention" : "Normal"}</div></article>`; $("#summary-cards").innerHTML = [metricCard("Total Users", totalUsers), card("Mailbox Capacity Risk", `${highCount} HIGH`, highCount > 0), card("License Attention", licenseAttention ?? "Data currently unavailable", Number(licenseAttention) > 0)].join(""); }
+function renderLicenses(data, ready = true) { const rows = ready ? Object.entries(data.license || {}) : []; $("#licenses").innerHTML = rows.length ? `<table><thead><tr><th>SKU</th><th>Purchased</th><th>Consumed</th><th>Available</th><th>Utilization</th><th>Assigned users</th></tr></thead><tbody>${rows.map(([sku, item]) => `<tr><th>${escapeHtml(sku)}</th><td>${escapeHtml(item.purchased_units)}</td><td>${escapeHtml(item.consumed_units)}</td><td>${escapeHtml(item.available_units)}</td><td>${escapeHtml(item.utilization_percent)}%</td><td>${escapeHtml(item.assigned_user_count)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">License data currently unavailable</p>`; }
+function workloadCard(name, item, fields) { return `<article class="card"><div class="card-head"><h3>${name}</h3></div>${fields.map(([label, key, suffix, kind]) => { const rendered = kind === "primitive" ? primitive(item[key]) : kind === "storage" ? storageValue(item[key]) : display(item[key], suffix); return `<div class="detail-row"><span class="detail-label">${label}</span><strong>${rendered}</strong></div>`; }).join("")}</article>`; }
+function renderWorkloads(data) { window.dashboardOnedrive = data.onedrive || {}; renderUsageSummaries(); }
+const workloadNames = { exchange: "Email usage", onedrive: "OneDrive usage", sharepoint: "SharePoint usage" };
+const usageLevel = (date, reference) => { if (!date || date === "UNKNOWN") return "NO DATA"; const age = Math.floor((new Date(reference) - new Date(date)) / 86400000); return age <= 1 ? "HIGH" : age <= 7 ? "MEDIUM" : age > 7 ? "LOW" : "NO DATA"; };
+// Exchange capacity presentation is active-only. The authoritative usage_level
+// (LOW/MEDIUM/HIGH/NO DATA) comes from the analytics view per user; we only
+// surface ACTIVE Exchange users in customer-facing capacity views. INACTIVE and
+// UNKNOWN users are excluded from detail + summary while remaining in the
+// backend evidence.
+const exchangeLevel = (u) => (u.exchange_usage_level || "no_data").replace("no_data", "NO DATA").toUpperCase();
+const exchangeBucket = (u) => { const level = exchangeLevel(u); return level === "NO DATA" ? "no_data" : level.toLowerCase(); };
+const exchangeActiveUsers = () => correlationUsers.filter((u) => u.exchange_status === "ACTIVE");
+const onedriveDetails = () => (window.dashboardOnedrive?.account_details || []);
+const onedriveLevel = (u) => String(u.usage_level || "NO_DATA").replace("no_data", "NO DATA").toUpperCase();
+let correlationUsers = [];
+function usageSummary(workload) { const pool = workload === "exchange" ? exchangeActiveUsers() : workload === "onedrive" ? onedriveDetails() : correlationUsers; const levelOf = workload === "exchange" ? exchangeLevel : workload === "onedrive" ? onedriveLevel : (u) => usageLevel(u[`${workload}_last_activity`], window.dashboardAsOf); const counts = ["HIGH","MEDIUM","LOW","NO DATA"].map((level) => pool.filter((u) => levelOf(u) === level).length); return `<button class="card usage-card" data-workload="${workload}" type="button"><div class="summary-label">${workloadNames[workload]}</div>${counts.map((n,i) => `<div class="usage-count"><span>${["High","Medium","Low","No Data"][i]}</span><strong>${n}</strong></div>`).join("")}</button>`; }
+function renderUsageSummaries() { $("#usage-summaries").innerHTML = Object.keys(workloadNames).map(usageSummary).join(""); document.querySelectorAll("[data-workload]").forEach((b) => b.addEventListener("click", () => renderDetail(b.dataset.workload))); }
+const formatGb = (number) => { if (number === null || number === undefined || number === "") return "Data currently unavailable"; const gb = Number(number) / (1024 ** 3); return `${gb >= 100 ? gb.toFixed(0) : gb.toFixed(2).replace(/\.00$/, "")} GB`; };
+const formatPercent = (number) => number === null || number === undefined || number === "" ? "—" : `${Number(number).toFixed(2).replace(/\.00$/, "")}%`;
+const formatFiles = (number) => { if (number === null || number === undefined || number === "") return "—"; const value = Number(number); return value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1).replace(/\.0$/, "")}K` : String(value); };
+const assignedSkus = (u) => { const skus = u.assigned_skus || u.assignedSkus || []; const items = Array.isArray(skus) ? skus : [skus]; const labels = items.map((sku) => typeof sku === "object" ? (sku.sku_part_number || sku.skuPartNumber || sku.display_name || sku.displayName || sku.product_name || sku.productName || sku.id || "") : sku).map((sku) => String(sku || "").trim()).filter(Boolean); return labels.length ? labels.map(escapeHtml).join("<br>") : "—"; };
+let detailState = { workload: null, filter: "ALL", search: "", page: 1, pageSize: 25 };
+function renderDetail(workload, filter = detailState.filter, page = 1) {
+  detailState = { ...detailState, workload, filter, page };
+  $("#usage-detail").classList.remove("hidden"); $("#detail-title").textContent = workloadNames[workload];
+  const pool = workload === "exchange" ? exchangeActiveUsers() : workload === "onedrive" ? onedriveDetails() : correlationUsers;
+  const levelOf = workload === "exchange" ? exchangeLevel : workload === "onedrive" ? onedriveLevel : (u) => usageLevel(u[`${workload}_last_activity`], window.dashboardAsOf);
+  const query = detailState.search.trim().toLowerCase();
+  const filtered = pool.filter((u) => (detailState.filter === "ALL" || levelOf(u) === detailState.filter) && (!query || [u.display_name, u.user_principal_name, ...(u.assigned_skus || [])].some((v) => String(v || "").toLowerCase().includes(query))));
+  const sorted = filtered.sort((a,b) => workload === "exchange" ? ((b.exchange_utilization_percent ?? -1) - (a.exchange_utilization_percent ?? -1)) : String(a[`${workload}_last_activity`] || "").localeCompare(String(b[`${workload}_last_activity`] || "")));
+  const pages = Math.max(1, Math.ceil(sorted.length / detailState.pageSize)); detailState.page = Math.min(detailState.page, pages); const shown = sorted.slice((detailState.page - 1) * detailState.pageSize, detailState.page * detailState.pageSize); const first = sorted.length ? (detailState.page - 1) * detailState.pageSize + 1 : 0; const last = Math.min(detailState.page * detailState.pageSize, sorted.length);
+  $("#detail-summary").innerHTML = `<div class="detail-controls"><input id="detail-search" type="search" placeholder="Search name, UPN, or SKU" value="${escapeHtml(detailState.search)}"><label>Page size <select id="detail-page-size"><option>25</option><option>50</option><option>100</option></select></label></div><div class="usage-filter-grid">${["HIGH","MEDIUM","LOW","NO DATA"].map((level) => `<button class="filter-button ${detailState.filter === level ? "active" : ""}" data-filter="${level}">${level}: ${pool.filter((u) => levelOf(u) === level).length}</button>`).join("")}<button class="filter-button ${detailState.filter === "ALL" ? "active" : ""}" data-filter="ALL">ALL: ${pool.length}</button></div>`;
+  $("#detail-page-size").value = String(detailState.pageSize);
+  const headers = workload === "exchange" ? "<th>Storage Used</th><th>Mailbox Capacity</th><th>Utilization %</th>" : workload === "onedrive" ? "<th>Storage Used</th><th>Storage Allocated</th><th>Utilization %</th><th>Files</th>" : "";
+  const onedriveTable = workload === "onedrive";
+  $("#detail-users").innerHTML = `<table><thead><tr><th>Display Name</th><th>User / UPN</th><th>Usage Level</th>${headers}${onedriveTable ? "" : `<th>${workload === "exchange" ? "Last Email Activity" : "Last Activity"}</th><th>Days Since Activity</th>${workload === "exchange" ? "" : `<th>SharePoint Status</th>`}<th>Licensed</th><th>Assigned SKUs</th>`}</tr></thead><tbody>${shown.map((u) => { const date=u[`${workload}_last_activity`], days=date ? Math.floor((new Date(window.dashboardAsOf)-new Date(date))/86400000) : "—"; const cells = workload === "exchange" ? `<td>${formatGb(u.exchange_storage_used ?? u.storage_used)}</td><td>${formatGb(u.mailbox_capacity)}</td><td>${formatPercent(u.exchange_utilization_percent)}</td>` : onedriveTable ? `<td>${escapeHtml(storage(u.storage_used))}</td><td>${escapeHtml(storage(u.storage_allocated))}</td><td>${formatPercent(u.utilization_percent)}</td><td>${formatFiles(u.file_count)}</td>` : ""; return `<tr><th>${escapeHtml(u.display_name || u.user_principal_name)}</th><td>${escapeHtml(u.user_principal_name)}</td><td>${escapeHtml(levelOf(u))}</td>${cells}${onedriveTable ? "" : `<td>${escapeHtml(date)}</td><td>${days}</td>${workload === "exchange" ? "" : `<td>${escapeHtml(u[`${workload}_status`])}</td>`}<td>${escapeHtml(u.licensed)}</td><td class="sku-cell">${assignedSkus(u)}</td>`}</tr>`; }).join("")}</tbody></table><div class="pagination"><span>Showing ${first}–${last} of ${sorted.length}</span><button class="plain-button" id="detail-prev" ${detailState.page <= 1 ? "disabled" : ""}>Previous</button><span>Page ${detailState.page} of ${pages}</span><button class="plain-button" id="detail-next" ${detailState.page >= pages ? "disabled" : ""}>Next</button></div>`;
+  $("#detail-search").addEventListener("input", (e) => { detailState.search = e.target.value; renderDetail(workload, detailState.filter, 1); }); $("#detail-page-size").addEventListener("change", (e) => { detailState.pageSize = Number(e.target.value); renderDetail(workload, detailState.filter, 1); }); document.querySelectorAll(".filter-button").forEach((button) => button.addEventListener("click", () => renderDetail(workload, button.dataset.filter, 1))); $("#detail-prev").addEventListener("click", () => renderDetail(workload, detailState.filter, detailState.page - 1)); $("#detail-next").addEventListener("click", () => renderDetail(workload, detailState.filter, detailState.page + 1));
+}
+$("#back-overview").addEventListener("click", () => { $("#usage-detail").classList.add("hidden"); });
+async function renderInactivity(days = 30) { try { const data = await get(`/api/operations/inactivity?days=${days}`); const item = data.status === "READY" ? (data.data || {}) : {}; $("#inactivity").innerHTML = [["Inactive users", item.inactive_users], ["Active users", item.active_users], ["Insufficient evidence", item.unknown_users], ["Workload inactivity signals", item.multi_workload_inactive_users]].map(([label, number], index) => `<div class="inactivity-cell"><div class="inactivity-number">${data.status === "READY" ? (number ?? 0) : "Data currently unavailable"}</div><div class="inactivity-label">${label}</div>${index === 3 ? '<div class="inactivity-caption">Users with inactivity evidence across evaluated workloads.</div>' : ""}</div>`).join(""); } catch (_) { showUnavailable(); $("#inactivity").innerHTML = `<div class="inactivity-cell">Data currently unavailable</div>`; } }
+async function start() {
+  let dashboardReady = false;
+  try {
+    await get("/health");
+    setHealth(true);
+    const [kpi, correlation, onedriveAdoption] = await Promise.all([
+      get("/api/operations/kpi"),
+      get("/api/operations/correlation/users"),
+      get("/api/operations/adoption/onedrive").catch(() => null),
+    ]);
+    const dashboardData = kpi.data || {};
+    const kpiOnedrive = dashboardData.onedrive || {};
+    const adoptionOnedrive = onedriveAdoption?.data;
+    const onedriveOwnedFields = ["capacity_usage", "data_last_refreshed", "account_details", "total_storage_used", "total_file_count"];
+    const mergedOnedrive = { ...kpiOnedrive };
+    if (adoptionOnedrive && typeof adoptionOnedrive === "object") {
+      onedriveOwnedFields.forEach((field) => {
+        if (Object.prototype.hasOwnProperty.call(adoptionOnedrive, field)) mergedOnedrive[field] = adoptionOnedrive[field];
+      });
+    }
+    const renderData = { ...dashboardData, onedrive: mergedOnedrive };
+    window.dashboardOnedrive = mergedOnedrive;
+    window.dashboardAsOf = kpi.as_of || correlation.as_of || "--";
+    $("#as-of").textContent = window.dashboardAsOf;
+    correlationUsers = correlation.data?.users || [];
+    renderSummary(renderData);
+    renderWorkloads(renderData);
+    renderLicenses(renderData, kpi.status === "READY");
+    dashboardReady = true;
+  } catch (_) {
+    setHealth(false);
+    showUnavailable();
+  } finally {
+    $("#loading").classList.add("hidden");
+    if (dashboardReady) $("#dashboard").classList.remove("hidden");
+  }
+}
+document.querySelectorAll("[data-days]").forEach((button) => button.addEventListener("click", () => { document.querySelectorAll("[data-days]").forEach((item) => item.classList.remove("active")); button.classList.add("active"); renderInactivity(button.dataset.days); }));
+start().catch(() => { $("#loading").classList.add("hidden"); setHealth(false); showUnavailable(); });

@@ -1,0 +1,155 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T07:33:38.777417+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-005",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Directory Audit Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/directoryAudits",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 429,
+      "classification": "THROTTLED",
+      "pages": 15,
+      "total_rows": 154,
+      "pagination_detected": true,
+      "duration_seconds": 13.229,
+      "graph_error_code": "UnknownError",
+      "graph_error_message": "Too Many Requests",
+      "retry_after": "10",
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T07:34:18.441145+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-006",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Sign-in Logs",
+      "method": "GET",
+      "endpoint_path": "/v1.0/auditLogs/signIns",
+      "auth_type": "application",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 6,
+      "total_rows": 55,
+      "pagination_detected": true,
+      "duration_seconds": 39.664,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T07:34:19.832743+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-007",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Applications",
+      "method": "GET",
+      "endpoint_path": "/v1.0/applications",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 5,
+      "pagination_detected": false,
+      "duration_seconds": 1.392,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T07:34:45.149758+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-008",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Service Principals",
+      "method": "GET",
+      "endpoint_path": "/v1.0/servicePrincipals",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 22,
+      "total_rows": 216,
+      "pagination_detected": true,
+      "duration_seconds": 25.317,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    },
+    {
+      "execution_timestamp": "2026-08-19T07:34:45.490060+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-009",
+      "workload": "Microsoft Entra ID",
+      "endpoint_name": "Devices",
+      "method": "GET",
+      "endpoint_path": "/v1.0/devices",
+      "auth_type": "application",
+      "documented_permissions": [
+        "Device.Read.All"
+      ],
+      "http_status": 200,
+      "classification": "PASS",
+      "pages": 1,
+      "total_rows": 1,
+      "pagination_detected": false,
+      "duration_seconds": 0.34,
+      "graph_error_code": null,
+      "graph_error_message": null,
+      "retry_after": null,
+      "token_roles": [
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "LicenseAssignment.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "agent_version": "0.2.0",
+  "updated_at": "2026-08-19T06:18:19.086593+00:00",
+  "workflow_state": "PARTIAL",
+  "token_roles": [
+    "Application.Read.All",
+    "AuditLog.Read.All",
+    "Device.Read.All",
+    "Group.Read.All",
+    "LicenseAssignment.Read.All",
+    "User.Read.All"
+  ],
+  "last_batch_execution": "2026-08-19T04:47:58.073755+00:00",
+  "endpoints": [
+    {
+      "id": "G01-001",
+      "key": "users",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T04:47:50.008388+00:00",
+      "documented_permissions": [
+        "User.Read.All"
+      ],
+      "pages": 4,
+      "total_rows": 39
+    },
+    {
+      "id": "G01-002",
+      "key": "groups",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T04:47:51.248644+00:00",
+      "documented_permissions": [
+        "Group.Read.All"
+      ],
+      "pages": 3,
+      "total_rows": 27
+    },
+    {
+      "id": "G01-003",
+      "key": "organization",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T04:47:52.632728+00:00",
+      "documented_permissions": [
+        "Organization.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 1
+    },
+    {
+      "id": "G01-004",
+      "key": "subscribedskus",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T04:47:52.989926+00:00",
+      "documented_permissions": [
+        "LicenseAssignment.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 3
+    },
+    {
+      "id": "G01-005",
+      "key": "directoryauditlogs",
+      "classification": "THROTTLED",
+      "http_status": 429,
+      "last_tested": "2026-08-19T06:17:22.198765+00:00",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "pages": 12,
+      "total_rows": 121
+    },
+    {
+      "id": "G01-006",
+      "key": "sign-inlogs",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T06:17:59.838391+00:00",
+      "documented_permissions": [
+        "AuditLog.Read.All"
+      ],
+      "pages": 6,
+      "total_rows": 55
+    },
+    {
+      "id": "G01-007",
+      "key": "applications",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T06:18:00.254032+00:00",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 5
+    },
+    {
+      "id": "G01-008",
+      "key": "serviceprincipals",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T06:18:18.783637+00:00",
+      "documented_permissions": [
+        "Application.Read.All"
+      ],
+      "pages": 22,
+      "total_rows": 216
+    },
+    {
+      "id": "G01-009",
+      "key": "devices",
+      "classification": "PASS",
+      "http_status": 200,
+      "last_tested": "2026-08-19T06:18:19.085795+00:00",
+      "documented_permissions": [
+        "Device.Read.All"
+      ],
+      "pages": 1,
+      "total_rows": 1
+    }
+  ],
+  "permission_groups": [
+    {
+      "permission": "Application.Read.All",
+      "affected_endpoint_ids": [
+        "G01-007",
+        "G01-008"
+      ],
+      "affected_endpoint_names": [
+        "Applications",
+        "Service Principals"
+      ],
+      "current_role_present": false,
+      "approval_status": "REQUIRED"
+    },
+    {
+      "permission": "AuditLog.Read.All",
+      "affected_endpoint_ids": [
+        "G01-005",
+        "G01-006"
+      ],
+      "affected_endpoint_names": [
+        "Directory Audit Logs",
+        "Sign-in Logs"
+      ],
+      "current_role_present": false,
+      "approval_status": "REQUIRED"
+    },
+    {
+      "permission": "Device.Read.All",
+      "affected_endpoint_ids": [
+        "G01-009"
+      ],
+      "affected_endpoint_names": [
+        "Devices"
+      ],
+      "current_role_present": false,
+      "approval_status": "REQUIRED"
+    }
+  ]
+}

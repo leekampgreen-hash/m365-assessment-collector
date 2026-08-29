@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "catalog_id": "SCENARIO_CATALOG_G08B",
+  "owner": "G08-B",
+  "description": "Initial controlled scenario catalog used by the future Scenario Agent to generate Microsoft 365 activity that may later be observed by the Collector. All scenarios are offline-defined; no live Graph calls are made.",
+  "version": "1.0.0",
+  "domains_supported": ["MAIL", "CALENDAR", "FILES", "AUTH"],
+  "domains_explicitly_excluded": [
+    "TEAMS",
+    "ADMIN",
+    "DESTRUCTIVE_TENANT_OPERATIONS"
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "SCN-MAIL-001",
+      "file": "scenarios/SCN-MAIL-001.json"
+    },
+    {
+      "scenario_id": "SCN-MAIL-002",
+      "file": "scenarios/SCN-MAIL-002.json"
+    },
+    {
+      "scenario_id": "SCN-CALENDAR-001",
+      "file": "scenarios/SCN-CALENDAR-001.json"
+    },
+    {
+      "scenario_id": "SCN-CALENDAR-002",
+      "file": "scenarios/SCN-CALENDAR-002.json"
+    },
+    {
+      "scenario_id": "SCN-CALENDAR-003",
+      "file": "scenarios/SCN-CALENDAR-003.json"
+    },
+    {
+      "scenario_id": "SCN-FILE-001",
+      "file": "scenarios/SCN-FILE-001.json"
+    },
+    {
+      "scenario_id": "SCN-FILE-002",
+      "file": "scenarios/SCN-FILE-002.json"
+    },
+    {
+      "scenario_id": "SCN-FILE-003",
+      "file": "scenarios/SCN-FILE-003.json"
+    },
+    {
+      "scenario_id": "SCN-AUTH-001",
+      "file": "scenarios/SCN-AUTH-001.json"
+    }
+  ],
+  "actor_model_file": "actor_model.json",
+  "permission_packs_file": "permission_packs.json",
+  "observability_map_file": "observability_map.json",
+  "totals": {
+    "total_scenarios": 9,
+    "enabled_scenarios": 1,
+    "disabled_scenarios": 8,
+    "destructive_scenarios_enabled": 0,
+    "by_domain": {
+      "MAIL": 2,
+      "CALENDAR": 3,
+      "FILES": 3,
+      "AUTH": 1
+    },
+    "by_risk": {
+      "LOW": 9,
+      "MODERATE": 0,
+      "HIGH": 0
+    },
+    "by_observability": {
+      "DIRECTLY_OBSERVABLE": 1,
+      "INDIRECTLY_OBSERVABLE": 8,
+      "NOT_COVERED_BY_CURRENT_G01_INVENTORY": 0
+    }
+  },
+  "current_scenario_app_delegated_permissions": ["User.Read"],
+  "additional_permissions_required": [
+    {
+      "permission": "Mail.Send",
+      "scenarios": ["SCN-MAIL-001", "SCN-MAIL-002"],
+      "status": "REQUIRED_NOT_GRANTED"
+    },
+    {
+      "permission": "Calendars.ReadWrite",
+      "scenarios": ["SCN-CALENDAR-001", "SCN-CALENDAR-002", "SCN-CALENDAR-003"],
+      "status": "REQUIRED_NOT_GRANTED"
+    },
+    {
+      "permission": "Files.ReadWrite",
+      "scenarios": ["SCN-FILE-001", "SCN-FILE-002", "SCN-FILE-003"],
+      "status": "REQUIRED_NOT_GRANTED"
+    }
+  ],
+  "invariants": [
+    "all_scenario_ids_unique",
+    "no_credential_substrings_in_any_field",
+    "no_wildcard_permission_bundles",
+    "no_destructive_scenario_is_enabled",
+    "enabled_scenarios_are_low_risk_only"
+  ]
+}

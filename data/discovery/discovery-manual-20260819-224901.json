@@ -1,0 +1,42 @@
+{
+  "agent_version": "0.2.0",
+  "results": [
+    {
+      "execution_timestamp": "2026-08-19T15:49:01.337129+00:00",
+      "agent_version": "0.2.0",
+      "inventory_id": "G01-018",
+      "workload": "Microsoft Entra RBAC",
+      "endpoint_name": "Directory Role Definitions",
+      "method": "GET",
+      "endpoint_path": "/v1.0/roleManagement/directory/roleDefinitions",
+      "auth_type": "application",
+      "documented_permissions": [
+        "RoleManagement.Read.Directory"
+      ],
+      "http_status": 400,
+      "classification": "API_ERROR",
+      "pages": 0,
+      "total_rows": 0,
+      "pagination_detected": false,
+      "duration_seconds": 1.381,
+      "graph_error_code": "Request_UnsupportedQuery",
+      "graph_error_message": "This resource requires a minimum page size of 20.",
+      "retry_after": null,
+      "token_roles": [
+        "AdministrativeUnit.Read.All",
+        "Application.Read.All",
+        "AuditLog.Read.All",
+        "Device.Read.All",
+        "Group.Read.All",
+        "IdentityRiskEvent.Read.All",
+        "IdentityRiskyUser.Read.All",
+        "LicenseAssignment.Read.All",
+        "Policy.Read.All",
+        "RoleManagement.Read.Directory",
+        "ServiceHealth.Read.All",
+        "ServiceMessage.Read.All",
+        "User.Read.All"
+      ]
+    }
+  ]
+}
