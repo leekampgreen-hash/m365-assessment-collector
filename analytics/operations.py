@@ -549,6 +549,20 @@ class OperationsAnalyticsQueryService:
             "storage_utilization": _metric(utilization, rows, status=status, missing=missing),
         }
 
+    def external_sharing_summary(self) -> list[dict[str, Any]]:
+        aggregates: dict[Any, dict[str, Any]] = {}
+        for row in self.tables["sharepoint_site_usage"]:
+            if _deleted(row.get("is_deleted")) is True:
+                continue
+            tenant_id = row.get("tenant_id")
+            aggregate = aggregates.setdefault(tenant_id, {"tenant_id": tenant_id, "external_share_count": 0, "sites_with_external_shares": 0})
+            count = _number(row, "external_share_count")
+            if count is not None:
+                aggregate["external_share_count"] += count
+                if count > 0:
+                    aggregate["sites_with_external_shares"] += 1
+        return sorted(aggregates.values(), key=lambda item: item["tenant_id"])
+
     def cross_workload_user_status(self) -> list[dict[str, Any]]:
         assignments = _rows(self.rows, "license_assignments")
         skus = {str(row.get("sku_id")): row for row in _rows(self.rows, "subscribed_sku") if row.get("sku_id") is not None}

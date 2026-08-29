@@ -83,6 +83,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "--sharepoint-settings", action="store_true", help="Collect SharePoint tenant settings (G01-020)."
     )
     parser.add_argument(
+        "--sharepoint-audit", action="store_true", help="Collect the bounded SharePoint Audit.SharePoint feed."
+    )
+    parser.add_argument(
         "--granted-graph-permissions", nargs="*", default=(),
         help="Explicit app permissions granted to this collector identity.",
     )
@@ -267,13 +270,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except SystemExit:
         return 2
 
-    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings)
+    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit)
     if selected_count == 0 and not args.dry_run:
         parser.error("one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, or --sharepoint-settings is required")
     if selected_count > 1:
-        parser.error("only one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, or --sharepoint-settings may be provided")
+        parser.error("only one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, or --sharepoint-audit may be provided")
     if args.sharepoint_settings:
         args.endpoint = "G01-020"
+    if args.sharepoint_audit:
+        args.endpoint = "SP-A01"
 
     inventory_path = Path(args.inventory)
     if not inventory_path.exists():
@@ -326,6 +331,50 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 writer.complete_endpoint_run(endpoint_run_id=endpoint_run_id, result=result)
                 writer.complete_collection_run(collection_run_id=collection_run_id, results=[result])
             print(safe_dumps({"onedrive_audit": metrics}) if args.json else "onedrive audit run complete")
+            return 0
+        except Exception as exc:
+            print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)
+            return 3
+    if args.sharepoint_audit and args.dry_run:
+        print(safe_dumps({"mode": "dry-run", "collector": "sharepoint_audit", "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: collector=sharepoint_audit no_token_requested=True no_graph_requested=True")
+        return 0
+    if args.sharepoint_audit and not args.dry_run:
+        try:
+            from collectors.core.config import load_auth_config
+            from collectors.sharepoint_audit import collect_and_persist_sharepoint_audit
+            database_connection, _ = _build_persistence()
+            auth_config = load_auth_config(auth_source)
+            tenant_id = _trusted_tenant_resolver(auth_config, database_connection)
+            spec = EndpointSpec(
+                endpoint_id="SP-A01", name="SharePoint Audit.SharePoint",
+                path="", workload="SharePoint", permission="ActivityFeed.Read",
+            )
+            writer = CollectionWriter(database_connection, dispatch_persistence)
+            collection_run_id = writer.begin_collection_run(tenant_id=tenant_id, endpoint_ids=[spec.endpoint_id])
+            endpoint_run_id = writer.begin_endpoint_run(
+                collection_run_id=collection_run_id, tenant_id=tenant_id, spec=spec,
+            )
+            end = datetime.now(timezone.utc)
+            try:
+                metrics = collect_and_persist_sharepoint_audit(
+                    tenant_id=tenant_id,
+                    auth_config=auth_config,
+                    connection=database_connection,
+                    url_open=urlopen,
+                    start=end - timedelta(hours=4),
+                    end=end,
+                    collected_at=end.isoformat(),
+                    collection_run_id=collection_run_id,
+                    endpoint_run_id=endpoint_run_id,
+                )
+                result = CollectionResult(endpoint_id=spec.endpoint_id, status="PASS", rows=metrics["normalized"], persisted_rows=metrics["persisted"])
+            except Exception:
+                result = CollectionResult(endpoint_id=spec.endpoint_id, status="ERROR", error_classification="SOURCE_FAILURE", error_message="COLLECTION_FAILED")
+                raise
+            finally:
+                writer.complete_endpoint_run(endpoint_run_id=endpoint_run_id, result=result)
+                writer.complete_collection_run(collection_run_id=collection_run_id, results=[result])
+            print(safe_dumps({"sharepoint_audit": metrics}) if args.json else "sharepoint audit run complete")
             return 0
         except Exception as exc:
             print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)

@@ -220,6 +220,11 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 data = {"sites": service.orphaned_sites()}
                 self._write(200, _response("READY", data, quality=_quality(service)))
                 return
+            if path == BASE_PATH + "/sharepoint/external-sharing":
+                service = self._load_service()
+                data = {"tenants": service.external_sharing_summary()}
+                self._write(200, _response("READY", data, quality=_quality(service)))
+                return
             if path == BASE_PATH + "/inactivity":
                 values = parse_qs(parsed.query).get("days", ["30"])
                 if len(values) != 1 or not values[0].isdigit() or int(values[0]) not in VALID_INACTIVITY_WINDOWS:

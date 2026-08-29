@@ -375,6 +375,9 @@ _ONEDRIVE_AUDIT_REQUIRED: tuple[str, ...] = (
     "event_category", "external_flag", "anonymous_flag", "collected_at",
 )
 _ONEDRIVE_AUDIT_OPERATIONS = {"AnonymousLinkCreated", "SharingInvitationCreated", "SharingSet", "FileMalwareDetected"}
+_SHAREPOINT_AUDIT_COLUMNS: tuple[str, ...] = _ONEDRIVE_AUDIT_COLUMNS
+_SHAREPOINT_AUDIT_REQUIRED: tuple[str, ...] = _ONEDRIVE_AUDIT_REQUIRED
+_SHAREPOINT_AUDIT_OPERATIONS = {"SharingInvitationCreated", "SharingRevoked", "AnonymousLinkCreated", "AnonymousLinkRemoved"}
 
 
 def _validate_onedrive_audit_row(row: Mapping[str, Any], trusted_tenant_id: int | None) -> None:
@@ -495,8 +498,75 @@ def write_onedrive_high_value_audit_batch(
     )
 
 
+def _validate_sharepoint_audit_row(row: Mapping[str, Any], trusted_tenant_id: int | None) -> None:
+    missing = tuple(column for column in _SHAREPOINT_AUDIT_REQUIRED if column not in row)
+    if missing:
+        raise PersistenceError("SharePoint audit row is missing required columns: {}".format(", ".join(missing)))
+    tenant_id = row["tenant_id"]
+    if isinstance(tenant_id, bool) or not isinstance(tenant_id, int) or tenant_id <= 0:
+        raise PersistenceError("SharePoint audit row tenant_id is missing or malformed")
+    if trusted_tenant_id is not None and tenant_id != trusted_tenant_id:
+        raise PersistenceError("SharePoint audit row tenant_id does not match trusted tenant_id")
+    if row["workload"] != "SharePoint":
+        raise PersistenceError("SharePoint audit row workload is not SharePoint")
+    operation = row["operation"]
+    if operation not in _SHAREPOINT_AUDIT_OPERATIONS:
+        raise PersistenceError("SharePoint audit operation is outside the filter contract")
+    for field in ("event_time", "collected_at"):
+        value = row[field]
+        if isinstance(value, datetime):
+            continue
+        if not isinstance(value, str):
+            raise PersistenceError("SharePoint audit {} is missing or malformed".format(field))
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            raise PersistenceError("SharePoint audit {} is missing or malformed".format(field)) from None
+    if operation in ("AnonymousLinkCreated", "AnonymousLinkRemoved"):
+        expected = ("EXTERNAL_SHARING", True, True)
+    elif operation == "SharingInvitationCreated":
+        expected = ("EXTERNAL_SHARING", row.get("target_user_or_group_type") == "Guest", False)
+    else:
+        expected = ("EXTERNAL_SHARING", True, False)
+    if (row["event_category"], row["external_flag"], row["anonymous_flag"]) != expected:
+        raise PersistenceError("SharePoint audit classification does not match the filter contract")
+
+
+def persist_sharepoint_high_value_audit_batch(
+    connection: Connection,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    trusted_tenant_id: int,
+) -> AuditBatchResult:
+    try:
+        connection.cursor().execute("BEGIN", ())
+        for row in rows:
+            _validate_sharepoint_audit_row(row, trusted_tenant_id)
+        sql = "INSERT INTO core.sharepoint_high_value_audit_event ({}) VALUES ({}) ON CONFLICT (tenant_id, audit_record_id) DO NOTHING".format(
+            ", ".join(_SHAREPOINT_AUDIT_COLUMNS), ", ".join("%s" for _ in _SHAREPOINT_AUDIT_COLUMNS)
+        )
+        inserted = 0
+        executor = BoundSqlExecutor(connection)
+        for row in rows:
+            cursor = executor.execute(sql, tuple(row.get(column) for column in _SHAREPOINT_AUDIT_COLUMNS))
+            inserted += int(getattr(cursor, "rowcount", 0) == 1)
+        connection.commit()
+        return AuditBatchResult(attempted=len(rows), inserted=inserted, duplicate_skips=len(rows) - inserted)
+    except PersistenceError:
+        connection.rollback()
+        raise
+    except Exception as exc:
+        connection.rollback()
+        raise PersistenceError("SharePoint audit batch failed: PERSISTENCE_ERROR") from exc
+
+
 # Accepted EVENT endpoints. G01-005 and G01-006 share core.audit_event; the
 _EVENT_ENDPOINTS: Mapping[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
+    "SP-A01": (
+        "core.sharepoint_high_value_audit_event",
+        _SHAREPOINT_AUDIT_COLUMNS,
+        ("tenant_id", "audit_record_id"),
+    ),
     "G01-005": (
         "core.audit_event",
         _AUDIT_EVENT_COLUMNS,

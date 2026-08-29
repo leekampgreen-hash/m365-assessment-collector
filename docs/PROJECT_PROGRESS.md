@@ -1,5 +1,13 @@
 # Project Progress
 
+## SP-P03 through SP-P07 SharePoint progress summary
+
+- **SP-P03:** SharePoint tenant settings expanded and the `G01-020` endpoint wired into the workload registry.
+- **SP-P04:** Migration 021 applied for SharePoint tenant settings persistence.
+- **SP-P05:** SharePoint tenant settings collector and production-path persistence wiring implemented, with focused coverage.
+- **SP-P06:** SharePoint orphaned-sites analytics method and read-only Operations API route implemented, with focused coverage.
+- **SP-P07:** SharePoint follow-up validation remains the next acceptance step after the implemented collector and analytics/API work.
+
 ## OD-P10 OneDrive workload seal / handover
 
 **Task:** `OD-P10-ONEDRIVE-WORKLOAD-SEAL-001`

@@ -619,6 +619,80 @@ def sharepoint_tenant_settings(
     return out
 
 
+def adapt_sharepoint_audit_logs(
+    records: Iterable[Mapping[str, Any]],
+    lineage: Any = None,
+) -> List[Dict[str, Any]]:
+    """SP-A01 SharePoint Audit events -> core.sharepoint_high_value_audit_event rows.
+
+    Filters Workload == "SharePoint" and operations in:
+    SharingInvitationCreated, SharingRevoked, AnonymousLinkCreated, AnonymousLinkRemoved.
+    Sets event_category, external_flag, anonymous_flag accordingly.
+    """
+    lineage = normalize_lineage(lineage)
+    out: List[Dict[str, Any]] = []
+    target_operations = {
+        "SharingInvitationCreated",
+        "SharingRevoked",
+        "AnonymousLinkCreated",
+        "AnonymousLinkRemoved",
+    }
+    for record in records:
+        if not isinstance(record, Mapping):
+            raise TypeError("record must be a mapping")
+        if record.get("Workload") != "SharePoint":
+            continue
+        operation = record.get("Operation")
+        if operation not in target_operations:
+            continue
+        # Determine flags
+        external = False
+        anonymous = False
+        category = "EXTERNAL_SHARING"
+        if operation in ("AnonymousLinkCreated", "AnonymousLinkRemoved"):
+            anonymous = True
+            external = True
+        elif operation == "SharingInvitationCreated":
+            # Capture both internal and external invitations
+            external = (record.get("TargetUserOrGroupType") == "Guest")
+            # anonymous flag remains False for invitations
+        elif operation == "SharingRevoked":
+            # Could be internal or external; we treat as external sharing event
+            external = True  # Revocation may involve external sharing context; we'll mark as external
+        # For SharingRevoked, we may not have target type, so we mark external as True.
+        # Build row
+        row = {
+            "tenant_id": lineage.tenant_id,
+            "audit_record_id": str(record.get("Id", "")),
+            "event_time": _as_timestamp(record.get("CreationTime")),
+            "operation": operation,
+            "workload": "SharePoint",
+            "record_type": _as_text(record.get("RecordType")),
+            "actor_upn": _as_text(record.get("UserId")),
+            "collection_run_id": lineage.collection_run_id,
+            "endpoint_run_id": lineage.endpoint_run_id,
+            "event_category": category,
+            "external_flag": external,
+            "anonymous_flag": anonymous,
+            "collected_at": lineage.collected_at,
+            "retention_class": lineage.retention_class or "LONG",
+            "client_ip": _as_text(record.get("ClientIP")),
+            "object_id": _as_text(record.get("ObjectId")),
+            "site_url": _as_text(record.get("SiteUrl")),
+            "source_relative_url": _as_text(record.get("SourceRelativeUrl")),
+            "source_file_name": _as_text(record.get("SourceFileName")),
+            "unique_sharing_id": _as_text(record.get("UniqueSharingId")),
+            "target_user_or_group_name": _as_text(record.get("TargetUserOrGroupName")),
+            "target_user_or_group_type": _as_text(record.get("TargetUserOrGroupType")),
+        }
+        # Ensure required fields are present
+        if not row["audit_record_id"] or row["event_time"] is None:
+            # skip malformed
+            continue
+        out.append(row)
+    return out
+
+
 __all__ = [
     "ENDPOINT_TABLE_MAP",
     "EVENT_SOURCE_DIRECTORY_AUDIT",
@@ -638,4 +712,5 @@ __all__ = [
     "service_health_overview",
     "service_update_messages",
     "sharepoint_tenant_settings",
+    "adapt_sharepoint_audit_logs",
 ]

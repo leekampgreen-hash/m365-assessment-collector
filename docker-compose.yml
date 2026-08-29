@@ -26,6 +26,8 @@ services:
       PGSSLMODE: disable
 
     volumes:
+      - ./analytics:/workspace/analytics
+      - ./api:/workspace/api
       - ./app:/workspace/app
       - ./collectors:/workspace/collectors
       - ./config:/workspace/config

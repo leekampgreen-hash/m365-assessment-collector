@@ -156,6 +156,20 @@ class OperationsAnalyticsTests(unittest.TestCase):
         self.assertEqual(result["total_file_count"]["value"], 5)
         self.assertEqual(result["storage_utilization"]["value"], 0.1)
 
+    def test_external_sharing_summary_aggregates_non_deleted_sites_per_tenant(self):
+        service = OperationsAnalyticsQueryService({
+            "sharepoint_site_usage": [
+                {"tenant_id": 2, "site_id": "a", "external_share_count": "3", "is_deleted": False},
+                {"tenant_id": 2, "site_id": "b", "external_share_count": 0, "is_deleted": False},
+                {"tenant_id": 2, "site_id": "deleted", "external_share_count": 99, "is_deleted": True},
+                {"tenant_id": 1, "site_id": "c", "external_share_count": 2, "is_deleted": False},
+            ],
+        })
+        self.assertEqual(service.external_sharing_summary(), [
+            {"tenant_id": 1, "external_share_count": 2, "sites_with_external_shares": 1},
+            {"tenant_id": 2, "external_share_count": 3, "sites_with_external_shares": 1},
+        ])
+
     def test_orphaned_sites_include_null_and_over_90_days_per_tenant(self):
         service = OperationsAnalyticsQueryService({
             "sharepoint_site_usage": [

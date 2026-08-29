@@ -45,6 +45,18 @@ NEXT:
 
 ---
 
+## ANALYTICS TASK
+
+For analytics tasks, implementation must proceed in this order:
+
+1. Write the method in `analytics/operations.py` FIRST.
+2. Write the route in `api/operations.py` SECOND.
+3. Write tests LAST, after the implementation exists.
+
+DO NOT write tests before the implementation exists.
+
+---
+
 ## Example: Small Task (1 gate)
 
 ```

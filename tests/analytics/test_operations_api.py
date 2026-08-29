@@ -38,6 +38,9 @@ class FakeService:
     def orphaned_sites(self):
         return [{"tenant_id": 2, "site_id": "site-old", "last_activity_date": None}]
 
+    def external_sharing_summary(self):
+        return [{"tenant_id": 2, "external_share_count": 3, "sites_with_external_shares": 1}]
+
     def sharepoint_site_adoption(self):
         return {
             "active_sites": {"value": 2, "status": "READY"},
@@ -123,6 +126,11 @@ class OperationsApiTests(unittest.TestCase):
         status, payload = self.get("/api/operations/data-quality")
         self.assertEqual(status, 200)
         self.assertEqual(payload["limitations"]["sharepoint_site_analytics_status"], "IDENTITY_UNAVAILABLE")
+
+    def test_external_sharing_api_exposes_tenant_summary(self):
+        status, payload = self.get("/api/operations/sharepoint/external-sharing")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["data"]["tenants"], [{"tenant_id": 2, "external_share_count": 3, "sites_with_external_shares": 1}])
 
     def test_orphaned_sites_api_exposes_inactive_sites(self):
         status, payload = self.get("/api/operations/sharepoint/orphaned-sites")
