@@ -50,48 +50,82 @@ def _collect_security_data() -> dict:
     }
 
 
-def _build_analysis_prompt(data: dict) -> str:
-    """Build analysis prompt from collected security data."""
-    generated = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    return f"""You are a Microsoft 365 Security Analyst.
-Analyze the following security data and generate a professional
-security analysis report in plain text format.
+def _summarize_data(data: dict) -> dict:
+    """Keep only compact, report-relevant security metrics."""
+    data = {key: value.get("data", value) if isinstance(value, dict) else value for key, value in data.items()}
+    risk = data.get("risk_score", {})
+    admin = data.get("admin_roles", {})
+    coverage = data.get("mfa_coverage", {})
+    registration = data.get("mfa_registration", {})
+    signin = data.get("signin_summary", {})
+    policies = data.get("ca_policies", {})
+    findings = data.get("findings", {}).get("findings", []) if isinstance(data.get("findings", {}), dict) else []
+    if isinstance(findings, dict):
+        findings = findings.get("items", [])
+    translations = {}
+    try:
+        from agent.knowledge.loader import KnowledgeBase
+        knowledge = KnowledgeBase()
+        translations = {
+            item.get("rule_id"): knowledge.get_rule_info(item.get("rule_id", ""))
+            for item in findings if item.get("rule_id")
+        }
+    except Exception:
+        pass
 
-The report must follow this exact structure:
+    def finding(item: dict) -> dict:
+        info = translations.get(item.get("rule_id")) or {}
+        return {
+            "finding": info.get("title") or item.get("title") or item.get("finding") or item.get("category") or "Security finding",
+            "severity": item.get("severity") or item.get("risk"),
+            "status": item.get("status"),
+        }
+
+    return {
+        "risk_score": {
+            "distribution": risk.get("risk_distribution", {}),
+            "top_risks": [
+                {key: item.get(key) for key in ("display_name", "risk_level", "score")}
+                for item in risk.get("top_risks", [])[:3]
+            ],
+        },
+        "admin_roles": {key: admin.get(key) for key in ("total_roles_assigned", "high_privilege_roles", "findings")},
+        "mfa_coverage": {key: coverage.get(key) for key in ("mfa_pass_rate", "findings")},
+        "mfa_registration": {key: registration.get(key) for key in ("total_users", "mfa_registered", "mfa_not_registered", "registration_rate_pct")},
+        "signin_summary": {key: signin.get(key) for key in ("total_signins", "failed_signins", "failure_rate_pct", "legacy_auth_signins", "findings")},
+        "ca_policies": {
+            key: policies.get(key) for key in ("total", "enabled", "disabled")
+        } | {"policies": [{key: policy.get(key) for key in ("display_name", "state")} for policy in policies.get("policies", [])[:3]]},
+        "findings": [finding(item) for item in findings[:5]],
+    }
+
+
+def _build_analysis_prompt(data: dict) -> str:
+    """Build analysis prompt from compact security data."""
+    generated = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    return f"""You are a Microsoft 365 Security Analyst. Write a concise plain-text report for IT support staff using only this data.
 
 SECURITY ANALYSIS REPORT
 Generated: {generated}
 
 EXECUTIVE SUMMARY
-[2-3 sentences summarizing overall security posture]
+2-3 sentences on overall posture.
 
 CRITICAL FINDINGS ([count] items)
-[List each critical finding with:]
-- Finding: [what the issue is in plain language]
-- Risk: [why this is dangerous, business impact]
-- Action: [specific steps to fix, numbered]
-
 HIGH FINDINGS ([count] items)
-[Same format]
-
 MEDIUM FINDINGS ([count] items)
-[Same format]
+For each: Finding, Risk/business impact, and numbered Action steps.
 
 RECOMMENDED PRIORITY ORDER
-[Numbered list of what to fix first, with brief reason]
+Numbered fixes with brief reasons.
 
 OVERALL SECURITY SCORE: [X]/100
-[One sentence justification]
+One-sentence justification.
 
-RULES:
-- Plain text only — no markdown, no asterisks, no hashtags
-- No technical jargon — write for IT support staff
-- No rule IDs, UUIDs, UPNs, or email addresses
-- Be specific and actionable
-- If data is unavailable for a section, say "No data available"
+Use no markdown, jargon, rule IDs, UUIDs, UPNs, or email addresses. Cover every security area. Say "No data available" when needed.
 
 SECURITY DATA:
-{json.dumps(data, indent=2, default=str)}
+{json.dumps(_summarize_data(data), separators=(",", ":"), default=str)}
 """
 
 
@@ -116,11 +150,12 @@ def generate_security_report() -> dict:
         client = OpenAI(
             api_key=config.KRYPTONLAB_API_KEY or config.OPENAI_API_KEY,
             base_url=config.OPENAI_BASE_URL,
+            timeout=45.0,
         )
         response = client.chat.completions.create(
-            model=config.MODEL,
+            model=config.ANALYST_MODEL,
             messages=[{"role": "user", "content": _build_analysis_prompt(data)}],
-            max_tokens=2000,
+            max_tokens=1200,
         )
         report = _plain_text_report(response.choices[0].message.content or "")
         tokens_used = getattr(response.usage, "total_tokens", None)
