@@ -53,6 +53,9 @@ class FakeService:
     def license_utilization(self):
         return {"utilization_percentage": {"value": 50, "status": "READY"}}
 
+    def teams_activity_summary(self):
+        return [{"tenant_id": 2, "total_users": 1, "inactive_30_days": 1, "inactive_60_days": 1, "inactive_90_days": 1, "users": [{"user_ref": "user-test", "last_activity_date": None}]}]
+
     def inactivity_candidates(self):
         return [
             {"user_ref": "user-secret", "inactivity_30_60_90": {"30": "inactive", "60": "active", "90": "active"}, "multi_workload_inactive": False},
@@ -101,6 +104,11 @@ class OperationsApiTests(unittest.TestCase):
         payload = json.loads(response.read())
         connection.close()
         return response.status, payload
+
+    def test_teams_activity_summary_endpoint(self):
+        status, payload = self.get("/api/operations/teams/activity-summary")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["data"]["tenants"][0]["inactive_90_days"], 1)
 
     def test_kpi_endpoint_serializes_read_model(self):
         status, payload = self.get("/api/operations/kpi")

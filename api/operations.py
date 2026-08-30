@@ -234,6 +234,11 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 data = {"tenants": service.external_sharing_summary()}
                 self._write(200, _response("READY", data, quality=_quality(service)))
                 return
+            if path == BASE_PATH + "/teams/activity-summary":
+                service = self._load_service()
+                data = {"tenants": service.teams_activity_summary()}
+                self._write(200, _response(_service_status(data), data, quality=_quality(service)))
+                return
             if path == BASE_PATH + "/inactivity":
                 values = parse_qs(parsed.query).get("days", ["30"])
                 if len(values) != 1 or not values[0].isdigit() or int(values[0]) not in VALID_INACTIVITY_WINDOWS:

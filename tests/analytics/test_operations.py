@@ -106,6 +106,29 @@ class OperationsAnalyticsTests(unittest.TestCase):
         service = OperationsAnalyticsQueryService(data)
         self.assertEqual(service.standard_kpi_summary()["license_attention_count"], 0)
 
+    def test_teams_activity_summary_groups_tenants_and_inactivity_windows(self):
+        service = OperationsAnalyticsQueryService({
+            "users": [
+                {"tenant_id": 1, "user_principal_name": "active@example.test", "display_name": "Active"},
+                {"tenant_id": 1, "user_principal_name": "old@example.test", "display_name": "Old"},
+                {"tenant_id": 2, "user_principal_name": "never@example.test", "display_name": "Never"},
+            ],
+            "teams_user_activity": [
+                row("active@example.test", "2026-08-01", tenant_id=1),
+                row("old@example.test", "2026-05-01", tenant_id=1),
+                row("never@example.test", None, tenant_id=2),
+            ],
+        }, as_of="2026-08-26")
+        self.assertEqual(service.teams_activity_summary(), [
+            {"tenant_id": 1, "total_users": 2, "inactive_30_days": 1, "inactive_60_days": 1, "inactive_90_days": 1, "users": [
+                {"user_ref": "user-" + __import__("hashlib").sha256("active@example.test".encode()).hexdigest()[:16], "display_name": "Active", "user_principal_name": "active@example.test", "last_activity_date": "2026-08-01"},
+                {"user_ref": "user-" + __import__("hashlib").sha256("old@example.test".encode()).hexdigest()[:16], "display_name": "Old", "user_principal_name": "old@example.test", "last_activity_date": "2026-05-01"},
+            ]},
+            {"tenant_id": 2, "total_users": 1, "inactive_30_days": 1, "inactive_60_days": 1, "inactive_90_days": 1, "users": [
+                {"user_ref": "user-" + __import__("hashlib").sha256("never@example.test".encode()).hexdigest()[:16], "display_name": "Never", "user_principal_name": "never@example.test", "last_activity_date": None},
+            ]},
+        ])
+
     def test_tenant_summary_and_disabled_accounts(self):
         summary = self.service.tenant_summary()
         self.assertEqual(summary["total_users"]["value"], 3)

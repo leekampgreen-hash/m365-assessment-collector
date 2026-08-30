@@ -21,7 +21,7 @@ TABLES = (
 USAGE_TABLES = (
     "office365_active_user", "exchange_email_activity", "exchange_mailbox_usage",
     "onedrive_activity", "onedrive_account_usage", "sharepoint_user_activity",
-    "sharepoint_site_usage",
+    "sharepoint_site_usage", "teams_user_activity",
 )
 CAPACITY_VIEW_TABLES = ("exchange_mailbox_capacity", "onedrive_account_capacity")
 
@@ -199,6 +199,7 @@ class OperationsAnalyticsQueryService:
             "onedrive_high_value_audit": "SELECT tenant_id, audit_record_id, event_time, event_category, operation, actor_upn, anonymous_flag, external_flag, object_display_name, workload FROM analytics.onedrive_high_value_audit WHERE tenant_id = %s ORDER BY event_time DESC, audit_record_id DESC",
             "sharepoint_high_value_audit_event": "SELECT tenant_id, audit_record_id, event_time, event_category, operation, actor_upn, anonymous_flag, external_flag, site_url, source_file_name, workload FROM core.sharepoint_high_value_audit_event WHERE tenant_id = %s ORDER BY event_time DESC, audit_record_id DESC",
         }
+        names["teams_user_activity"] = "SELECT current_rows.* FROM core.usage_teams_user_activity current_rows JOIN (SELECT tenant_id, MAX(observed_at) AS observed_at FROM core.usage_teams_user_activity WHERE tenant_id = %s GROUP BY tenant_id) newest ON newest.tenant_id = current_rows.tenant_id AND newest.observed_at = current_rows.observed_at WHERE current_rows.tenant_id = %s"
         names.update({name: "SELECT current_rows.* FROM core.usage_{0} current_rows JOIN (SELECT tenant_id, MAX(observed_at) AS observed_at FROM core.usage_{0} WHERE tenant_id = %s GROUP BY tenant_id) newest ON newest.tenant_id = current_rows.tenant_id AND newest.observed_at = current_rows.observed_at WHERE current_rows.tenant_id = %s".format(name) for name in USAGE_TABLES})
         loaded: dict[str, list[dict[str, Any]]] = {}
         for name, sql in names.items():
@@ -507,6 +508,37 @@ class OperationsAnalyticsQueryService:
         details = [{field: row.get(field) for field in ("event_time", "event_category", "operation", "actor_upn", "anonymous_flag", "external_flag", "site_url", "source_file_name", "workload")} for row in recent]
         status = "READY" if rows or "sharepoint_high_value_audit_event" in self.rows else "DATA_DEPENDENCY_UNAVAILABLE"
         return {"summary": summary, "tenants": tenant_list, "recent_events": details, "status": status, "limit": bounded}
+
+    def teams_activity_summary(self) -> list[dict[str, Any]]:
+        rows = self.tables["teams_user_activity"]
+        by_tenant: dict[Any, dict[str, Any]] = {}
+        users_by_tenant: dict[Any, dict[str, dict[str, Any]]] = {}
+        for user in self.users:
+            tenant_id = user.get("tenant_id")
+            key = _directory_key(user)
+            if key:
+                users_by_tenant.setdefault(tenant_id, {})[key] = user
+        for row in rows:
+            tenant_id = row.get("tenant_id")
+            key = _key(row)
+            if not key:
+                continue
+            user = users_by_tenant.get(tenant_id, {}).get(key)
+            detail = {
+                "user_ref": row.get("user_ref") or _user_ref(key, masked=bool(row.get("identity_is_masked"))),
+                "display_name": user.get("display_name") if user else None,
+                "user_principal_name": user.get("user_principal_name") if user else row.get("user_principal_name") or row.get("identity_value"),
+                "last_activity_date": (_date(row.get("last_activity_date")).isoformat() if _date(row.get("last_activity_date")) else None),
+            }
+            aggregate = by_tenant.setdefault(tenant_id, {"tenant_id": tenant_id, "total_users": 0, "inactive_30_days": 0, "inactive_60_days": 0, "inactive_90_days": 0, "users": []})
+            aggregate["total_users"] += 1
+            activity_date = _date(row.get("last_activity_date"))
+            age = (self.as_of - activity_date).days if activity_date else None
+            for days in (30, 60, 90):
+                if age is None or age > days:
+                    aggregate[f"inactive_{days}_days"] += 1
+            aggregate["users"].append(detail)
+        return sorted(by_tenant.values(), key=lambda item: (item["tenant_id"] is None, item["tenant_id"]))
 
     def sharepoint_user_adoption(self) -> dict[str, Any]:
         rows = self.tables["sharepoint_user_activity"]
