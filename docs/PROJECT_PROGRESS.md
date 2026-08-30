@@ -1,5 +1,16 @@
 # Project Progress
 
+## DA-P02 Groups and role assignments population (PASS)
+
+**Task:** `DA-P02-CLOSE`
+**Status:** `DA-P02 PASS`
+
+Populated targeted directory tables through live targeted collection:
+
+- `core."group"`: 18 rows
+- `core.directory_role_assignment`: 11 rows
+- Pytest environment fixed permanently; broad collector-container suite passes **1314/1314 tests**.
+
 ## DA-P01 Persistence defect closure (PASS)
 
 **Task:** `DA-P01-CLOSE`
