@@ -102,6 +102,7 @@ SKU_RECORD = {
         {"servicePlanId": "sp-1", "servicePlanName": "EXCHANGE_S_ENTERPRISE",
          "provisioningStatus": "Success", "appliesTo": "User"},
     ],
+    "nextLifecycleDateTime": "2026-12-31T23:59:59Z",
 }
 
 APP_RECORD = {
@@ -582,6 +583,7 @@ class HistoricalWithSnapshotAdapterTests(unittest.TestCase):
         # total prepaid = enabled + suspended + warning = 25
         self.assertEqual(current["prepaid_units"], 25)
         self.assertEqual(current["service_plans"], SKU_RECORD["servicePlans"])
+        self.assertEqual(current["next_lifecycle_datetime"], "2026-12-31T23:59:59Z")
         self.assertEqual(current["last_observed_at"], OBSERVED_AT)
         self.assertEqual(current["retention_class"], "STANDARD")
         # ----- snapshot row -----
@@ -605,6 +607,7 @@ class HistoricalWithSnapshotAdapterTests(unittest.TestCase):
         self.assertIsNone(current["consumed_units"])
         self.assertEqual(current["prepaid_units"], 0)
         self.assertIsNone(current["service_plans"])
+        self.assertIsNone(current["next_lifecycle_datetime"])
         self.assertEqual(snapshot["source_object_id"], "sku-2")
         self.assertEqual(snapshot["prepaid_units"], 0)
 

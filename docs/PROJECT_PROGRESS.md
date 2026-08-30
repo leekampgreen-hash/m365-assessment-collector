@@ -11,6 +11,18 @@ Populated targeted directory tables through live targeted collection:
 - `core.directory_role_assignment`: 11 rows
 - Pytest environment fixed permanently; broad collector-container suite passes **1314/1314 tests**.
 
+## DA-P03 License expiry field (PASS)
+
+**Task:** `DA-P03-CLOSE`
+**Status:** `DA-P03 PASS`
+
+Added license expiry field through migration 023 and populated through live targeted collection:
+
+- Migration 023 applied: `next_lifecycle_datetime` and `capability_status_expiry` columns added to `core.subscribed_sku`
+- Column existence verified: both columns present in `core.subscribed_sku`
+- Targeted collection completed: `G01-004` endpoint executed successfully
+- Expiry data populated: `next_lifecycle_datetime` and `capability_status_expiry` fields populated in `core.subscribed_sku`
+
 ## DA-P01 Persistence defect closure (PASS)
 
 **Task:** `DA-P01-CLOSE`

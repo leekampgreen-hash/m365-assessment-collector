@@ -21,6 +21,7 @@ from .common import (
     _get_int,
     _get_json_value,
     _get_text,
+    _get_timestamp,
     _require_mapping,
     _wrap_snapshot,
 )
@@ -79,6 +80,7 @@ def normalize(
     service_plans = _get_json_value(record, "servicePlans")
     sku_id = _get_text(record, "skuId")
     sku_part_number = _get_text(record, "skuPartNumber")
+    next_lifecycle_datetime = _get_timestamp(record, "nextLifecycleDateTime")
 
     current_row: Dict[str, Any] = dict(lineage)
     current_row["sku_id"] = sku_id
@@ -87,6 +89,7 @@ def normalize(
     current_row["consumed_units"] = consumed_units
     current_row["prepaid_units"] = prepaid_total
     current_row["service_plans"] = service_plans
+    current_row["next_lifecycle_datetime"] = next_lifecycle_datetime
     current_row["retention_class"] = RETENTION_CLASS
 
     snapshot_row: Dict[str, Any] = {
