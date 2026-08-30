@@ -322,6 +322,23 @@
     "enabled": true
   },
   {
+    "id": "TM-001",
+    "key": "teams_user_activity",
+    "name": "Teams User Activity User Detail",
+    "workload": "Microsoft Teams Usage Reports",
+    "data_domain": "usage_reports",
+    "method": "GET",
+    "auth": "application",
+    "documented_permissions": ["Reports.Read.All"],
+    "permission": "Reports.Read.All",
+    "pagination": false,
+    "enabled": true,
+    "transport_type": "USAGE_REPORT_CSV",
+    "report_key": "teams_user_activity",
+    "period": "D7",
+    "path": "/v1.0/reports/getTeamsUserActivityUserDetail(period='D7')"
+  },
+  {
     "id": "USAGE-002",
     "key": "exchange_email_activity",
     "name": "Exchange Email Activity User Detail",

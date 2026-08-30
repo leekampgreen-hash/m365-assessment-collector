@@ -2,6 +2,7 @@ FROM python:3.13-slim
 
 COPY requirements-collector.txt /tmp/requirements-collector.txt
 RUN python -m pip install --no-cache-dir --requirement /tmp/requirements-collector.txt \
+    && python -m pip install --no-cache-dir pytest==8.4.1 \
     && rm /tmp/requirements-collector.txt
 
 COPY analytics /workspace/analytics

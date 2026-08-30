@@ -33,7 +33,6 @@ REPORTS = {
     "onedrive_account_usage": _spec("onedrive_account_usage", "OneDrive Usage Account Detail", "getOneDriveUsageAccountDetail", ("Report Refresh Date",), "OneDrive", "account"),
     "sharepoint_user_activity": _spec("sharepoint_user_activity", "SharePoint Activity User Detail", "getSharePointActivityUserDetail", COMMON_USER, "SharePoint", "user"),
     "sharepoint_site_usage": _spec("sharepoint_site_usage", "SharePoint Site Usage Detail", "getSharePointSiteUsageDetail", ("Report Refresh Date",), "SharePoint", "site"),
-    "teams_user_activity": _spec("teams_user_activity", "Teams User Activity User Detail", "getTeamsUserActivityUserDetail", COMMON_USER, "Teams", "user"),
 }
 
 ALIASES = {

@@ -48,9 +48,9 @@ class UsageRuntimeTests(unittest.TestCase):
     def test_inventory_has_exactly_seven_usage_reports_and_distinct_type(self):
         specs = CollectorRuntime(INVENTORY, {}).specs
         usage = [spec for spec in specs if spec.transport_type == "USAGE_REPORT_CSV"]
-        self.assertEqual(len(usage), 7)
+        self.assertEqual(len(usage), 8)
         self.assertEqual({spec.period for spec in usage}, {"D7"})
-        self.assertEqual(len({spec.report_key for spec in usage}), 7)
+        self.assertEqual(len({spec.report_key for spec in usage}), 8)
         self.assertTrue(all(spec.path.endswith("(period='D7')") for spec in usage))
         self.assertTrue(all(spec.transport_type == "NORMAL_GRAPH_JSON" for spec in specs[:19]))
 
