@@ -87,6 +87,7 @@ _TOOL_FUNCTIONS: dict[str, Callable[..., dict[str, Any]]] = {
     "get_adoption_sharepoint": tools.get_adoption_sharepoint,
     "get_inactivity": tools.get_inactivity,
     "get_license_utilization": tools.get_license_utilization,
+    "get_license_parking": tools.get_license_parking,
     "get_correlation_users": tools.get_correlation_users,
     "get_signin_summary": tools.get_signin_summary,
     "get_signin_risk": tools.get_signin_risk,
@@ -116,6 +117,7 @@ def _mock_tools(message: str) -> list[tuple[str, dict[str, Any]]]:
         "get_summary": ["summary", "overview", "health", "overall", "how is"],
         "get_data_quality": ["data quality", "data-quality", "quality", "freshness"],
         "get_capabilities": ["capabilities", "what can", "how can", "help me", "what do you"],
+        "get_license_parking": ["license parking", "unused license", "wasted license", "inactive license", "disabled account license", "license waste", "license optimization", "who has license but not using", "licenses but not active", "license but not active"],
         "get_license_utilization": ["license", "sku", "subscription", "utilization"],
         "get_kpi": ["kpi", "key performance", "metrics"],
         "get_adoption_sharepoint": ["sharepoint adoption", "sharepoint usage"],
@@ -141,6 +143,8 @@ def _mock_tools(message: str) -> list[tuple[str, dict[str, Any]]]:
         return [("get_signin_summary", tools.get_signin_summary())]
     if any(alias in text for alias in aliases["get_signin_risk"]):
         return [("get_signin_risk", tools.get_signin_risk())]
+    if any(alias in text for alias in aliases["get_license_parking"]):
+        return [("get_license_parking", tools.get_license_parking())]
     if any(alias in text for alias in aliases["get_inactivity"]):
         days = next((value for value in (90, 60, 30) if str(value) in text), 30)
         return [("get_inactivity", tools.get_inactivity(days))]
@@ -183,6 +187,8 @@ def _schema() -> list[dict[str, Any]]:
             description = "Returns tenant conditional access policies with total, enabled, disabled, display names, and states."
         elif name == "get_admin_roles":
             description = "Returns admin role inventory — who has privileged roles, assignment counts, and risk findings. Call when asked about admin roles, privileged access, or who are the admins."
+        elif name == "get_license_parking":
+            description = "Returns license parking report — identifies wasted license spend from inactive users, disabled accounts, and unassigned licenses. Shows estimated monthly and annual cost waste. Call when asked about license waste, unused licenses, or optimization."
         elif name == "run_security_analysis":
             description = "Generates a comprehensive security analysis report covering all security findings, risk scores, MFA status, admin roles, and sign-in analytics. Call when user asks for a full security report, security assessment, or security posture analysis. This tool takes longer than others — inform user it may take a moment."
         schemas.append({"type": "function", "function": {"name": name, "description": description, "parameters": parameters}})

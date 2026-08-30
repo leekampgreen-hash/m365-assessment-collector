@@ -54,3 +54,12 @@ Database checks confirm current users, current-plus-snapshot SKU persistence (3 
 
 - **Evidence:** `docs/evidence/STD-11-LICENSE-BASIC-LIVE-ACCEPTANCE-001.md`.
 - **Next:** `STD-12-CROSS-WORKLOAD-CORRELATION-CONTRACT-001`.
+
+### LIC-P01 License Parking Report
+
+**Status:** `PASS`
+
+- Added `GET /api/license/parking-report` with tenant-scoped detection of disabled licensed accounts, inactive licensed users at 30/60/90 days, and unassigned subscription capacity.
+- Response exposes display names and SKU part numbers only; monthly and annual waste estimates use known SKU prices and estimate unknown SKUs at zero.
+- Registered `get_license_parking` for mock and live agent modes with license-waste keyword routing.
+- **Validation:** API report returned HTTP 200 with `READY`; agent routing selected `get_license_parking`. Collector pytest reached 303 passing tests before a pre-existing migration-order expectation failure.

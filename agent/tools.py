@@ -67,6 +67,10 @@ def get_license_utilization() -> dict[str, Any]:
     return _get("/api/operations/license-utilization")
 
 
+def get_license_parking() -> dict[str, Any]:
+    return _get("/api/license/parking-report")
+
+
 def get_correlation_users() -> dict[str, Any]:
     return _get("/api/operations/correlation/users")
 

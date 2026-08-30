@@ -23,6 +23,7 @@
 - SEC-ANALYST-P01: Security Analyst Agent — PASS
 - INFRA-P01: Scheduled collector (phase-ordered) — SEALED
 - AUTH-P01: API Key authentication — SEALED
+- LIC-P01: License Parking Report — PASS
 
 ## Active Task
 Planning next sprint
@@ -58,6 +59,7 @@ From `api/operations.py`:
 - `GET /api/operations/adoption/sharepoint`
 - `GET /api/operations/adoption/sharepoint/sites`
 - `GET /api/operations/license-utilization`
+- `GET /api/license/parking-report`
 - `GET /api/operations/data-quality`
 - `GET /api/security/summary`
 - `GET /api/security/findings?status={status}&severity={severity}`

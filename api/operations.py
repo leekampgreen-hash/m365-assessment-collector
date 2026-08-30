@@ -26,6 +26,15 @@ from capabilities.persistence import CapabilityQueryService
 
 BASE_PATH = "/api/operations"
 VALID_INACTIVITY_WINDOWS = (30, 60, 90)
+LICENSE_PRICES = {
+    "SPB": 22.00,
+    "AAD_PREMIUM_P2": 9.00,
+    "POWER_BI_STANDARD": 10.00,
+    "O365_BUSINESS_PREMIUM": 22.00,
+    "ENTERPRISEPACK": 36.00,
+    "ENTERPRISEPREMIUM": 57.00,
+    "DESKLESSPACK": 4.00,
+}
 
 
 def _contains_status(value: Any, status: str) -> bool:
@@ -71,6 +80,51 @@ def _quality(service: OperationsAnalyticsQueryService) -> dict[str, Any]:
         "partial_tenant_coverage": built["data_quality"]["partial_tenant_coverage"],
         "identity_joins": built["data_quality"]["identity_joins"],
     }
+
+
+def _license_parking(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT u.user_id, u.display_name, u.account_enabled, oa.last_activity_date,
+               s.sku_part_number
+        FROM core.user u
+        JOIN core.user_license_assignment ula ON ula.tenant_id = u.tenant_id AND ula.user_id = u.user_id
+        JOIN core.subscribed_sku s ON s.tenant_id = ula.tenant_id AND s.sku_id = ula.sku_id
+        LEFT JOIN LATERAL (SELECT MAX(last_activity_date) AS last_activity_date FROM core.usage_office365_active_user WHERE tenant_id = u.tenant_id AND LOWER(entity_key) = LOWER(u.user_principal_name)) oa ON TRUE
+        WHERE u.tenant_id = %s
+        ORDER BY u.user_id
+    """, (tenant_id,))
+    users: dict[int, dict[str, Any]] = {}
+    for user_id, display_name, enabled, last_activity, sku in cursor.fetchall():
+        user = users.setdefault(user_id, {"display_name": display_name, "account_enabled": enabled, "last_activity_date": last_activity, "licenses": []})
+        if sku not in user["licenses"]:
+            user["licenses"].append(sku)
+    def shaped(user: dict[str, Any]) -> dict[str, Any]:
+        cost = round(sum(LICENSE_PRICES.get(sku, 0.0) for sku in user["licenses"]), 2)
+        return {"display_name": user["display_name"], "licenses": user["licenses"], "monthly_cost_usd": cost}
+    now = datetime.now(timezone.utc).date()
+    categories = {}
+    for days, key in ((90, "inactive_90d"), (60, "inactive_60d"), (30, "inactive_30d")):
+        categories[key] = [shaped(user) for user in users.values() if user["account_enabled"] and (user["last_activity_date"] is None or user["last_activity_date"] < now - timedelta(days=days))]
+        categories[key].sort(key=lambda item: item["monthly_cost_usd"], reverse=True)
+    disabled = [shaped(user) for user in users.values() if not user["account_enabled"]]
+    disabled.sort(key=lambda item: item["monthly_cost_usd"], reverse=True)
+    cursor.execute("SELECT sku_part_number, prepaid_units, consumed_units FROM core.subscribed_sku WHERE tenant_id = %s AND prepaid_units > consumed_units", (tenant_id,))
+    unassigned = []
+    for sku, purchased, assigned in cursor.fetchall():
+        count = purchased - assigned
+        unassigned.append({"sku_part_number": sku, "purchased": purchased, "assigned": assigned, "unassigned_count": count, "monthly_waste_usd": round(count * LICENSE_PRICES.get(sku, 0.0), 2)})
+    unassigned.sort(key=lambda item: item["monthly_waste_usd"], reverse=True)
+    total_users = len(users)
+    waste = disabled + categories["inactive_90d"] + unassigned
+    total_monthly = round(sum(item["monthly_cost_usd"] for item in disabled + categories["inactive_90d"]) + sum(item["monthly_waste_usd"] for item in unassigned), 2)
+    recommendations = []
+    for label, items, action in (("disabled", disabled, "Reclaim licenses from disabled accounts."), ("inactive 90d", categories["inactive_90d"], "Review and reclaim licenses from users inactive 90+ days."), ("unassigned", unassigned, "Review and remove unassigned license capacity.")):
+        saving = round(sum(item.get("monthly_cost_usd", item.get("monthly_waste_usd", 0.0)) for item in items), 2)
+        if saving:
+            recommendations.append({"priority": 1 if label == "disabled" else 2, "action": action, "potential_saving_monthly_usd": saving})
+    recommendations.sort(key=lambda item: item["potential_saving_monthly_usd"], reverse=True)
+    return {"summary": {"total_licensed_users": total_users, "total_waste_monthly_usd": total_monthly, "total_waste_annual_usd": round(total_monthly * 12, 2), "waste_categories": {"disabled_with_license": len(disabled), "inactive_90d_with_license": len(categories["inactive_90d"]), "inactive_60d_with_license": len(categories["inactive_60d"]), "inactive_30d_with_license": len(categories["inactive_30d"]), "unassigned_licenses": sum(item["unassigned_count"] for item in unassigned)}}, "disabled_accounts": disabled, "inactive_90d": categories["inactive_90d"], "inactive_60d": categories["inactive_60d"], "inactive_30d": categories["inactive_30d"], "unassigned_licenses": unassigned, "recommendations": recommendations}
 
 
 class OperationsApiHandler(BaseHTTPRequestHandler):
@@ -190,16 +244,23 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 if close is not None:
                     close()
             return
-        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path == "/api/capabilities") and not verify_api_key(self):
+        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path == "/api/capabilities") and not verify_api_key(self):
             self.send_response(401)
             self.send_header("WWW-Authenticate", "X-API-Key")
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and path != "/api/capabilities":
+        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and path != "/api/capabilities":
             self._write(404, _response("NOT_FOUND"))
             return
         try:
+            if path == "/api/license/parking-report":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _license_parking(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
             if path.startswith("/api/security"):
                 try:
                     if path == "/api/security/summary":
