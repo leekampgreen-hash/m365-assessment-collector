@@ -37,7 +37,7 @@ Add a summary panel at the top of the dashboard showing actionable findings that
 ```
 
 ## AGT-DEV01 — Agent Auto-Tester
-**Status:** PASS  
+**Status:** PASS (100% score)
 **Priority:** LOW
 
 **Description:**
@@ -63,3 +63,13 @@ and verifies agent response quality.
 - All categories pass: security, adoption, license, inactivity, general, out_of_scope
 - No rule IDs or UUIDs detected in any response
 - Results saved to `scripts/agent_test_results.json`
+
+## INFRA-P02 — Scheduled email report
+**Status:** PLANNED
+**Priority:** MEDIUM
+
+**Description:**
+Implement scheduled email reports based on collected operational and security data.
+
+**Status Detail:**
+Designed and ready to implement.

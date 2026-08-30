@@ -78,6 +78,13 @@ Evidence: AGT-P01 through AGT-P05 accepted; all 8 AGT-P05 tests pass.
 - Added keyword-based context lookup with a concise prompt-size limit and module-level singleton loading.
 - Integrated relevant knowledge context into live-mode agent system prompts.
 
+## AGT-P08 KryptonLab provider switch (PASS)
+
+**Task:** `AGT-P08`
+**Status:** `AGT-P08 PASS`
+
+- Switched the agent provider to KryptonLab using `kl/claude-sonnet-4-6`.
+
 ## AGT-P09 Knowledge base restructure (PASS)
 
 **Task:** `AGT-P09`
@@ -100,6 +107,13 @@ Evidence: AGT-P01 through AGT-P05 accepted; all 8 AGT-P05 tests pass.
 - 38 agent tests pass.
 - Web fetch deferred to the future; AGT-P11 and AGT-P12 are on hold.
 
+## AGT-TD01 Tech debt cleanup (PASS)
+
+**Task:** `AGT-TD01`
+**Status:** `AGT-TD01 PASS`
+
+- Completed 19 agent-related technical debt fixes.
+
 ## AGT-P11 Web fetch cache (DEFERRED)
 
 **Task:** `AGT-P11`
@@ -114,4 +128,8 @@ Evidence: AGT-P01 through AGT-P05 accepted; all 8 AGT-P05 tests pass.
 **Status:** `AGT-P12 DEFERRED`
 
 - Integration deferred until AGT-P11 is complete.
+
+## Roadmap
+
+See `docs/progress/agent_roadmap.md` for production and planned agent definitions.
 

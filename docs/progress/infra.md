@@ -15,4 +15,4 @@ Added APScheduler-based scheduled collection with per-group endpoint and securit
 
 Status: `INFRA-P01 PASS`
 
-Next: `AGT-UX01 Executive Summary Panel`
+Next: `INFRA-P02 Scheduled email report`

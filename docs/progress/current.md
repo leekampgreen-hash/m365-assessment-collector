@@ -2,42 +2,38 @@
 
 ## Completed Recently
 
-- SP-P03 to SP-P12: SharePoint workload SEALED
-- TM-P01 to TM-P03: Teams collector + analytics PASS
-- DA-P01 to DA-P03: Data audit + persistence fixes
-- API-P01: Missing endpoints added
-- OPT-P01: Token optimization (progress files split)
-- AGT-P01 to AGT-P09: Agent tools, orchestration, chat API, chat box UI, additional tools, live acceptance, knowledge base, and knowledge base restructure PASS
-- SEC-P01 to SEC-P07: Security risk, MFA coverage, conditional-access, admin-roles, sign-in logs, MFA registration, sign-in detail, and combined risk scoring APIs and agent tools PASS
-- AGT-UX01: Executive Summary Panel PASS — 5 real DB findings displayed in plain language with color-coded severity and nginx envsubst API key injection
-- AGT-DEV01: Agent Auto-Tester PASS — 100% (30/30 questions); all categories pass, with no rule IDs or UUIDs detected; results saved to `scripts/agent_test_results.json`
-
-## Agent Status
-
-- AGT-P01: PASS
-- AGT-P02: PASS
-- AGT-P03: PASS
-- AGT-P04: PASS
-- AGT-P05: PASS
-- AGT-P06: PASS
-- AGT-P07: PASS
-- AGT-P09: PASS
-- AGT-P10: PASS
-- AGT-P11: DEFERRED
-- AGT-P12: DEFERRED
-- SEC-P05: PASS
-- SEC-P06: PASS
-- AUTH-P01: PASS
-- INFRA-P01: PASS
+- AGT-P01 to P03: Agent core + API endpoint — SEALED
+- AGT-P04: Chat UI + dark theme — SEALED
+- AGT-P05: Live acceptance test — SEALED
+- AGT-P06: 3 additional tools (`get_summary`, `get_data_quality`, `get_capabilities`) — SEALED
+- AGT-P07: Knowledge base — SEALED
+- AGT-P08: KryptonLab provider switch (`kl/claude-sonnet-4-6`) — SEALED
+- AGT-P09: Knowledge base restructure (`core/` + `products/`) — SEALED
+- AGT-P10: Research tool stub + Microsoft Learn URLs — SEALED
+- AGT-TD01: Tech debt cleanup (19 fixes) — SEALED
+- AGT-UX01: Executive Summary Panel — SEALED
+- AGT-DEV01: Agent auto-tester 100% score — SEALED
+- SEC-P01: Risky users + risk detections — SEALED
+- SEC-P02: MFA coverage — SEALED
+- SEC-P03: CA Policy inventory — SEALED
+- SEC-P04: Admin role inventory — SEALED
+- SEC-P05: Sign-in logs analytics — SEALED
+- SEC-P06: MFA registration per user — SEALED
+- SEC-P07: Sign-in detail + combined risk scoring — SEALED
+- INFRA-P01: Scheduled collector (phase-ordered) — SEALED
+- AUTH-P01: API Key authentication — SEALED
 
 ## Active Task
-GitHub commit + next planning session
-
+Planning next sprint
 
 ## Next Steps
 
-1. AGT-DEV01 Agent Auto-Tester
-2. API Key auth UI (future SaaS)
+1. INFRA-P02 — Scheduled email report (designed, ready to implement)
+2. Multi-tenant architecture design
+3. UI polish — mobile responsive, loading states
+4. AGT-P11/P12 — Web fetch + research integration (blocked, defer)
+5. Security Analyst Agent (future)
+6. License Optimizer Agent (future)
 
 
 ## Available API Endpoints
