@@ -59,5 +59,7 @@ and verifies agent response quality.
 
 **Verification:**
 - 30-question dataset and standalone evaluator added under `scripts/`
-- Live score: not run in this environment; execute `python scripts/test_agent.py` against the operations API
-- Evaluates rejection, tool usage, plain-language response length, rule IDs, and UUIDs
+- Live score: 100% (30/30 questions)
+- All categories pass: security, adoption, license, inactivity, general, out_of_scope
+- No rule IDs or UUIDs detected in any response
+- Results saved to `scripts/agent_test_results.json`

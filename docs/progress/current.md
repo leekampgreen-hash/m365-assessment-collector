@@ -10,7 +10,7 @@
 - AGT-P01 to AGT-P09: Agent tools, orchestration, chat API, chat box UI, additional tools, live acceptance, knowledge base, and knowledge base restructure PASS
 - SEC-P01 to SEC-P07: Security risk, MFA coverage, conditional-access, admin-roles, sign-in logs, MFA registration, sign-in detail, and combined risk scoring APIs and agent tools PASS
 - AGT-UX01: Executive Summary Panel PASS — 5 real DB findings displayed in plain language with color-coded severity and nginx envsubst API key injection
-- AGT-DEV01: Agent Auto-Tester PASS — 30-question dataset and standalone evaluator added; live score pending execution against the operations API
+- AGT-DEV01: Agent Auto-Tester PASS — 100% (30/30 questions); all categories pass, with no rule IDs or UUIDs detected; results saved to `scripts/agent_test_results.json`
 
 ## Agent Status
 
@@ -31,7 +31,7 @@
 - INFRA-P01: PASS
 
 ## Active Task
-review and next planning session
+GitHub commit + next planning session
 
 
 ## Next Steps

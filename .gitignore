@@ -13,6 +13,7 @@ agent/knowledge/cache/*.json
 .pytest_cache/
 *.log
 logs/
+scripts/agent_test_results.json
 tmp/
 temp/
 *.dump
