@@ -16,7 +16,7 @@ async function get(path) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DASHBOARD_FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(path, { headers: { Accept: "application/json" }, signal: controller.signal });
+    const response = await fetch(path, { headers: { Accept: "application/json", "X-API-Key": window.API_KEY || "" }, signal: controller.signal });
     if (!response.ok) throw new Error("request failed");
     return await response.json();
   } finally {
@@ -25,12 +25,32 @@ async function get(path) {
 }
 function setHealth(ready) { $("#health-dot").className = `dot ${ready ? "ready" : "error"}`; $("#health-label").textContent = ready ? "Analytics service healthy" : "Analytics service unavailable"; }
 function showUnavailable() { $("#error-banner").textContent = "Analytics service unavailable"; $("#error-banner").classList.remove("hidden"); }
-function metricCard(label, item) { return `<article class="card"><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${value(item) === null ? "Data currently unavailable" : escapeHtml(display(item))}</div><div class="status ${value(item) === null ? "unavailable" : "ready"}">${status(item)}</div></article>`; }
-function renderSummary(data) { const totalUsers = data.tenant?.total_users; const highCount = Number(data.exchange?.capacity_usage?.high ?? 0); const licenseAttention = data.license_attention_count; const card = (label, number, emphasized) => `<article class="card"><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(number)}</div><div class="status ${emphasized ? "unavailable" : "ready"}">${emphasized ? "Attention" : "Normal"}</div></article>`; $("#summary-cards").innerHTML = [metricCard("Total Users", totalUsers), card("Mailbox Capacity Risk", `${highCount} HIGH`, highCount > 0), card("License Attention", licenseAttention ?? "Data currently unavailable", Number(licenseAttention) > 0)].join(""); }
-function renderLicenses(data, ready = true) { const rows = ready ? Object.entries(data.license || {}) : []; $("#licenses").innerHTML = rows.length ? `<table><thead><tr><th>SKU</th><th>Purchased</th><th>Consumed</th><th>Available</th><th>Utilization</th><th>Assigned users</th></tr></thead><tbody>${rows.map(([sku, item]) => `<tr><th>${escapeHtml(sku)}</th><td>${escapeHtml(item.purchased_units)}</td><td>${escapeHtml(item.consumed_units)}</td><td>${escapeHtml(item.available_units)}</td><td>${escapeHtml(item.utilization_percent)}%</td><td>${escapeHtml(item.assigned_user_count)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">License data currently unavailable</p>`; }
+function metricCard(label, item, icon, iconClass, sublabel) { return `<article class="card"><div class="kpi-icon ${iconClass}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${value(item) === null ? "Data currently unavailable" : escapeHtml(display(item))}</div><div class="status ${value(item) === null ? "unavailable" : "ready"}">${escapeHtml(sublabel || status(item))}</div></article>`; }
+async function loadExecSummary() {
+  const paths = ["/api/security/admin-roles", "/api/security/mfa-coverage", "/api/security/ca-policies", "/api/security/signin-summary", "/api/security/mfa-registration"];
+  const responses = await Promise.all(paths.map((path) => get(path).catch(() => null)));
+  const available = responses.filter(Boolean);
+  if (!available.length) return;
+  const rank = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const findings = available.flatMap((response) => Array.isArray(response.data?.findings) ? response.data.findings : []).sort((a, b) => (rank[String(a.risk || "LOW").toUpperCase()] ?? 3) - (rank[String(b.risk || "LOW").toUpperCase()] ?? 3)).slice(0, 5);
+  const panel = $("#exec-summary");
+  const count = findings.length;
+  if (!count) {
+    $("#exec-summary-icon").textContent = "✅";
+    $("#exec-summary-count").textContent = "No issues found — tenant looks healthy";
+    $("#exec-summary-items").innerHTML = "";
+  } else {
+    $("#exec-summary-icon").textContent = count >= 3 ? "🔴" : "⚠️";
+    $("#exec-summary-count").textContent = count >= 3 ? `${count} items require your attention` : `⚠️ ${count} item${count === 1 ? "" : "s"} require your attention`;
+    $("#exec-summary-items").innerHTML = findings.map((finding) => { const risk = String(finding.risk || "LOW").toLowerCase(); const icon = risk === "high" ? "🔴" : risk === "medium" ? "🟡" : "🟢"; return `<div class="exec-summary-item ${["high", "medium", "low"].includes(risk) ? risk : "low"}"><span>${icon}</span><span>${escapeHtml(finding.finding)}</span></div>`; }).join("");
+  }
+  panel.style.display = "block";
+}
+function renderSummary(data) { const totalUsers = data.tenant?.total_users; const highCount = Number(data.exchange?.capacity_usage?.high ?? 0); const licenseAttention = data.license_attention_count; const card = (label, number, emphasized, icon, iconClass) => `<article class="card"><div class="kpi-icon ${iconClass}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(number)}</div><div class="status ${emphasized ? "unavailable" : "ready"}">${emphasized ? "Attention" : "Normal"}</div></article>`; const personIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="currentColor"></circle><path d="M5 20c.7-3.5 3.1-5.5 7-5.5s6.3 2 7 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>'; const inboxIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M4 16h4l1.5-3h5L16 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path></svg>'; const badgeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M9 14h6v6H9z" fill="none" stroke="currentColor" stroke-width="2"></path></svg>'; $("#summary-cards").innerHTML = [metricCard("Directory Users", totalUsers, personIcon, "kpi-users", "Active in tenant"), card("Mailbox Capacity Risk", `${highCount} HIGH`, highCount > 0, inboxIcon, "kpi-risk"), card("License Attention", licenseAttention ?? "Data currently unavailable", Number(licenseAttention) > 0, badgeIcon, "kpi-license")].join(""); }
+function renderLicenses(data, ready = true) { const rows = ready ? Object.entries(data.license || {}) : []; $("#licenses").innerHTML = rows.length ? `<table><thead><tr><th>SKU</th><th>Purchased</th><th>Consumed</th><th>Available</th><th>Utilization</th><th>Assigned users</th></tr></thead><tbody>${rows.map(([sku, item]) => `<tr><th>${escapeHtml(sku)}</th><td>${escapeHtml(item.purchased_units)}</td><td>${escapeHtml(item.consumed_units)}</td><td class="${Number(item.available_units) === 0 ? "available-zero" : ""}">${escapeHtml(item.available_units)}</td><td><span class="utilization-pill utilization-${Number(item.utilization_percent) === 100 ? "full" : Number(item.utilization_percent) <= 10 ? "low" : "mid"}">${escapeHtml(item.utilization_percent)}%</span></td><td>${escapeHtml(item.assigned_user_count)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">License data currently unavailable</p>`; }
 function workloadCard(name, item, fields) { return `<article class="card"><div class="card-head"><h3>${name}</h3></div>${fields.map(([label, key, suffix, kind]) => { const rendered = kind === "primitive" ? primitive(item[key]) : kind === "storage" ? storageValue(item[key]) : display(item[key], suffix); return `<div class="detail-row"><span class="detail-label">${label}</span><strong>${rendered}</strong></div>`; }).join("")}</article>`; }
 function renderWorkloads(data) { window.dashboardOnedrive = data.onedrive || {}; renderUsageSummaries(); }
-const workloadNames = { exchange: "Email usage", onedrive: "OneDrive usage", sharepoint: "SharePoint usage" };
+const workloadNames = { exchange: '<i class="ti ti-mail" aria-hidden="true"></i>', onedrive: '<i class="ti ti-cloud" aria-hidden="true"></i>', sharepoint: '<i class="ti ti-layout-grid" aria-hidden="true"></i>' };
 const usageLevel = (date, reference) => { if (!date || date === "UNKNOWN") return "NO DATA"; const age = Math.floor((new Date(reference) - new Date(date)) / 86400000); return age <= 1 ? "HIGH" : age <= 7 ? "MEDIUM" : age > 7 ? "LOW" : "NO DATA"; };
 // Exchange capacity presentation is active-only. The authoritative usage_level
 // (LOW/MEDIUM/HIGH/NO DATA) comes from the analytics view per user; we only
@@ -69,6 +89,7 @@ function renderDetail(workload, filter = detailState.filter, page = 1) {
 $("#back-overview").addEventListener("click", () => { $("#usage-detail").classList.add("hidden"); });
 async function renderInactivity(days = 30) { try { const data = await get(`/api/operations/inactivity?days=${days}`); const item = data.status === "READY" ? (data.data || {}) : {}; $("#inactivity").innerHTML = [["Inactive users", item.inactive_users], ["Active users", item.active_users], ["Insufficient evidence", item.unknown_users], ["Workload inactivity signals", item.multi_workload_inactive_users]].map(([label, number], index) => `<div class="inactivity-cell"><div class="inactivity-number">${data.status === "READY" ? (number ?? 0) : "Data currently unavailable"}</div><div class="inactivity-label">${label}</div>${index === 3 ? '<div class="inactivity-caption">Users with inactivity evidence across evaluated workloads.</div>' : ""}</div>`).join(""); } catch (_) { showUnavailable(); $("#inactivity").innerHTML = `<div class="inactivity-cell">Data currently unavailable</div>`; } }
 async function start() {
+  loadExecSummary().catch(() => {});
   let dashboardReady = false;
   try {
     await get("/health");

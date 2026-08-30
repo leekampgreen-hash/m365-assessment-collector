@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Microsoft 365 Operations Intelligence</title>
+  <script>window.API_KEY = "__API_KEY_PLACEHOLDER__";</script>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 </head>
 <body>
   <main class="shell">
@@ -24,6 +26,13 @@
 
     <div id="loading" class="loading">Loading operational data<span class="pulse">...</span></div>
     <div id="dashboard" class="hidden">
+      <div id="exec-summary" class="exec-summary" style="display:none">
+        <div class="exec-summary-header">
+          <span id="exec-summary-icon">⚠️</span>
+          <span id="exec-summary-count"></span>
+        </div>
+        <div id="exec-summary-items" class="exec-summary-items"></div>
+      </div>
       <section id="overview-section">
         <div class="section-heading"><div><p class="eyebrow">At a glance</p><h2>Overview</h2></div></div>
         <div id="summary-cards" class="card-grid three"></div>
@@ -37,6 +46,61 @@
 
     </div>
   </main>
+  <button id="chat-toggle" class="chat-toggle" type="button" aria-label="Open M365 assistant">&#128172;</button>
+  <section id="chat-panel" class="chat-panel" aria-label="M365 Assistant">
+    <header class="chat-header"><span class="chat-avatar">AI</span><div><strong>M365 Assistant</strong><small>Ask about your tenant</small></div><button id="chat-expand" class="chat-expand" type="button" aria-label="Expand assistant"><i class="ti ti-arrows-maximize"></i></button><button id="chat-close" class="chat-close" type="button" aria-label="Close assistant">×</button></header>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-area"><input id="chat-input" type="text" placeholder="Ask about your tenant..." autocomplete="off"><button id="chat-send" type="button" aria-label="Send message">➤</button></div>
+  </section>
   <script src="/app.js"></script>
+  <script>
+    (() => {
+      const button = document.getElementById("chat-toggle");
+       const panel = document.getElementById("chat-panel");
+       const expand = document.getElementById("chat-expand");
+       const close = document.getElementById("chat-close");
+      const input = document.getElementById("chat-input");
+      const send = document.getElementById("chat-send");
+      const messages = document.getElementById("chat-messages");
+      const history = [];
+      const addMessage = (role, content) => {
+        const bubble = document.createElement("div");
+        bubble.className = `chat-bubble ${role}`;
+        bubble.textContent = content;
+        messages.appendChild(bubble);
+        messages.scrollTop = messages.scrollHeight;
+        return bubble;
+      };
+      const submit = async () => {
+        const message = input.value.trim();
+        if (!message || send.disabled) return;
+        input.value = "";
+        addMessage("user", message);
+        history.push({ role: "user", content: message });
+        send.disabled = true;
+        const thinking = addMessage("agent", "Thinking...");
+        try {
+          const response = await fetch("/api/agent/chat", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", "X-API-Key": window.API_KEY || "" }, body: JSON.stringify({ message, history }) });
+          if (!response.ok) throw new Error("request failed");
+          const data = await response.json();
+          thinking.textContent = data.reply || "Sorry, I couldn't reach the assistant. Please try again.";
+          history.push({ role: "assistant", content: thinking.textContent });
+        } catch (_) {
+          thinking.textContent = "Sorry, I couldn't reach the assistant. Please try again.";
+          history.push({ role: "assistant", content: thinking.textContent });
+        } finally { send.disabled = false; input.focus(); }
+      };
+      button.addEventListener("click", () => { panel.classList.toggle("open"); if (panel.classList.contains("open")) input.focus(); });
+       expand.addEventListener("click", () => {
+         const expanded = panel.classList.toggle("expanded");
+         expand.setAttribute("aria-label", expanded ? "Collapse assistant" : "Expand assistant");
+         expand.firstElementChild.className = `ti ti-arrows-${expanded ? "minimize" : "maximize"}`;
+       });
+       close.addEventListener("click", () => panel.classList.remove("open"));
+      send.addEventListener("click", submit);
+      input.addEventListener("keydown", (event) => { if (event.key === "Enter") submit(); });
+      addMessage("agent", "Hi! Ask me anything about your M365 tenant — adoption, licenses, inactivity, or health.");
+    })();
+  </script>
 </body>
 </html>
