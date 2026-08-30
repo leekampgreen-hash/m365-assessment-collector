@@ -64,12 +64,94 @@ and verifies agent response quality.
 - No rule IDs or UUIDs detected in any response
 - Results saved to `scripts/agent_test_results.json`
 
-## INFRA-P02 — Scheduled email report
+## INFRA-P02 — Scheduled Email Report
+**Status:** PLANNED
+**Priority:** HIGH
+
+**Description:**
+Daily/weekly HTML email summary to IT admins.
+
+**Design doc:**
+docs/progress/infra_roadmap.md
+
+**Dependencies:**
+All security + license endpoints (complete)
+
+## LIC-OPTIMIZER-P01 — License Optimizer Agent
+**Status:** PLANNED
+**Priority:** HIGH
+
+**Description:**
+AI agent that analyzes license parking report and generates specific reclaim recommendations with cost savings.
+
+**Triggers:**
+On-demand via chat or dedicated button.
+
+**Dependencies:**
+LIC-P01 license parking report (complete)
+
+## AGT-MULTI-P01 — Multi-tenant Architecture
+**Status:** PLANNED
+**Priority:** HIGH
+
+**Description:**
+Support multiple customer tenants — each with own credentials, data isolation, and API key.
+
+**Dependencies:**
+Full architecture redesign required.
+
+## AGT-DEV01-UPDATE — Update Agent Test Questions
 **Status:** PLANNED
 **Priority:** MEDIUM
 
 **Description:**
-Implement scheduled email reports based on collected operational and security data.
+Update scripts/agent_test_questions.json to cover 20 tools (currently covers 19). Add questions for:
+- get_license_parking
+- run_security_analysis
+- get_signin_detail
+- get_risk_score
+- get_admin_roles
+- get_mfa_registration
 
-**Status Detail:**
-Designed and ready to implement.
+## UI-P01 — UI Polish
+**Status:** PLANNED
+**Priority:** MEDIUM
+
+**Description:**
+Mobile responsive, loading states, error handling, usage cards icon centering fix.
+
+## AGT-P11 — Web Fetch Cache Layer
+**Status:** DEFERRED
+**Priority:** LOW
+
+**Blocker:**
+DuckDuckGo blocked from container, Tavily API key needed.
+
+## AGT-P12 — Research Integration
+**Status:** DEFERRED
+**Priority:** LOW
+
+**Blocker:**
+Depends on AGT-P11.
+
+## SAAS-P01 — Customer Onboarding Flow
+**Status:** PLANNED
+**Priority:** MEDIUM
+
+**Description:**
+Self-service onboarding for new MSP customers — register tenant, generate API key, connect Graph API.
+
+## SAAS-P02 — White Label
+**Status:** PLANNED
+**Priority:** LOW
+
+**Description:**
+MSP can rebrand dashboard with own logo and colors.
+
+## SAAS-P03 — Rate Limiting
+**Status:** PLANNED
+**Priority:** MEDIUM
+
+**Description:**
+Protect API from abuse — per key rate limiting.
+
