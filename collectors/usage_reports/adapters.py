@@ -32,3 +32,7 @@ def sharepoint_user_activity(content, *, tenant_id, observed_at):
 
 def sharepoint_site_usage(content, *, tenant_id, observed_at):
     return _adapter("sharepoint_site_usage", content, tenant_id=tenant_id, observed_at=observed_at)
+
+
+def teams_user_activity(content, *, tenant_id, observed_at):
+    return _adapter("teams_user_activity", content, tenant_id=tenant_id, observed_at=observed_at)

@@ -70,6 +70,7 @@ EXPECTED_TABLES = {
     "core.usage_onedrive_account_usage", "core.usage_onedrive_account_usage_snapshot",
     "core.usage_sharepoint_user_activity", "core.usage_sharepoint_user_activity_snapshot",
     "core.usage_sharepoint_site_usage", "core.usage_sharepoint_site_usage_snapshot",
+    "core.usage_teams_user_activity", "core.usage_teams_user_activity_snapshot",
     "security.observation",
     "security.finding_evaluation",
     "security.finding_current",
@@ -105,6 +106,8 @@ EXPECTED_FILES_IN_ORDER = [
     "020_onedrive_high_value_audit_analytics.sql",
     "021_sharepoint_tenant_settings.sql",
     "022_sharepoint_high_value_audit.sql",
+    "023_subscribed_sku_lifecycle.sql",
+    "024_teams_user_activity.sql",
 ]
 
 
@@ -276,8 +279,8 @@ class TableInventoryTests(unittest.TestCase):
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            51,
-            f"expected exactly 51 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            53,
+            f"expected exactly 53 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:

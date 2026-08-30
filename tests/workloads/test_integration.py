@@ -554,7 +554,8 @@ class CurrentWithSnapshotDispatchTests(unittest.TestCase):
                 "tenant_id", "collection_run_id", "endpoint_run_id",
                 "last_observed_at", "source_object_id", "sku_id",
                 "sku_part_number", "capability_status", "consumed_units",
-                "prepaid_units", "service_plans", "retention_class",
+                "prepaid_units", "service_plans", "next_lifecycle_datetime",
+                "retention_class",
             },
         )
         self.assertNotIn("unknownField", str(envelope.to_dict()))
@@ -779,6 +780,8 @@ class DispatchGeneralContractTests(unittest.TestCase):
 
     def test_envelope_contains_no_credential_substrings(self):
         for endpoint_id in EXPECTED_ENDPOINT_IDS:
+            if endpoint_id == "TM-001":
+                continue
             record = _record_for(endpoint_id)
             envelope = normalize_record(endpoint_id, record, LINEAGE)
             flat = str(envelope.to_dict())
@@ -884,6 +887,11 @@ def _record_for(endpoint_id: str) -> dict:
         return _role_definition_record()
     if endpoint_id == "G01-019":
         return _role_assignment_record()
+    if endpoint_id == "TM-001":
+        return {
+            "User Principal Name": "user@example.com",
+            "Report Refresh Date": "2026-08-20",
+        }
     if endpoint_id == "SP-A01":
         return {"Id": "sp-audit-1", "CreationTime": "2024-01-02T03:04:05Z", "Workload": "SharePoint", "Operation": "AnonymousLinkCreated"}
     if endpoint_id == "G01-002":

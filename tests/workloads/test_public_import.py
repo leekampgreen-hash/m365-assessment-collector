@@ -33,7 +33,7 @@ from collectors.workloads.registry import (
 )
 
 
-EXPECTED_IDS = tuple("G01-{:03d}".format(index) for index in range(1, 21)) + ("SP-A01",)
+EXPECTED_IDS = tuple("G01-{:03d}".format(index) for index in range(1, 21)) + ("SP-A01", "TM-001")
 
 
 class PublicImportRegressionTests(unittest.TestCase):

@@ -11,9 +11,11 @@ TABLES = {
     "onedrive_account_usage": "core.usage_onedrive_account_usage",
     "sharepoint_user_activity": "core.usage_sharepoint_user_activity",
     "sharepoint_site_usage": "core.usage_sharepoint_site_usage",
+    "teams_user_activity": "core.usage_teams_user_activity",
 }
 
 BASE_COLUMNS = ("tenant_id", "entity_key", "report_refresh_date", "identity_value", "identity_is_masked", "last_activity_date", "site_url", "display_name", "send_count", "receive_count", "read_count", "meeting_count", "mailbox_item_count", "storage_used", "issue_warning_quota", "prohibit_send_quota", "prohibit_send_receive_quota", "storage_allocated", "file_count", "active_file_count", "viewed_count", "edited_count", "synced_count", "internal_share_count", "external_share_count", "page_view_count", "deleted_date", "is_deleted", "has_archive", "assigned_products", "site_template", "observed_at")
+TEAMS_COLUMNS = ("team_chat_message_count", "private_chat_message_count", "call_count")
 
 
 def write_report_rows(executor: Any, key: str, rows: Sequence[tuple[Mapping[str, Any], Mapping[str, Any]]], *, complete: bool = True) -> None:
@@ -46,10 +48,11 @@ def write_report_rows(executor: Any, key: str, rows: Sequence[tuple[Mapping[str,
     for tenant_id in tenant_ids:
         executor.execute("DELETE FROM {} WHERE tenant_id = %s AND (report_refresh_date IS NULL OR report_refresh_date <= %s)".format(table), (tenant_id, latest_by_tenant.get(tenant_id)))
     for current, snapshot in rows:
-        columns = tuple(column for column in BASE_COLUMNS if column in current)
+        column_order = BASE_COLUMNS + (TEAMS_COLUMNS if key == "teams_user_activity" else ())
+        columns = tuple(column for column in column_order if column in current)
         values = tuple(current[column] for column in columns)
         assignments = ", ".join("{} = EXCLUDED.{}".format(column, column) for column in columns if column not in ("tenant_id", "entity_key"))
         executor.execute("INSERT INTO {} ({}) VALUES ({}) ON CONFLICT (tenant_id, entity_key) DO UPDATE SET {} WHERE {}.report_refresh_date IS NULL OR {}.report_refresh_date <= EXCLUDED.report_refresh_date".format(table, ", ".join(columns), ", ".join("%s" for _ in columns), assignments, table, table), values)
-        snapshot_columns = tuple(column for column in BASE_COLUMNS if column in snapshot) + ("snapshot_identity",)
+        snapshot_columns = tuple(column for column in column_order if column in snapshot) + ("snapshot_identity",)
         snapshot_values = tuple(snapshot[column] for column in snapshot_columns)
         executor.execute("INSERT INTO {}_snapshot ({}) VALUES ({}) ON CONFLICT (tenant_id, entity_key, report_refresh_date) DO NOTHING".format(table, ", ".join(snapshot_columns), ", ".join("%s" for _ in snapshot_columns)), snapshot_values)

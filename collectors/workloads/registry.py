@@ -46,7 +46,7 @@ from .models import (
 
 EXPECTED_ENDPOINT_IDS: Tuple[str, ...] = tuple(
     "G01-{:03d}".format(index) for index in range(1, 21)
-) + ("SP-A01",)
+) + ("SP-A01", "TM-001")
 
 
 # ---------------------------------------------------------------------------
@@ -501,6 +501,21 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         owner="security_service",
         adapter=_wrap_g07b(g07b_adapters.adapt_sharepoint_audit_logs),
         description="SharePoint high-value audit events (sharing, anonymous links)",
+    )
+
+    from ..usage_reports import adapters as usage_adapters
+    entries["TM-001"] = _entry(
+        "TM-001",
+        PERSISTENCE_CURRENT_WITH_SNAPSHOT,
+        current_table="core.usage_teams_user_activity",
+        snapshot_table="core.usage_teams_user_activity_snapshot",
+        workload="Teams",
+        retention_class="STANDARD",
+        owner="usage_reports",
+        adapter=lambda record, lineage: usage_adapters.teams_user_activity(
+            record, tenant_id=lineage.tenant_id, observed_at=lineage.observed_at
+        )[0],
+        description="Teams User Activity -- D7 current + snapshot",
     )
 
     return entries

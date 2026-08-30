@@ -29,9 +29,11 @@ REPORTS = {
     "exchange_email_activity": _spec("exchange_email_activity", "Exchange Email Activity User Detail", "getEmailActivityUserDetail", COMMON_USER, "Exchange", "user"),
     "exchange_mailbox_usage": _spec("exchange_mailbox_usage", "Exchange Mailbox Usage Detail", "getMailboxUsageDetail", COMMON_USER, "Exchange", "user"),
     "onedrive_activity": _spec("onedrive_activity", "OneDrive Activity User Detail", "getOneDriveActivityUserDetail", COMMON_USER, "OneDrive", "user"),
+    "teams_user_activity": _spec("teams_user_activity", "Teams User Activity User Detail", "getTeamsUserActivityUserDetail", COMMON_USER, "Teams", "user"),
     "onedrive_account_usage": _spec("onedrive_account_usage", "OneDrive Usage Account Detail", "getOneDriveUsageAccountDetail", ("Report Refresh Date",), "OneDrive", "account"),
     "sharepoint_user_activity": _spec("sharepoint_user_activity", "SharePoint Activity User Detail", "getSharePointActivityUserDetail", COMMON_USER, "SharePoint", "user"),
     "sharepoint_site_usage": _spec("sharepoint_site_usage", "SharePoint Site Usage Detail", "getSharePointSiteUsageDetail", ("Report Refresh Date",), "SharePoint", "site"),
+    "teams_user_activity": _spec("teams_user_activity", "Teams User Activity User Detail", "getTeamsUserActivityUserDetail", COMMON_USER, "Teams", "user"),
 }
 
 ALIASES = {
@@ -154,6 +156,9 @@ def normalize_report_rows(key: str, content: bytes | str, *, tenant_id: int, obs
             current[field] = _pick(row, names)
         metric_names = {
             "send_count": ("Send Count", "Send Count (Last Activity)"),
+            "team_chat_message_count": ("Team Chat Message Count",),
+            "private_chat_message_count": ("Private Chat Message Count",),
+            "call_count": ("Call Count",),
             "receive_count": ("Receive Count", "Receive Count (Last Activity)"),
             "read_count": ("Read Count",), "meeting_count": ("Meeting Count",),
             "mailbox_item_count": ("Item Count", "Mailbox Item Count"),
@@ -165,6 +170,7 @@ def normalize_report_rows(key: str, content: bytes | str, *, tenant_id: int, obs
             "file_count": ("File Count", "Files"), "active_file_count": ("Active File Count", "Active Files"),
             "viewed_count": ("Viewed Or Edited File Count", "Viewed Count"),
             "edited_count": ("Edited File Count", "Edited Count"),
+            "meeting_count": ("Meeting Count",),
             "synced_count": ("Synced File Count", "Synced Count"),
             "internal_share_count": ("Internal Shared File Count", "Internal Sharing Count"),
             "external_share_count": ("External Shared File Count", "External Sharing Count"),
@@ -175,9 +181,11 @@ def normalize_report_rows(key: str, content: bytes | str, *, tenant_id: int, obs
         }
         for field, names in metric_names.items():
             current[field] = _pick(row, names)
-        for field in ("storage_used", "issue_warning_quota", "prohibit_send_quota", "prohibit_send_receive_quota"):
+        current["user_principal_name"] = _pick(row, ALIASES["upn"])
+        for field in ("storage_used", "issue_warning_quota", "prohibit_send_quota", "prohibit_send_receive_quota", "team_chat_message_count", "private_chat_message_count", "call_count", "meeting_count"):
             current[field] = _as_number(current[field])
-        if key in ("exchange_mailbox_usage", "onedrive_activity", "onedrive_account_usage"):
+
+        if key in ("exchange_mailbox_usage", "onedrive_activity", "onedrive_account_usage", "teams_user_activity"):
             raw_deleted = current["is_deleted"]
             current["is_deleted"] = _as_bool(raw_deleted)
             # OneDrive KPIs fail closed when the source flag is malformed.

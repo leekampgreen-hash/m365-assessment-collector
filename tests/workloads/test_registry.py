@@ -71,6 +71,7 @@ EXPECTED_MODE_BUCKETS = {
         "G01-013",
         "G01-015",
         "G01-019",
+        "TM-001",
     },
     PERSISTENCE_CURRENT_WITH_HISTORY: {"G01-016", "G01-017"},
 }
@@ -99,6 +100,7 @@ EXPECTED_OWNER = {
     "G01-019": "directory",
     "G01-020": "security_service",
     "SP-A01": "security_service",
+    "TM-001": "usage_reports",
 }
 
 
@@ -147,6 +149,7 @@ EXPECTED_TABLE_MAPPING = {
     },
     "G01-020": {"current": "core.sharepoint_tenant_settings"},
     "SP-A01": {"current": "core.sharepoint_high_value_audit_event", "event": "core.sharepoint_high_value_audit_event"},
+    "TM-001": {"current": "core.usage_teams_user_activity", "snapshot": "core.usage_teams_user_activity_snapshot"},
 }
 
 

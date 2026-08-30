@@ -24,6 +24,7 @@ class UsageReportTransportTests(unittest.TestCase):
             "onedrive_account_usage": "getOneDriveUsageAccountDetail",
             "sharepoint_user_activity": "getSharePointActivityUserDetail",
             "sharepoint_site_usage": "getSharePointSiteUsageDetail",
+            "teams_user_activity": "getTeamsUserActivityUserDetail",
         }
         for key, method in expected.items():
             self.assertEqual(build_report_path(key), "/v1.0/reports/{}(period='D7')".format(method))
@@ -91,6 +92,21 @@ class CsvAndAdapterTests(unittest.TestCase):
             self.assertEqual(current["report_refresh_date"], "2026-08-20")
             self.assertEqual(current["storage_used"], 10)
             self.assertEqual(snapshot["snapshot_identity"], "7:{}:2026-08-20".format(current["entity_key"]))
+
+    def test_teams_user_activity_fields_are_normalized(self):
+        content = ("User Principal Name,Report Refresh Date,Last Activity Date,"
+                   "Team Chat Message Count,Private Chat Message Count,Call Count,Meeting Count,Is Deleted\n"
+                   "user@example.com,2026-08-20,2026-08-19,11,7,3,5,false\n")
+        current, snapshot = normalize_report_rows("teams_user_activity", content,
+                                                   tenant_id=7, observed_at="now")[0]
+        self.assertEqual(current["user_principal_name"], "user@example.com")
+        self.assertEqual(current["entity_key"], "user@example.com")
+        self.assertEqual(current["team_chat_message_count"], 11)
+        self.assertEqual(current["private_chat_message_count"], 7)
+        self.assertEqual(current["call_count"], 3)
+        self.assertEqual(current["meeting_count"], 5)
+        self.assertFalse(current["is_deleted"])
+        self.assertIn("snapshot_identity", snapshot)
 
     def test_onedrive_owner_principal_name_and_stable_fallback(self):
         content = ("Report Refresh Date,Owner Principal Name,Site URL,Storage Used (Bytes)\n"
