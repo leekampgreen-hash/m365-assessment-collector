@@ -232,14 +232,26 @@ class OperationsAnalyticsTests(unittest.TestCase):
         service = OperationsAnalyticsQueryService({
             "sharepoint_site_usage": [
                 {"tenant_id": 2, "site_id": "recent", "last_activity_date": "2026-08-01"},
-                {"tenant_id": 2, "site_id": "old", "last_activity_date": "2026-05-28"},
+                {"tenant_id": 2, "site_id": "old", "last_activity_date": "2026-05-28", "site_name": "Old Site", "display_name": "Global Administrator"},
                 {"tenant_id": 1, "site_id": "never", "last_activity_date": None},
             ],
         }, as_of="2026-08-27")
         self.assertEqual(service.orphaned_sites(), [
             {"tenant_id": 1, "site_id": "never", "site_url": None, "display_name": None, "last_activity_date": None},
-            {"tenant_id": 2, "site_id": "old", "site_url": None, "display_name": None, "last_activity_date": "2026-05-28"},
+            {"tenant_id": 2, "site_id": "old", "site_url": None, "display_name": "Old Site", "last_activity_date": "2026-05-28"},
         ])
+
+    def test_license_utilization_joins_activity_by_user_identity(self):
+        service = OperationsAnalyticsQueryService({
+            "users": [{"user_principal_name": "licensed@example.test"}],
+            "license_assignments": [{"user_principal_name": "licensed@example.test"}],
+            "exchange_email_activity": [{
+                "entity_key": "Licensed User", "identity_value": "licensed@example.test",
+                "last_activity_date": "2026-08-26",
+            }],
+        }, as_of="2026-08-27")
+        result = service.license_utilization()
+        self.assertEqual(result["utilized_users"]["value"], 1)
 
     def test_sharepoint_utilization_fails_closed_for_missing_allocation(self):
         result = OperationsAnalyticsQueryService({

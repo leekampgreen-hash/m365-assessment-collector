@@ -561,6 +561,50 @@ def persist_sharepoint_high_value_audit_batch(
 
 
 # Accepted EVENT endpoints. G01-005 and G01-006 share core.audit_event; the
+_SIGNIN_LOG_COLUMNS: tuple[str, ...] = (
+    "tenant_id", "source_signin_id", "user_principal_name", "user_display_name",
+    "app_display_name", "ip_address", "location_city", "location_country",
+    "signin_datetime", "status_error_code", "status_failure_reason", "is_interactive",
+    "client_app_used", "conditional_access_status", "risk_level_during_signin",
+    "risk_state", "collected_at", "retention_class",
+)
+
+
+def write_signin_log_record(executor: BoundSqlExecutor, record: NormalizedWorkloadRecord) -> None:
+    if record.persistence_mode != PersistenceMode.EVENT or record.event_row is None:
+        raise PersistenceError("G01-006 requires an EVENT row")
+    row = record.event_row
+    required = ("tenant_id", "source_object_id", "event_at", "collected_at", "retention_class")
+    missing = tuple(column for column in required if column not in row)
+    if missing:
+        raise PersistenceError("Sign-in row is missing required columns: {}".format(", ".join(missing)))
+    columns = _SIGNIN_LOG_COLUMNS
+    values = {
+        "tenant_id": row["tenant_id"],
+        "source_signin_id": row["source_object_id"],
+        "user_principal_name": row.get("user_principal_name"),
+        "user_display_name": row.get("user_display_name"),
+        "app_display_name": row.get("app_display_name"),
+        "ip_address": row.get("ip_address"),
+        "location_city": row.get("location_city"),
+        "location_country": row.get("location_country"),
+        "signin_datetime": row["event_at"],
+        "status_error_code": row.get("category"),
+        "status_failure_reason": row.get("result"),
+        "is_interactive": row.get("is_interactive"),
+        "client_app_used": row.get("activity"),
+        "conditional_access_status": row.get("conditional_access_status"),
+        "risk_level_during_signin": row.get("risk_level_during_signin"),
+        "risk_state": row.get("risk_state"),
+        "collected_at": row["collected_at"],
+        "retention_class": row["retention_class"],
+    }
+    sql = "INSERT INTO core.signin_log ({}) VALUES ({}) ON CONFLICT (tenant_id, source_signin_id) DO NOTHING".format(
+        ", ".join(columns), ", ".join("%s" for _ in columns)
+    )
+    executor.execute(sql, tuple(values[column] for column in columns))
+
+
 _EVENT_ENDPOINTS: Mapping[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "SP-A01": (
         "core.sharepoint_high_value_audit_event",
@@ -899,6 +943,9 @@ def dispatch_persistence(
         _validate_record_dispatch(record, endpoint_id, mode)
     if endpoint_id == "G01-001":
         write_users_with_assignments(executor, records)
+    elif endpoint_id == "G01-006":
+        for record in records:
+            write_signin_log_record(executor, record)
     else:
         for record in records:
             writer(executor, record)

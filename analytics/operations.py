@@ -566,7 +566,7 @@ class OperationsAnalyticsQueryService:
                 "tenant_id": row.get("tenant_id"),
                 "site_id": row.get("site_id") or row.get("entity_key"),
                 "site_url": row.get("site_url"),
-                "display_name": row.get("display_name") or row.get("site_name"),
+                "display_name": row.get("site_name") or row.get("site_display_name"),
                 "last_activity_date": last_activity.isoformat() if last_activity else None,
             })
         return sorted(result, key=lambda item: (item["tenant_id"] is None, item["tenant_id"], str(item["site_id"] or "")))
@@ -794,13 +794,24 @@ class OperationsAnalyticsQueryService:
             if key in usage:
                 usage[key].append(row)
         statuses = {
-            key: [_evidence_status(row, self._workload_for_row(row), self.as_of) for row in values]
+            key: [self._license_evidence_status(row, self._workload_for_row(row)) for row in values]
             for key, values in usage.items()
         }
         utilized = {key for key, values in statuses.items() if "utilized" in values}
         review = {key for key, values in statuses.items() if "explicitly_inactive" in values and "utilized" not in values}
         insufficient = entitled - utilized - review
         return {"entitled_users": _metric(len(entitled), assignments), "utilized_users": _metric(len(utilized), assignments), "apparently_unused_entitlement_candidates": _metric(len(review), assignments), "insufficient_evidence_users": _metric(len(insufficient), assignments), "utilization_percentage": _metric(round(len(utilized) / len(entitled) * 100, 2) if entitled else None, assignments)}
+
+    def _license_evidence_status(self, row: Mapping[str, Any], workload: str) -> str:
+        if workload == "exchange_email_activity":
+            fields = ("send_count", "receive_count", "read_count", "meeting_count")
+        elif workload == "onedrive_activity":
+            fields = ("viewed_count", "edited_count", "synced_count", "active_file_count")
+        else:
+            fields = ()
+        if any(_number(row, field) is not None and _number(row, field) > 0 for field in fields):
+            return "utilized"
+        return _evidence_status(row, workload, self.as_of)
 
     def _workload_for_row(self, row: Mapping[str, Any]) -> str:
         for name, values in self.tables.items():
