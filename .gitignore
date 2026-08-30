@@ -9,6 +9,7 @@ secrets/
 *.p12
 __pycache__/
 *.pyc
+agent/knowledge/cache/*.json
 .pytest_cache/
 *.log
 logs/

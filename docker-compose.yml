@@ -19,6 +19,7 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /workspace
       PGHOST: postgres
       PGPORT: "5432"
       PGDATABASE: graph_agent
@@ -26,6 +27,7 @@ services:
       PGSSLMODE: disable
 
     volumes:
+      - ./agent:/workspace/agent
       - ./analytics:/workspace/analytics
       - ./api:/workspace/api
       - ./app:/workspace/app
@@ -70,6 +72,7 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /workspace
       PGHOST: postgres
       PGPORT: "5432"
       PGDATABASE: graph_agent
@@ -78,6 +81,19 @@ services:
       GRAPH_TENANT_DB_ID: "2"
       API_HOST: 0.0.0.0
       API_PORT: "8080"
+      API_KEY: ${API_KEY}
+      AGENT_MODE: ${AGENT_MODE}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      KRYPTONLAB_API_KEY: ${KRYPTONLAB_API_KEY}
+      MODEL: ${MODEL:-kl/claude-sonnet-4-6}
+
+    volumes:
+      - ./agent:/workspace/agent
+      - ./analytics:/workspace/analytics
+      - ./api:/workspace/api
+      - ./capabilities:/workspace/capabilities
+      - ./collectors:/workspace/collectors
+      - ./config:/workspace/config
 
     secrets:
       - source: graph_agent_runtime_password
@@ -104,7 +120,10 @@ services:
     ports:
       - "127.0.0.1:18080:80"
 
-    read_only: true
+    environment:
+      API_KEY: ${API_KEY}
+      NGINX_ENVSUBST_VARS: API_KEY
+
     tmpfs:
       - /var/cache/nginx
       - /var/run
@@ -122,6 +141,50 @@ services:
 
     restart: unless-stopped
 
+    networks:
+      - graph-agent-net
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.collector
+    image: graph-agent-collector:dev
+    container_name: graph-agent-scheduler-dev
+    user: "70:70"
+    working_dir: /workspace
+    command: python -m collectors.scheduler
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /workspace
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: graph_agent
+      PGUSER: graph_agent_runtime
+      PGSSLMODE: disable
+    volumes:
+      - ./agent:/workspace/agent
+      - ./analytics:/workspace/analytics
+      - ./api:/workspace/api
+      - ./app:/workspace/app
+      - ./agents:/workspace/agents
+      - ./collectors:/workspace/collectors
+      - ./config:/workspace/config
+      - ./data:/workspace/data
+      - ./database:/workspace/database
+      - ./docs:/workspace/docs
+      - ./logs:/workspace/logs
+      - ./scripts:/workspace/scripts
+      - ./tests:/workspace/tests
+    secrets:
+      - source: graph_agent_collector_auth
+        target: /workspace/secrets/collector.env
+      - source: graph_agent_runtime_password
+        target: graph_agent_runtime_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
       - graph-agent-net
 

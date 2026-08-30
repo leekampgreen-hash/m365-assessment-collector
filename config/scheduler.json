@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "schedules": [
+    {
+      "name": "identity_daily",
+      "description": "Directory data — users, groups, roles",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": ["G01-001", "G01-002", "G01-003", "G01-018"],
+      "interval_hours": 24,
+      "granted_permissions": ["Directory.Read.All", "RoleManagement.Read.Directory"],
+      "enabled": true
+    },
+    {
+      "name": "security_daily",
+      "description": "Security findings and CA policies",
+      "phase": 2,
+      "data_type": "security",
+      "endpoints": [],
+      "security_rules": [
+        "M365-ENTRA-MFA-REG-001",
+        "M365-ENTRA-ADMIN-MFA-REG-001",
+        "M365-ENTRA-CA-MFA-001",
+        "M365-ENTRA-CA-ENFORCEMENT-001",
+        "M365-ENTRA-CA-LEGACY-AUTH-001"
+      ],
+      "interval_hours": 24,
+      "granted_permissions": ["AuditLog.Read.All", "Policy.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "signin_logs_hourly",
+      "description": "Sign-in logs — fresh every hour",
+      "phase": 3,
+      "data_type": "event",
+      "endpoints": ["G01-006"],
+      "interval_hours": 1,
+      "granted_permissions": ["AuditLog.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "usage_reports_daily",
+      "description": "M365 usage reports — adoption data",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "usage_reports",
+      "interval_hours": 24,
+      "granted_permissions": ["Reports.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "license_daily",
+      "description": "License inventory and SKU data",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": ["G01-004"],
+      "interval_hours": 24,
+      "granted_permissions": ["Directory.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "event_cleanup_daily",
+      "description": "Remove event data older than 90 days",
+      "phase": 3,
+      "data_type": "maintenance",
+      "interval_hours": 24,
+      "enabled": true
+    }
+  ],
+  "settings": {
+    "startup_delay_seconds": 30,
+    "jitter_seconds": 60,
+    "max_concurrent_jobs": 1,
+    "timezone": "UTC"
+  }
+}
