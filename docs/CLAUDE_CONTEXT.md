@@ -55,10 +55,10 @@ or an independent blocking security/correctness finding.
 ## ACTIVE TASK
 <!-- Update this section each time you begin a new task -->
 
-**Current phase:** STD-20 (CLOSURE PREFLIGHT BLOCKED)
-**Blocker:** SharePoint user-usage API dependency unavailable;
-             main-dashboard Usage Overview mount/wiring not proven
-**Next planned:** STD-21 (Runtime Parity/Hardening) → STD-22 (Standard Feature Closure)
+**ACTIVE TASK:** Agentic M365 Operational Assistant design
+**Current phase:** Agentic M365 Operational Assistant design
+**Blocker:** None
+**Next planned:** Complete the Agentic M365 Operational Assistant design
 
 **Deferred until STD-22 closes:**
 - Entra security-posture expansion
