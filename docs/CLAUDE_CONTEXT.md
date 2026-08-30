@@ -17,8 +17,12 @@ Python 3.13, PostgreSQL 16, Docker Compose, Microsoft Graph API,
 Microsoft 365 Management Activity API, static HTML/JS UI.
 
 ## Navigation
-- Roadmap & status: `docs/PROJECT_PROGRESS.md`
-- File ownership: `docs/PROJECT_FILE_MAP.md`
+- Progress index: `docs/PROJECT_PROGRESS.md`
+- Active task and next steps: `docs/progress/current.md`
+- Foundation / G01 / CH / STD-01–STD-15: `docs/progress/foundation.md`
+- Workload progress: `docs/progress/exchange.md`, `docs/progress/onedrive.md`, `docs/progress/sharepoint.md`, `docs/progress/teams.md`, `docs/progress/license.md`
+- Quick navigation and rules: `docs/FILE_MAP_QUICK.md`
+- Full file ownership: `docs/PROJECT_FILE_MAP.md`
 - Worker rules: `docs/WORKER_HANDOVER.md`
 - Evidence: `docs/evidence/`
 

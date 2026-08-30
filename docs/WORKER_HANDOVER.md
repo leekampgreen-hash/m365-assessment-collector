@@ -5,8 +5,8 @@
 ## Mandatory Steps Before Execution
 
 1. Read `docs/WORKER_HANDOVER.md` (this file)
-2. Read `docs/PROJECT_FILE_MAP.md` — all file ownership is here
-3. Read `docs/PROJECT_PROGRESS.md` — current status of all phases
+2. Read `docs/FILE_MAP_QUICK.md` — key navigation and rules; consult `docs/PROJECT_FILE_MAP.md` for full ownership
+3. Read `docs/progress/current.md` — active status and next steps; consult the relevant workload progress file for phase history
 4. Confirm that every file path you intend to touch actually exists before editing
 5. Do NOT broadly explore the repo — read only files relevant to the task
 
