@@ -1,0 +1,37 @@
+{
+  "M365-ENTRA-MFA-REG-001": {
+    "title": "Users have not registered for multi-factor authentication",
+    "risk_level": "HIGH",
+    "plain_language": "Some users can sign in without having set up an extra identity check, such as an authenticator app or phone prompt.",
+    "business_impact": "A stolen password may be enough to access company email, files, and other services, increasing the chance of account takeover and data loss.",
+    "recommended_action": "1. Identify the users in the finding. 2. Ask them to register Microsoft Authenticator or another approved method at the next sign-in. 3. Provide clear setup instructions and support. 4. Recheck registration and follow up with anyone still incomplete."
+  },
+  "M365-ENTRA-ADMIN-MFA-REG-001": {
+    "title": "An administrator has not registered for multi-factor authentication",
+    "risk_level": "HIGH",
+    "plain_language": "A person with powerful administrator access has not set up an extra identity check.",
+    "business_impact": "If that administrator's password is stolen, an attacker could change security settings, create accounts, or access sensitive company data.",
+    "recommended_action": "1. Contact the administrator immediately. 2. Have them register Microsoft Authenticator or an approved strong method. 3. Confirm the registration works. 4. Review recent sign-ins and temporarily remove unnecessary admin access if registration cannot be completed promptly."
+  },
+  "M365-ENTRA-CA-MFA-001": {
+    "title": "Multi-factor authentication is not required by a sign-in policy",
+    "risk_level": "HIGH",
+    "plain_language": "A sign-in rule does not ask people to prove their identity with an extra step when it should.",
+    "business_impact": "Passwords alone may protect important services, so phishing or reused passwords can lead to unauthorized access.",
+    "recommended_action": "1. Review the affected policy and its included users, groups, and applications. 2. Configure the access requirement to use multi-factor authentication. 3. Exclude only approved emergency accounts with compensating controls. 4. Test with pilot users, then enable the policy and monitor sign-ins."
+  },
+  "M365-ENTRA-CA-ENFORCEMENT-001": {
+    "title": "A sign-in policy is not being enforced",
+    "risk_level": "HIGH",
+    "plain_language": "A security rule exists, but it is either turned off or only observing what would happen without blocking risky access.",
+    "business_impact": "The organization may believe it is protected while users can still sign in without the intended security checks.",
+    "recommended_action": "1. Confirm the policy's scope and conditions. 2. Test it in reporting mode with representative users. 3. Resolve unexpected blocks or exclusions. 4. Change the policy to enabled enforcement and monitor sign-in results."
+  },
+  "M365-ENTRA-CA-LEGACY-AUTH-001": {
+    "title": "Older sign-in methods are still allowed",
+    "risk_level": "HIGH",
+    "plain_language": "Some older apps or connection methods can sign in without supporting modern security checks.",
+    "business_impact": "These methods can bypass multi-factor authentication and are commonly targeted in password-spraying attacks.",
+    "recommended_action": "1. Identify users and apps using older sign-ins. 2. Update or replace those apps. 3. Create a policy to block legacy authentication for all users, with only a documented temporary exception if essential. 4. Monitor sign-in logs and remove exceptions quickly."
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "enabled": {"label": "Enabled and enforced", "risk": "NONE", "plain_language": "The policy is active and can require or block access according to its rules.", "action_needed": false},
+  "disabled": {"label": "Turned off", "risk": "HIGH", "plain_language": "The policy is not active, so it cannot protect sign-ins.", "action_needed": true},
+  "enabledForReportingButNotEnforced": {"label": "Report-only", "risk": "MEDIUM", "plain_language": "The policy records what it would do, but it does not yet require or block anything.", "action_needed": true}
+}
