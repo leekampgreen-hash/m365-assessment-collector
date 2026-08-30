@@ -116,6 +116,215 @@ class SecurityFindingQueryService:
         }
         return finding
 
+    def signin_risk(self) -> dict[str, Any]:
+        row = self._fetchone(
+            """SELECT count(*) FILTER (WHERE COALESCE(is_deleted, false) = false)::int,
+                      count(*) FILTER (WHERE COALESCE(is_deleted, false) = false AND upper(risk_level) = 'HIGH')::int,
+                      count(*) FILTER (WHERE COALESCE(is_deleted, false) = false AND upper(risk_level) = 'MEDIUM')::int,
+                      count(*) FILTER (WHERE COALESCE(is_deleted, false) = false AND upper(risk_level) = 'LOW')::int
+               FROM core.risky_user WHERE tenant_id = %s""",
+            (self.tenant_id,),
+        ) or (0, 0, 0, 0)
+        detection_row = self._fetchone(
+            """SELECT count(*)::int,
+                      count(*) FILTER (WHERE detected_at >= CURRENT_TIMESTAMP - INTERVAL '30 days')::int
+               FROM core.risk_detection WHERE tenant_id = %s""",
+            (self.tenant_id,),
+        ) or (0, 0)
+        return {
+            "risky_users": {"total": row[0], "high_risk": row[1], "medium_risk": row[2], "low_risk": row[3]},
+            "risk_detections": {"total": detection_row[0], "recent_30d": detection_row[1]},
+        }
+
+    def mfa_registration(self) -> dict[str, Any]:
+        rows = self._fetchall(
+            """SELECT u.display_name, COALESCE((r.payload ->> 'isMfaRegistered')::boolean, false),
+                      EXISTS (SELECT 1 FROM core.directory_role_assignment a
+                              WHERE a.tenant_id = u.tenant_id AND a.principal_id = u.source_object_id)
+               FROM core.\"user\" u
+               LEFT JOIN LATERAL (
+                   SELECT payload FROM raw.raw_graph_record
+                   WHERE tenant_id = u.tenant_id AND endpoint_id = 'G01-021'
+                     AND (source_object_id = u.source_object_id OR payload ->> 'id' = u.source_object_id
+                          OR lower(payload ->> 'userPrincipalName') = lower(u.user_principal_name))
+                   ORDER BY collected_at DESC LIMIT 1
+               ) r ON true
+               WHERE u.tenant_id = %s AND u.account_enabled IS TRUE
+                 AND r.payload IS NOT NULL
+               ORDER BY u.display_name NULLS LAST""",
+            (self.tenant_id,),
+        )
+        aggregate = self._fetchone(
+            """SELECT normalized_value::jsonb FROM security.observation
+               WHERE tenant_id = %s AND rule_id = 'M365-ENTRA-MFA-REG-001'
+               ORDER BY observed_at DESC LIMIT 1""", (self.tenant_id,))
+        if rows:
+            total = len(rows)
+            registered = sum(bool(row[1]) for row in rows)
+            without = [{"display_name": row[0] or "Unknown", "is_admin": bool(row[2])}
+                       for row in rows if not row[1]]
+            admin_gap = any(item["is_admin"] for item in without)
+        else:
+            value = (aggregate or ({},))[0] or {}
+            total = int(value.get("enabled_user_count", 0))
+            registered = int(value.get("mfa_registered_count", 0))
+            without = []
+            admin_gap = False
+        not_registered = total - registered
+        rate = round(registered / total * 100, 2) if total else 100.0
+        findings = []
+        if rate < 80:
+            findings.append({"finding": f"Only {rate}% of users have MFA registered", "risk": "HIGH"})
+        if admin_gap or self._fetchone(
+            "SELECT 1 FROM security.finding_current WHERE tenant_id = %s AND rule_id = 'M365-ENTRA-ADMIN-MFA-REG-001' AND status = 'OPEN' LIMIT 1",
+            (self.tenant_id,),
+        ):
+            findings.append({"finding": "Administrator without MFA detected", "risk": "HIGH"})
+        if rate < 95:
+            findings.append({"finding": f"{not_registered} users without MFA", "risk": "MEDIUM"})
+        return {"total_users": total, "mfa_registered": registered, "mfa_not_registered": not_registered,
+                "registration_rate_pct": rate, "users_without_mfa": without, "findings": findings}
+
+    def signin_detail(self) -> dict[str, Any]:
+        rows = self._fetchall(
+            """SELECT COALESCE(l.user_display_name, u.display_name, 'Unknown'),
+                      count(*)::int,
+                      count(*) FILTER (WHERE l.status_error_code <> 0 OR l.status_failure_reason IS NOT NULL)::int,
+                      COALESCE(array_agg(DISTINCT l.location_country) FILTER (WHERE l.location_country IS NOT NULL AND l.location_country <> ''), ARRAY[]::text[]),
+                      count(*) FILTER (WHERE lower(COALESCE(l.client_app_used, '')) LIKE ANY (ARRAY['%%legacy%%', '%%imap%%', '%%pop%%', '%%smtp%%', '%%basic%%']))::int,
+                      max(l.signin_datetime),
+                      u.source_object_id
+               FROM core.signin_log l
+               LEFT JOIN core.\"user\" u ON u.tenant_id = l.tenant_id
+                 AND lower(u.user_principal_name) = lower(l.user_principal_name)
+               WHERE l.tenant_id = %s AND l.signin_datetime >= CURRENT_TIMESTAMP - INTERVAL '30 days'
+               GROUP BY COALESCE(l.user_display_name, u.display_name, 'Unknown'), u.source_object_id
+               ORDER BY count(*) FILTER (WHERE l.status_error_code <> 0 OR l.status_failure_reason IS NOT NULL) DESC,
+                        count(*) DESC LIMIT 20""", (self.tenant_id,))
+        risky = {row[0] for row in self._fetchall(
+            "SELECT source_object_id FROM core.risky_user WHERE tenant_id = %s AND COALESCE(is_deleted, false) = false", (self.tenant_id,))}
+        users = []
+        for name, total, failed, countries, legacy, last, object_id in rows:
+            countries = sorted(str(country) for country in (countries or []))
+            rate = round(failed / total * 100, 2) if total else 0.0
+            signals = []
+            if rate > 30: signals.append("High failure rate")
+            if legacy > 0: signals.append("Uses legacy authentication")
+            if len(countries) > 2: signals.append("Signs in from multiple countries")
+            if object_id in risky: signals.append("Flagged as risky by Entra")
+            users.append({"display_name": name or "Unknown", "total_signins": total, "failed_signins": failed,
+                          "failure_rate_pct": rate, "countries": countries, "legacy_auth_count": legacy,
+                          "last_signin": last, "risk_signals": signals})
+        return {"period_days": 30, "total_users_with_activity": len(users), "users": users}
+
+    def risk_score(self) -> dict[str, Any]:
+        detail = self.signin_detail()
+        signin = {item["display_name"]: item for item in detail["users"]}
+        users = self._fetchall("SELECT source_object_id, display_name FROM core.\"user\" WHERE tenant_id = %s AND account_enabled IS TRUE", (self.tenant_id,))
+        risky = {row[0] for row in self._fetchall("SELECT source_object_id FROM core.risky_user WHERE tenant_id = %s AND COALESCE(is_deleted, false) = false", (self.tenant_id,))}
+        mfa_open = bool(self._fetchone("SELECT 1 FROM security.finding_current WHERE tenant_id = %s AND rule_id ILIKE '%%MFA%%' AND status = 'OPEN' LIMIT 1", (self.tenant_id,)))
+        admin_ids = {row[0] for row in self._fetchall("SELECT DISTINCT principal_id FROM core.directory_role_assignment WHERE tenant_id = %s", (self.tenant_id,))}
+        ca_weak = bool(self._fetchone("SELECT 1 FROM core.conditional_access_policy WHERE tenant_id = %s AND state = 'enabledForReportingButNotEnforced' LIMIT 1", (self.tenant_id,)))
+        tenant_risks = ["Conditional Access policies are in report-only mode"] if ca_weak else []
+        scored = []
+        for object_id, name in users:
+            item = signin.get(name or "Unknown", {})
+            score, factors = (20 if ca_weak else 0), (["Conditional Access policy not enforced"] if ca_weak else [])
+            if mfa_open:
+                score += 40; factors.append("MFA is not registered")
+            if object_id in admin_ids and mfa_open:
+                score += 30; factors.append("Administrator without MFA")
+            if object_id in risky:
+                score += 50; factors.append("Flagged as risky by Entra")
+            if item.get("failure_rate_pct", 0) > 30:
+                score += 30; factors.append("High sign-in failure rate")
+            if len(item.get("countries", [])) > 2:
+                score += 20; factors.append("Signs in from multiple countries")
+            level = "CRITICAL" if score >= 81 else "HIGH" if score >= 51 else "MEDIUM" if score >= 21 else "LOW"
+            scored.append({"display_name": name or "Unknown", "risk_level": level, "score": score, "risk_factors": factors})
+        scored.sort(key=lambda item: item["score"], reverse=True)
+        distribution = {level: sum(item["risk_level"] == level for item in scored) for level in ("CRITICAL", "HIGH", "MEDIUM", "LOW")}
+        return {"scoring_model_version": "1.0", "total_users_scored": len(scored), "risk_distribution": distribution,
+                "top_risks": scored[:10], "tenant_wide_risks": tenant_risks}
+
+    def mfa_coverage(self) -> dict[str, Any]:
+        rows = self._fetchall(
+            """SELECT rule_id, status, count(*)::int
+               FROM security.finding_current
+               WHERE tenant_id = %s AND rule_id ILIKE '%%MFA%%'
+               GROUP BY rule_id, status ORDER BY rule_id, status""",
+            (self.tenant_id,),
+        )
+        findings = [{"rule_id": row[0], "status": row[1], "count": row[2]} for row in rows]
+        total = sum(row[2] for row in rows)
+        passed = sum(row[2] for row in rows if row[1] == "PASS")
+        return {"findings": findings, "mfa_pass_rate": passed / total if total else None}
+
+    def ca_policies(self) -> dict[str, Any]:
+        rows = self._fetchall(
+            """SELECT display_name, state
+               FROM core.conditional_access_policy
+               WHERE tenant_id = %s ORDER BY display_name NULLS LAST""",
+            (self.tenant_id,),
+        )
+        disabled = sum(1 for row in rows if str(row[1]).upper() == "DISABLED")
+        enabled = len(rows) - disabled
+        return {
+            "total": len(rows),
+            "enabled": enabled,
+            "disabled": disabled,
+            "policies": [{"display_name": row[0], "state": row[1]} for row in rows],
+        }
+
+    def admin_roles(self) -> dict[str, Any]:
+        rows = self._fetchall(
+            """SELECT d.display_name, d.description, COUNT(a.principal_id)::int
+               FROM core.directory_role_definition d
+               JOIN core.directory_role_assignment a
+                 ON a.role_definition_id = d.source_object_id
+                AND a.tenant_id = d.tenant_id
+               WHERE d.tenant_id = %s
+               GROUP BY d.display_name, d.description
+               ORDER BY COUNT(a.principal_id) DESC""",
+            (self.tenant_id,),
+        )
+        privileged_roles = {
+            "exchange administrator", "sharepoint administrator", "security administrator",
+            "compliance administrator", "user administrator", "billing administrator",
+        }
+        roles = []
+        for name, description, assigned_users in rows:
+            role_name = str(name or "")
+            count = int(assigned_users or 0)
+            normalized_name = role_name.casefold()
+            if normalized_name == "global administrator" or count > 3:
+                risk_level = "HIGH"
+            elif normalized_name in privileged_roles:
+                risk_level = "MEDIUM"
+            else:
+                risk_level = "LOW"
+            roles.append({
+                "role_name": name,
+                "role_description": description,
+                "assigned_users": count,
+                "risk_level": risk_level,
+            })
+        global_count = next((role["assigned_users"] for role in roles if str(role["role_name"]).casefold() == "global administrator"), 0)
+        findings = []
+        if global_count > 3:
+            findings.append({"finding": f"Too many Global Administrators ({global_count}) — recommend maximum 3", "risk": "HIGH"})
+        findings.extend(
+            {"finding": f"{role['role_name']} has {role['assigned_users']} assignments — review necessity", "risk": "HIGH"}
+            for role in roles
+            if role["risk_level"] == "HIGH" and role["assigned_users"] > 5
+        )
+        return {
+            "total_roles_assigned": len(roles),
+            "high_privilege_roles": sum(1 for role in roles if role["risk_level"] == "HIGH"),
+            "roles": roles,
+            "findings": findings,
+        }
+
     def data_quality(self) -> dict[str, Any]:
         row = self._fetchone(
             """SELECT count(*)::int,

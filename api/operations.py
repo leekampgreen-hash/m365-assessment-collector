@@ -6,8 +6,9 @@ Collector persistence runtime.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 import json
+from pathlib import Path
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable
@@ -15,6 +16,10 @@ from urllib.parse import parse_qs, urlsplit
 
 from analytics import OperationsAnalyticsQueryService
 from api.security import SecurityFindingQueryService, validate_filters
+from api.signin import SigninSummaryService
+from api.auth import verify_api_key
+from api.agent import handle_chat
+from agent.orchestrator import RejectedInputError
 from collectors.persistence import open_database_connection
 from capabilities.persistence import CapabilityQueryService
 
@@ -119,9 +124,44 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
         self._capability_connection = connection
         return CapabilityQueryService.from_connection(connection, self.tenant_id)
 
+    def do_POST(self) -> None:
+        parsed = urlsplit(self.path)
+        if parsed.path.rstrip("/") == "/api/agent/chat" and not verify_api_key(self):
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", "X-API-Key")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if parsed.path.rstrip("/") != "/api/agent/chat":
+            self._write(404, _response("NOT_FOUND"))
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            self._write(200, handle_chat(payload))
+        except RejectedInputError:
+            self._write(400, {"error": "Request not permitted.", "code": "REJECTED"})
+        except ValueError as exc:
+            self._write(400, {"error": str(exc)})
+        except Exception as exc:
+            self._write(503, {"error": str(exc)})
+
     def do_GET(self) -> None:
         parsed = urlsplit(self.path)
         path = parsed.path.rstrip("/")
+        if path == "/api/scheduler/status":
+            try:
+                config_path = Path("config/scheduler.json")
+                config = json.loads(config_path.read_text())
+                now = datetime.now(timezone.utc)
+                schedules = []
+                for schedule in config.get("schedules", []):
+                    interval = schedule.get("interval_hours", 24)
+                    schedules.append({**schedule, "next_run": (now + timedelta(hours=interval)).isoformat()})
+                self._write(200, {"status": "RUNNING", "schedules": schedules})
+            except Exception:
+                self._write(503, {"status": "UNAVAILABLE", "schedules": []})
+            return
         if path == "/health":
             connection = None
             try:
@@ -136,6 +176,12 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 close = getattr(connection, "close", None)
                 if close is not None:
                     close()
+            return
+        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path == "/api/capabilities") and not verify_api_key(self):
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", "X-API-Key")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
             return
         if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and path != "/api/capabilities":
             self._write(404, _response("NOT_FOUND"))
@@ -164,6 +210,38 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                     if path == "/api/security/data-quality":
                         service = self._load_security_service()
                         self._write(200, _response("READY", service.data_quality()))
+                        return
+                    if path == "/api/security/signin-detail":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.signin_detail()))
+                        return
+                    if path == "/api/security/risk-score":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.risk_score()))
+                        return
+                    if path == "/api/security/signin-summary":
+                        service = SigninSummaryService(self._load_security_service().connection, 2)
+                        self._write(200, _response("READY", service.summary()))
+                        return
+                    if path == "/api/security/signin-risk":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.signin_risk()))
+                        return
+                    if path == "/api/security/mfa-registration":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.mfa_registration()))
+                        return
+                    if path == "/api/security/mfa-coverage":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.mfa_coverage()))
+                        return
+                    if path == "/api/security/ca-policies":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.ca_policies()))
+                        return
+                    if path == "/api/security/admin-roles":
+                        service = self._load_security_service()
+                        self._write(200, _response("READY", service.admin_roles()))
                         return
                     detail_prefix = "/api/security/findings/"
                     if path.startswith(detail_prefix) and path[len(detail_prefix):]:

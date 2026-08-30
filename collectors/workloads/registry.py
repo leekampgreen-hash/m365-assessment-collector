@@ -395,14 +395,14 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
     entries["G01-006"] = _entry(
         "G01-006",
         PERSISTENCE_EVENT,
-        current_table="core.audit_event",
-        event_table="core.audit_event",
+        current_table="core.signin_log",
+        event_table="core.signin_log",
         workload="Microsoft Entra ID",
-        retention_class="HIGH_SENSITIVITY",
+        retention_class="SHORT",
         owner="security_service",
         event_source=EVENT_SOURCE_SIGN_IN,
         adapter=_wrap_g07b(g07b_adapters.adapt_sign_in_logs),
-        description="Sign-in Logs -- append-only event rows",
+        description="Sign-in Logs -- append-only analytics rows",
     )
     entries["G01-011"] = _entry(
         "G01-011",
