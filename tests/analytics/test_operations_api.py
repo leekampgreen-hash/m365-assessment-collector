@@ -41,6 +41,12 @@ class FakeService:
     def external_sharing_summary(self):
         return [{"tenant_id": 2, "external_share_count": 3, "sites_with_external_shares": 1}]
 
+    def sharepoint_tenant_settings(self):
+        return {"sharing_capability": "externalUserAndGuestSharing", "allow_guest_user_sharing": False, "status": "READY"}
+
+    def license_expiry(self):
+        return {"subscribed_sku": [{"sku_part_number": "E5", "capability_status": "Enabled", "next_lifecycle_datetime": "2026-12-31T23:59:59Z"}], "status": "READY"}
+
     def sharepoint_site_adoption(self):
         return {
             "active_sites": {"value": 2, "status": "READY"},
@@ -144,6 +150,14 @@ class OperationsApiTests(unittest.TestCase):
         status, payload = self.get("/api/operations/sharepoint/orphaned-sites")
         self.assertEqual(status, 200)
         self.assertEqual(payload["data"]["sites"][0]["site_id"], "site-old")
+
+    def test_tenant_settings_and_license_expiry_endpoints(self):
+        status, payload = self.get("/api/operations/sharepoint/tenant-settings")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["data"]["sharing_capability"], "externalUserAndGuestSharing")
+        status, payload = self.get("/api/operations/license/expiry")
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["data"]["subscribed_sku"][0]["capability_status"], "Enabled")
 
     def test_sharepoint_site_api_exposes_basic_kpis(self):
         status, payload = self.get("/api/operations/adoption/sharepoint/sites")

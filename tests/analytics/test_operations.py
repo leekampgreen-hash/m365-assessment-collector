@@ -193,6 +193,41 @@ class OperationsAnalyticsTests(unittest.TestCase):
             {"tenant_id": 2, "external_share_count": 3, "sites_with_external_shares": 1},
         ])
 
+    def test_sharepoint_tenant_settings_projection(self):
+        service = OperationsAnalyticsQueryService({
+            "sharepoint_tenant_settings": [{
+                "sharing_capability": "externalUserAndGuestSharing",
+                "default_sharing_link_type": "None",
+                "external_user_expiration_required": True,
+                "external_user_expiration_in_days": 30,
+                "file_anonymous_link_type": "View",
+                "folder_anonymous_link_type": "Edit",
+                "require_anonymous_links_expire_in_days": 7,
+                "allow_guest_user_sharing": False,
+            }],
+        })
+        result = service.sharepoint_tenant_settings()
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["sharing_capability"], "externalUserAndGuestSharing")
+        self.assertEqual(result["allow_guest_user_sharing"], False)
+
+    def test_license_expiry_projection_fails_closed_without_skus(self):
+        result = OperationsAnalyticsQueryService({}).license_expiry()
+        self.assertEqual(result["status"], "DATA_DEPENDENCY_UNAVAILABLE")
+        self.assertEqual(result["subscribed_sku"], [])
+
+    def test_license_expiry_projection_includes_status_and_lifecycle(self):
+        result = OperationsAnalyticsQueryService({"subscribed_sku": [{
+            "sku_id": "sku-1", "sku_part_number": "E5",
+            "capability_status": "Enabled",
+            "next_lifecycle_datetime": "2026-12-31T23:59:59Z",
+        }]}).license_expiry()
+        self.assertEqual(result["subscribed_sku"], [{
+            "sku_id": "sku-1", "sku_part_number": "E5",
+            "capability_status": "Enabled",
+            "next_lifecycle_datetime": "2026-12-31T23:59:59Z",
+        }])
+
     def test_orphaned_sites_include_null_and_over_90_days_per_tenant(self):
         service = OperationsAnalyticsQueryService({
             "sharepoint_site_usage": [

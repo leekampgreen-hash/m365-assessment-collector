@@ -16,7 +16,7 @@ TABLES = (
     "exchange_mailbox_usage", "onedrive_activity", "onedrive_account_usage",
     "onedrive_account_capacity",
     "sharepoint_user_activity", "sharepoint_site_usage", "license_assignments",
-    "subscribed_sku",
+    "subscribed_sku", "sharepoint_tenant_settings",
 )
 USAGE_TABLES = (
     "office365_active_user", "exchange_email_activity", "exchange_mailbox_usage",
@@ -193,7 +193,8 @@ class OperationsAnalyticsQueryService:
         names = {
             "users": 'SELECT tenant_id, user_id, source_object_id, user_principal_name, display_name, account_enabled FROM core."user" WHERE tenant_id = %s',
             "license_assignments": 'SELECT a.tenant_id, a.user_id, a.sku_id, u.user_principal_name FROM core.user_license_assignment a JOIN core."user" u ON u.tenant_id = a.tenant_id AND u.user_id = a.user_id WHERE a.tenant_id = %s',
-            "subscribed_sku": "SELECT sku_id, sku_part_number, consumed_units, prepaid_units, capability_status, last_observed_at FROM core.subscribed_sku WHERE tenant_id = %s",
+            "subscribed_sku": "SELECT sku_id, sku_part_number, consumed_units, prepaid_units, capability_status, next_lifecycle_datetime, last_observed_at FROM core.subscribed_sku WHERE tenant_id = %s",
+            "sharepoint_tenant_settings": "SELECT sharing_capability, default_sharing_link_type, external_user_expiration_required, external_user_expiration_in_days, file_anonymous_link_type, folder_anonymous_link_type, require_anonymous_links_expire_in_days, allow_guest_user_sharing, last_observed_at FROM core.sharepoint_tenant_settings WHERE tenant_id = %s",
             "exchange_mailbox_capacity": "SELECT tenant_id, identity_value, user_principal_name, user_ref, identity_is_masked, storage_used, mailbox_capacity, utilization_percent, usage_level, report_refresh_date, last_activity_date FROM analytics.exchange_mailbox_capacity WHERE tenant_id = %s",
             "onedrive_account_capacity": "SELECT tenant_id, entity_key, identity_value, user_ref, identity_is_masked, storage_used, storage_allocated, utilization_percent, usage_level, file_count, report_refresh_date FROM analytics.onedrive_account_capacity WHERE tenant_id = %s",
             "onedrive_high_value_audit": "SELECT tenant_id, audit_record_id, event_time, event_category, operation, actor_upn, anonymous_flag, external_flag, object_display_name, workload FROM analytics.onedrive_high_value_audit WHERE tenant_id = %s ORDER BY event_time DESC, audit_record_id DESC",
@@ -619,6 +620,31 @@ class OperationsAnalyticsQueryService:
                 if count > 0:
                     aggregate["sites_with_external_shares"] += 1
         return sorted(aggregates.values(), key=lambda item: item["tenant_id"])
+
+    def sharepoint_tenant_settings(self) -> dict[str, Any]:
+        fields = (
+            "sharing_capability", "default_sharing_link_type",
+            "external_user_expiration_required", "external_user_expiration_in_days",
+            "file_anonymous_link_type", "folder_anonymous_link_type",
+            "require_anonymous_links_expire_in_days", "allow_guest_user_sharing",
+            "last_observed_at",
+        )
+        rows = _rows(self.rows, "sharepoint_tenant_settings")
+        if not rows:
+            return {field: None for field in fields} | {
+                "status": "DATA_DEPENDENCY_UNAVAILABLE",
+                "missing_dependency": "core.sharepoint_tenant_settings",
+            }
+        return {field: rows[0].get(field) for field in fields} | {"status": "READY", "missing_dependency": None}
+
+    def license_expiry(self) -> dict[str, Any]:
+        fields = ("sku_id", "sku_part_number", "capability_status", "next_lifecycle_datetime")
+        rows = _rows(self.rows, "subscribed_sku")
+        return {
+            "subscribed_sku": [{field: row.get(field) for field in fields} for row in rows],
+            "status": "READY" if rows else "DATA_DEPENDENCY_UNAVAILABLE",
+            "missing_dependency": None if rows else "core.subscribed_sku",
+        }
 
     def cross_workload_user_status(self) -> list[dict[str, Any]]:
         assignments = _rows(self.rows, "license_assignments")

@@ -234,6 +234,16 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 data = {"tenants": service.external_sharing_summary()}
                 self._write(200, _response("READY", data, quality=_quality(service)))
                 return
+            if path == BASE_PATH + "/sharepoint/tenant-settings":
+                service = self._load_service()
+                data = service.sharepoint_tenant_settings()
+                self._write(200, _response(data.pop("status", _service_status(data)), data))
+                return
+            if path == BASE_PATH + "/license/expiry":
+                service = self._load_service()
+                data = service.license_expiry()
+                self._write(200, _response(data.pop("status", _service_status(data)), data))
+                return
             if path == BASE_PATH + "/teams/activity-summary":
                 service = self._load_service()
                 data = {"tenants": service.teams_activity_summary()}
