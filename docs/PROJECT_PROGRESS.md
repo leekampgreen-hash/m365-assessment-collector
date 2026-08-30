@@ -1,5 +1,13 @@
 # Project Progress
 
+## API-P01 Operations API endpoint completion (PASS)
+
+API-P01 PASS — Added missing endpoints:
+
+- GET /api/operations/sharepoint/tenant-settings
+- GET /api/operations/license/expiry
+- 1300/1300 PASS, parity PASS
+
 ## TM-P03 Teams analytics + API (PASS)
 
 **Task:** `TM-P03-CLOSE`
