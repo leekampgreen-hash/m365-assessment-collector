@@ -20,6 +20,7 @@
 - SEC-P05: Sign-in logs analytics — SEALED
 - SEC-P06: MFA registration per user — SEALED
 - SEC-P07: Sign-in detail + combined risk scoring — SEALED
+- SEC-ANALYST-P01: Security Analyst Agent — PASS
 - INFRA-P01: Scheduled collector (phase-ordered) — SEALED
 - AUTH-P01: API Key authentication — SEALED
 

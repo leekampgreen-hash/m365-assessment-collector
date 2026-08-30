@@ -126,6 +126,19 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlsplit(self.path)
+        if parsed.path.rstrip("/") == "/api/agent/analyze/security":
+            if not verify_api_key(self):
+                self.send_response(401)
+                self.send_header("WWW-Authenticate", "X-API-Key")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            try:
+                from agent.analyst import generate_security_report
+                self._write(200, generate_security_report())
+            except Exception as exc:
+                self._write(503, {"status": "ERROR", "error": str(exc)})
+            return
         if parsed.path.rstrip("/") == "/api/agent/chat" and not verify_api_key(self):
             self.send_response(401)
             self.send_header("WWW-Authenticate", "X-API-Key")

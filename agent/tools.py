@@ -101,3 +101,24 @@ def get_ca_policies() -> dict[str, Any]:
 
 def get_admin_roles() -> dict[str, Any]:
     return _get("/api/security/admin-roles")
+
+
+def run_security_analysis() -> dict[str, Any]:
+    request = Request(
+        f"http://localhost:{INTERNAL_API_PORT}/api/agent/analyze/security",
+        data=b"{}",
+        method="POST",
+        headers={"Accept": "application/json", "Content-Type": "application/json", "X-API-Key": INTERNAL_API_KEY},
+    )
+    try:
+        with urlopen(request, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raise ToolError(f"Operations API returned HTTP {exc.code}") from exc
+    except URLError as exc:
+        raise ToolError("Service temporarily unavailable. Please try again.") from exc
+    except (TimeoutError, OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ToolError(f"Operations API request failed: {type(exc).__name__}") from exc
+    if not isinstance(payload, dict):
+        raise ToolError("Operations API returned an invalid JSON object")
+    return payload

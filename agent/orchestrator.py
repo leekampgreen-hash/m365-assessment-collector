@@ -96,12 +96,14 @@ _TOOL_FUNCTIONS: dict[str, Callable[..., dict[str, Any]]] = {
     "get_mfa_registration": tools.get_mfa_registration,
     "get_ca_policies": tools.get_ca_policies,
     "get_admin_roles": tools.get_admin_roles,
+    "run_security_analysis": tools.run_security_analysis,
 }
 
 
 def _mock_tools(message: str) -> list[tuple[str, dict[str, Any]]]:
     text = message.casefold()
     aliases = {
+        "run_security_analysis": ["security report", "security analysis", "analyze security", "full security", "security assessment", "generate report", "security posture"],
         "get_inactivity": ["inactive", "inactiv", "not active", "haven't logged", "last login", "30 day", "60 day", "90 day"],
         "get_mfa_registration": ["mfa registration", "registered for mfa", "who has mfa", "mfa status", "unregistered", "without mfa", "not registered"],
         "get_mfa_coverage": ["mfa", "multi-factor", "multifactor", "authenticator", "two-factor", "2fa"],
@@ -121,6 +123,8 @@ def _mock_tools(message: str) -> list[tuple[str, dict[str, Any]]]:
         "get_adoption_exchange": ["exchange adoption", "email adoption", "email usage"],
         "get_correlation_users": ["correlation", "cross-workload", "user activity across"],
     }
+    if any(alias in text for alias in aliases["run_security_analysis"]):
+        return [("run_security_analysis", tools.run_security_analysis())]
     if any(alias in text for alias in aliases["get_admin_roles"]):
         return [("get_admin_roles", tools.get_admin_roles())]
     if any(alias in text for alias in aliases["get_ca_policies"]):
@@ -179,6 +183,8 @@ def _schema() -> list[dict[str, Any]]:
             description = "Returns tenant conditional access policies with total, enabled, disabled, display names, and states."
         elif name == "get_admin_roles":
             description = "Returns admin role inventory — who has privileged roles, assignment counts, and risk findings. Call when asked about admin roles, privileged access, or who are the admins."
+        elif name == "run_security_analysis":
+            description = "Generates a comprehensive security analysis report covering all security findings, risk scores, MFA status, admin roles, and sign-in analytics. Call when user asks for a full security report, security assessment, or security posture analysis. This tool takes longer than others — inform user it may take a moment."
         schemas.append({"type": "function", "function": {"name": name, "description": description, "parameters": parameters}})
     return schemas
 
