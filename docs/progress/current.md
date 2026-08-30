@@ -7,17 +7,38 @@
 - DA-P01 to DA-P03: Data audit + persistence fixes
 - API-P01: Missing endpoints added
 - OPT-P01: Token optimization (progress files split)
+- AGT-P01 to AGT-P09: Agent tools, orchestration, chat API, chat box UI, additional tools, live acceptance, knowledge base, and knowledge base restructure PASS
+- SEC-P01 to SEC-P07: Security risk, MFA coverage, conditional-access, admin-roles, sign-in logs, MFA registration, sign-in detail, and combined risk scoring APIs and agent tools PASS
+- AGT-UX01: Executive Summary Panel PASS — 5 real DB findings displayed in plain language with color-coded severity and nginx envsubst API key injection
+- AGT-DEV01: Agent Auto-Tester PASS — 30-question dataset and standalone evaluator added; live score pending execution against the operations API
+
+## Agent Status
+
+- AGT-P01: PASS
+- AGT-P02: PASS
+- AGT-P03: PASS
+- AGT-P04: PASS
+- AGT-P05: PASS
+- AGT-P06: PASS
+- AGT-P07: PASS
+- AGT-P09: PASS
+- AGT-P10: PASS
+- AGT-P11: DEFERRED
+- AGT-P12: DEFERRED
+- SEC-P05: PASS
+- SEC-P06: PASS
+- AUTH-P01: PASS
+- INFRA-P01: PASS
 
 ## Active Task
+review and next planning session
 
-Agentic M365 Operational Assistant — design phase
 
 ## Next Steps
 
-1. Analisa struktur data untuk agent
-2. API Key auth
-3. Agent MVP design + implementation
-4. UX/Dashboard
+1. AGT-DEV01 Agent Auto-Tester
+2. API Key auth UI (future SaaS)
+
 
 ## Available API Endpoints
 
@@ -45,6 +66,10 @@ From `api/operations.py`:
 - `GET /api/security/findings?status={status}&severity={severity}`
 - `GET /api/security/findings/{finding_id}`
 - `GET /api/security/data-quality`
+- `GET /api/security/signin-risk`
+- `GET /api/security/mfa-coverage`
+- `GET /api/security/mfa-registration`
+- `GET /api/security/ca-policies`
 - `GET /api/capabilities`
 
 ## Navigation
