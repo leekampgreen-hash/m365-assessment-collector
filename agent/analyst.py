@@ -100,33 +100,9 @@ def _summarize_data(data: dict) -> dict:
     }
 
 
-def _build_analysis_prompt(data: dict) -> str:
-    """Build analysis prompt from compact security data."""
-    generated = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    return f"""You are a Microsoft 365 Security Analyst. Write a concise plain-text report for IT support staff using only this data.
-
-SECURITY ANALYSIS REPORT
-Generated: {generated}
-
-EXECUTIVE SUMMARY
-2-3 sentences on overall posture.
-
-CRITICAL FINDINGS ([count] items)
-HIGH FINDINGS ([count] items)
-MEDIUM FINDINGS ([count] items)
-For each: Finding, Risk/business impact, and numbered Action steps.
-
-RECOMMENDED PRIORITY ORDER
-Numbered fixes with brief reasons.
-
-OVERALL SECURITY SCORE: [X]/100
-One-sentence justification.
-
-Use no markdown, jargon, rule IDs, UUIDs, UPNs, or email addresses. Cover every security area. Say "No data available" when needed.
-
-SECURITY DATA:
-{json.dumps(_summarize_data(data), separators=(",", ":"), default=str)}
-"""
+def _build_data_message(data: dict) -> str:
+    """Build a message containing the compact security data."""
+    return json.dumps(_summarize_data(data), separators=(",", ":"), default=str)
 
 
 def _plain_text_report(report: str) -> str:
@@ -140,7 +116,7 @@ def _plain_text_report(report: str) -> str:
     return "\n".join(lines).strip()
 
 
-def generate_security_report() -> dict:
+def generate_security_report(system_prompt: str = None, choice: str = "", history: list = None) -> dict:
     """Collect security data and generate an analysis report."""
     from openai import OpenAI
 
@@ -152,9 +128,18 @@ def generate_security_report() -> dict:
             base_url=config.OPENAI_BASE_URL,
             timeout=45.0,
         )
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        if history:
+            messages.extend(history)
+        user_content = _build_data_message(data)
+        if choice:
+            user_content = f"{choice}\n\n{user_content}"
+        messages.append({"role": "user", "content": user_content})
         response = client.chat.completions.create(
             model=config.ANALYST_MODEL,
-            messages=[{"role": "user", "content": _build_analysis_prompt(data)}],
+            messages=messages,
             max_tokens=1200,
         )
         report = _plain_text_report(response.choices[0].message.content or "")

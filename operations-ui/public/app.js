@@ -50,6 +50,19 @@ function renderSummary(data) { const totalUsers = data.tenant?.total_users; cons
 function renderLicenses(data, ready = true) { const rows = ready ? Object.entries(data.license || {}) : []; $("#licenses").innerHTML = rows.length ? `<table><thead><tr><th>SKU</th><th>Purchased</th><th>Consumed</th><th>Available</th><th>Utilization</th><th>Assigned users</th></tr></thead><tbody>${rows.map(([sku, item]) => `<tr><th>${escapeHtml(sku)}</th><td>${escapeHtml(item.purchased_units)}</td><td>${escapeHtml(item.consumed_units)}</td><td class="${Number(item.available_units) === 0 ? "available-zero" : ""}">${escapeHtml(item.available_units)}</td><td><span class="utilization-pill utilization-${Number(item.utilization_percent) === 100 ? "full" : Number(item.utilization_percent) <= 10 ? "low" : "mid"}">${escapeHtml(item.utilization_percent)}%</span></td><td>${escapeHtml(item.assigned_user_count)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">License data currently unavailable</p>`; }
 function workloadCard(name, item, fields) { return `<article class="card"><div class="card-head"><h3>${name}</h3></div>${fields.map(([label, key, suffix, kind]) => { const rendered = kind === "primitive" ? primitive(item[key]) : kind === "storage" ? storageValue(item[key]) : display(item[key], suffix); return `<div class="detail-row"><span class="detail-label">${label}</span><strong>${rendered}</strong></div>`; }).join("")}</article>`; }
 function renderWorkloads(data) { window.dashboardOnedrive = data.onedrive || {}; renderUsageSummaries(); }
+let optimizerReport = null;
+const confidenceRank = { high: 0, medium: 1, low: 2 };
+function renderOptimizer() {
+  const report = optimizerReport || { summary: { flagged_users: 0, by_category: {} }, recommendations: [] };
+  const categories = Object.entries(report.summary.by_category || {});
+  $("#license-optimizer-summary").innerHTML = `<div class="summary-value">${escapeHtml(report.summary.flagged_users ?? 0)}</div><div class="optimizer-badges">${categories.map(([key, count]) => `<span class="badge optimizer-${key}">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(count)}</span>`).join("")}</div>`;
+  const category = $("#optimizer-category")?.value || "ALL", confidence = $("#optimizer-confidence")?.value || "ALL";
+  const rows = (report.recommendations || []).flatMap((user) => user.flags.map((flag) => ({ ...user, flag }))).filter((row) => (category === "ALL" || row.flag.flag === category) && (confidence === "ALL" || row.flag.confidence === confidence)).sort((a, b) => confidenceRank[a.flag.confidence] - confidenceRank[b.flag.confidence] || a.flag.flag.localeCompare(b.flag.flag));
+  $("#license-optimizer-controls").innerHTML = `<label>Category <select id="optimizer-category"><option value="ALL">All</option>${categories.map(([key]) => `<option value="${escapeHtml(key)}">${escapeHtml(key.replaceAll("_", " "))}</option>`).join("")}</select></label><label>Confidence <select id="optimizer-confidence"><option value="ALL">All</option><option>high</option><option>medium</option><option>low</option></select></label>`;
+  $("#optimizer-category").value = category; $("#optimizer-confidence").value = confidence;
+  $("#license-optimizer-table").innerHTML = rows.length ? `<table><thead><tr><th>Display Name</th><th>UPN</th><th>Licenses</th><th>Flag</th><th>Confidence</th><th>Detail</th><th>Recommended Action</th></tr></thead><tbody>${rows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml(row.user_principal_name)}</td><td>${escapeHtml(row.licenses.join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td><span class="badge confidence-${escapeHtml(row.flag.confidence)}">${escapeHtml(row.flag.confidence)}</span></td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">No flagged users found</p>`;
+  $("#optimizer-category").addEventListener("change", renderOptimizer); $("#optimizer-confidence").addEventListener("change", renderOptimizer);
+}
 const workloadNames = { exchange: '<i class="ti ti-mail" aria-hidden="true"></i>', onedrive: '<i class="ti ti-cloud" aria-hidden="true"></i>', sharepoint: '<i class="ti ti-layout-grid" aria-hidden="true"></i>' };
 const usageLevel = (date, reference) => { if (!date || date === "UNKNOWN") return "NO DATA"; const age = Math.floor((new Date(reference) - new Date(date)) / 86400000); return age <= 1 ? "HIGH" : age <= 7 ? "MEDIUM" : age > 7 ? "LOW" : "NO DATA"; };
 // Exchange capacity presentation is active-only. The authoritative usage_level
@@ -94,10 +107,12 @@ async function start() {
   try {
     await get("/health");
     setHealth(true);
-    const [kpi, correlation, onedriveAdoption] = await Promise.all([
+    const [kpi, correlation, onedriveAdoption, licenseOptimizer] = await Promise.all([
       get("/api/operations/kpi"),
       get("/api/operations/correlation/users"),
-      get("/api/operations/adoption/onedrive").catch(() => null),
+       get("/api/operations/adoption/onedrive").catch(() => null),
+       get("/api/license/optimizer-report").catch(() => null),
+
     ]);
     const dashboardData = kpi.data || {};
     const kpiOnedrive = dashboardData.onedrive || {};
@@ -117,6 +132,8 @@ async function start() {
     renderSummary(renderData);
     renderWorkloads(renderData);
     renderLicenses(renderData, kpi.status === "READY");
+    optimizerReport = licenseOptimizer;
+    renderOptimizer();
     dashboardReady = true;
   } catch (_) {
     setHealth(false);

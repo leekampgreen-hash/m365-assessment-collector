@@ -20,6 +20,7 @@ from api.signin import SigninSummaryService
 from api.auth import verify_api_key
 from api.agent import handle_chat
 from agent.orchestrator import RejectedInputError
+from agent import config
 from collectors.persistence import open_database_connection
 from capabilities.persistence import CapabilityQueryService
 
@@ -80,6 +81,88 @@ def _quality(service: OperationsAnalyticsQueryService) -> dict[str, Any]:
         "partial_tenant_coverage": built["data_quality"]["partial_tenant_coverage"],
         "identity_joins": built["data_quality"]["identity_joins"],
     }
+
+
+def _license_optimizer_report(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT u.user_id, u.display_name, u.user_principal_name, u.user_type,
+               u.account_enabled, s.sku_part_number, oa.last_activity_date
+        FROM core.user u
+        JOIN core.user_license_assignment ula ON ula.tenant_id = u.tenant_id AND ula.user_id = u.user_id
+        JOIN core.subscribed_sku s ON s.tenant_id = ula.tenant_id AND s.sku_id = ula.sku_id
+        LEFT JOIN LATERAL (
+            SELECT MAX(last_activity_date) AS last_activity_date
+            FROM core.usage_office365_active_user
+            WHERE tenant_id = u.tenant_id AND LOWER(entity_key) = LOWER(u.user_principal_name)
+        ) oa ON TRUE
+        WHERE u.tenant_id = %s
+        ORDER BY u.user_id, s.sku_part_number
+    """, (tenant_id,))
+    users: dict[Any, dict[str, Any]] = {}
+    for user_id, display_name, upn, user_type, enabled, sku, last_activity in cursor.fetchall():
+        user = users.setdefault(user_id, {"user_id": user_id, "display_name": display_name,
+            "user_principal_name": upn, "user_type": user_type, "account_enabled": enabled,
+            "last_activity_date": last_activity, "licenses": []})
+        user["licenses"].append(sku)
+        if last_activity is not None:
+            current = user.get("last_activity_date")
+            if current is None or last_activity > current:
+                user["last_activity_date"] = last_activity
+    now = datetime.now(timezone.utc).date()
+    categories = {key: 0 for key in ("inactive_licensed_user", "zero_usage_licensed_user", "over_licensed_user", "duplicate_license_user", "guest_with_license", "blocked_with_license")}
+    recommendations = []
+    for user in users.values():
+        flags = []
+        last = user["last_activity_date"]
+        age = (now - last).days if last else None
+        counts = {sku: user["licenses"].count(sku) for sku in set(user["licenses"])}
+        def add(flag: str, confidence: str, detail: str) -> None:
+            categories[flag] += 1
+            flags.append({"flag": flag, "confidence": confidence, "detail": detail})
+        if age is not None and age > 15:
+            add("inactive_licensed_user", "medium", f"No sign-in activity in {age} days")
+        if last is None:
+            add("zero_usage_licensed_user", "medium", "No usage activity recorded")
+        if len(user["licenses"]) > 1:
+            add("over_licensed_user", "low", f"Assigned {len(user['licenses'])} licenses")
+        if any(count > 1 for count in counts.values()):
+            add("duplicate_license_user", "high", "The same license is assigned more than once")
+        if str(user.get("user_type") or "").lower() == "guest":
+            add("guest_with_license", "high", "Guest account has an assigned license")
+        if user.get("account_enabled") is False:
+            add("blocked_with_license", "high", "Blocked account has an assigned license")
+        if flags:
+            recommendations.append({"user_id": user["user_id"], "display_name": user["display_name"],
+                "user_principal_name": user["user_principal_name"], "licenses": user["licenses"],
+                "flags": flags, "recommended_action": "Review and consider license reclaim"})
+    summary = {"total_users_with_license": len(users), "flagged_users": len(recommendations), "by_category": categories}
+    try:
+        recommendation_summary = _generate_license_recommendation(summary)
+    except Exception:
+        recommendation_summary = "A license optimization recommendation could not be generated at this time. Review the flagged users and category counts to identify reclaim and assignment cleanup opportunities."
+    return {"summary": summary, "recommendation_summary": recommendation_summary, "recommendations": recommendations}
+
+
+def _generate_license_recommendation(summary: dict[str, Any]) -> str:
+    from openai import OpenAI
+
+    prompt = f"""You are a Microsoft 365 licensing analyst. Write a general recommendation for this tenant in English using only the supplied aggregate data. Return exactly 2-3 concise sentences in plain text. Explain the most important license optimization priorities and practical next steps. Do not mention individual users, identifiers, or invent facts.
+
+SUMMARY DATA:
+{json.dumps(summary, separators=(",", ":"))}
+"""
+    client = OpenAI(
+        api_key=config.KRYPTONLAB_API_KEY or config.OPENAI_API_KEY,
+        base_url=config.OPENAI_BASE_URL,
+        timeout=45.0,
+    )
+    response = client.chat.completions.create(
+        model=config.ANALYST_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=250,
+    )
+    return (response.choices[0].message.content or "").strip()
 
 
 def _license_parking(connection: Any, tenant_id: int) -> dict[str, Any]:
@@ -189,7 +272,16 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 return
             try:
                 from agent.analyst import generate_security_report
-                self._write(200, generate_security_report())
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+                self._write(
+                    200,
+                    generate_security_report(
+                        system_prompt=payload.get("system_prompt"),
+                        choice=payload.get("choice", ""),
+                        history=payload.get("history"),
+                    ),
+                )
             except Exception as exc:
                 self._write(503, {"status": "ERROR", "error": str(exc)})
             return
@@ -254,6 +346,13 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             self._write(404, _response("NOT_FOUND"))
             return
         try:
+            if path == "/api/license/optimizer-report":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _license_optimizer_report(connection, self.tenant_id))
+                finally:
+                    connection.close()
+                return
             if path == "/api/license/parking-report":
                 connection = self.connection_factory()
                 try:
