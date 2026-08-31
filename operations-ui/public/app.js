@@ -5,12 +5,12 @@ const display = (object, suffix = "") => { const result = value(object); return 
 const storage = (number) => { if (number === null || number === undefined || number === "") return "Data currently unavailable"; const units = ["B", "KB", "MB", "GB", "TB"]; let value = Number(number); let index = 0; while (Math.abs(value) >= 1024 && index < units.length - 1) { value /= 1024; index += 1; } return `${value.toFixed(index ? 2 : 0)} ${units[index]}`; };
 const source = (object) => metric(object).source_refresh_date ? `Source refreshed ${metric(object).source_refresh_date}` : "Source refresh unavailable";
 const status = (object) => metric(object).status === "READY" ? "Ready" : "Data currently unavailable";
-// Render an explicit primitive (plain number/string) field without metric-object semantics.
 const primitive = (value) => value === null || value === undefined || value === "" ? "Data currently unavailable" : `${value}`;
-// Apply the storage() formatter to a value that may arrive as a metric object or a raw byte number.
 const storageValue = (object) => storage(metric(object).value ?? object);
 const DASHBOARD_FETCH_TIMEOUT_MS = 10000;
+const PANEL_LOAD_DELAY_MS = 500;
 const escapeHtml = (item) => String(item ?? "—").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+const SKELETON_BAR = '<div class="skeleton-bar"></div>'.repeat(3);
 
 async function get(path) {
   const controller = new AbortController();
@@ -23,6 +23,7 @@ async function get(path) {
     clearTimeout(timeout);
   }
 }
+
 function setHealth(ready) { $("#health-dot").className = `dot ${ready ? "ready" : "error"}`; $("#health-label").textContent = ready ? "Analytics service healthy" : "Analytics service unavailable"; }
 function showUnavailable() { $("#error-banner").textContent = "Analytics service unavailable"; $("#error-banner").classList.remove("hidden"); }
 function metricCard(label, item, icon, iconClass, sublabel) { return `<article class="card"><div class="kpi-icon ${iconClass}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${value(item) === null ? "Data currently unavailable" : escapeHtml(display(item))}</div><div class="status ${value(item) === null ? "unavailable" : "ready"}">${escapeHtml(sublabel || status(item))}</div></article>`; }
@@ -36,13 +37,13 @@ async function loadExecSummary() {
   const panel = $("#exec-summary");
   const count = findings.length;
   if (!count) {
-    $("#exec-summary-icon").textContent = "✅";
+    $("#exec-summary-icon").textContent = "OK";
     $("#exec-summary-count").textContent = "No issues found — tenant looks healthy";
     $("#exec-summary-items").innerHTML = "";
   } else {
-    $("#exec-summary-icon").textContent = count >= 3 ? "🔴" : "⚠️";
-    $("#exec-summary-count").textContent = count >= 3 ? `${count} items require your attention` : `⚠️ ${count} item${count === 1 ? "" : "s"} require your attention`;
-    $("#exec-summary-items").innerHTML = findings.map((finding) => { const risk = String(finding.risk || "LOW").toLowerCase(); const icon = risk === "high" ? "🔴" : risk === "medium" ? "🟡" : "🟢"; return `<div class="exec-summary-item ${["high", "medium", "low"].includes(risk) ? risk : "low"}"><span>${icon}</span><span>${escapeHtml(finding.finding)}</span></div>`; }).join("");
+    $("#exec-summary-icon").textContent = count >= 3 ? "!" : "!";
+    $("#exec-summary-count").textContent = count >= 3 ? `${count} items require your attention` : `! ${count} item${count === 1 ? "" : "s"} require your attention`;
+    $("#exec-summary-items").innerHTML = findings.map((finding) => { const risk = String(finding.risk || "LOW").toLowerCase(); const icon = risk === "high" ? "!" : risk === "medium" ? "!" : "."; return `<div class="exec-summary-item ${["high", "medium", "low"].includes(risk) ? risk : "low"}"><span>${icon}</span><span>${escapeHtml(finding.finding)}</span></div>`; }).join("");
   }
   panel.style.display = "block";
 }
@@ -51,6 +52,8 @@ function renderLicenses(data, ready = true) { const rows = ready ? Object.entrie
 function workloadCard(name, item, fields) { return `<article class="card"><div class="card-head"><h3>${name}</h3></div>${fields.map(([label, key, suffix, kind]) => { const rendered = kind === "primitive" ? primitive(item[key]) : kind === "storage" ? storageValue(item[key]) : display(item[key], suffix); return `<div class="detail-row"><span class="detail-label">${label}</span><strong>${rendered}</strong></div>`; }).join("")}</article>`; }
 function renderWorkloads(data) { window.dashboardOnedrive = data.onedrive || {}; renderUsageSummaries(); }
 let optimizerReport = null;
+let optimizerPage = 1;
+let optimizerPageSize = 10;
 const confidenceRank = { high: 0, medium: 1, low: 2 };
 function renderOptimizer() {
   const report = optimizerReport?.data || optimizerReport || { summary: { flagged_users: 0, by_category: {} }, recommendations: [] };
@@ -59,10 +62,16 @@ function renderOptimizer() {
   $("#license-optimizer-summary").innerHTML = `<div><div class="summary-label">Total flagged users</div><div class="summary-value">${escapeHtml(report.summary?.flagged_users ?? 0)}</div></div><div class="optimizer-badges">${allCategories.map((key) => `<span class="badge optimizer-${key}">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(categories[key] ?? 0)}</span>`).join("")}</div><p class="optimizer-recommendation">${escapeHtml(report.recommendation_summary || "No recommendation summary available.")}</p>`;
   const category = $("#optimizer-category")?.value || "ALL", confidence = $("#optimizer-confidence")?.value || "ALL";
   const rows = (report.recommendations || []).flatMap((user) => (user.flags || []).map((flag) => ({ ...user, flag }))).filter((row) => (category === "ALL" || row.flag.flag === category) && (confidence === "ALL" || row.flag.confidence === confidence)).sort((a, b) => confidenceRank[a.flag.confidence] - confidenceRank[b.flag.confidence] || a.flag.flag.localeCompare(b.flag.flag));
-  $("#license-optimizer-controls").innerHTML = `<label>Category <select id="optimizer-category"><option value="ALL">All</option>${allCategories.map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(key.replaceAll("_", " "))}</option>`).join("")}</select></label><label>Confidence <select id="optimizer-confidence"><option value="ALL">All</option><option>high</option><option>medium</option><option>low</option></select></label>`;
-  $("#optimizer-category").value = category; $("#optimizer-confidence").value = confidence;
-  $("#license-optimizer-table").innerHTML = rows.length ? `<table><thead><tr><th>Display Name</th><th>Licenses</th><th>Flag(s)</th><th>Confidence</th><th>Detail</th><th>Recommended Action</th></tr></thead><tbody>${rows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml((row.licenses || []).join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td><span class="badge confidence-${escapeHtml(row.flag.confidence)}">${escapeHtml(row.flag.confidence)}</span></td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">No flagged users found</p>`;
-  $("#optimizer-category").addEventListener("change", renderOptimizer); $("#optimizer-confidence").addEventListener("change", renderOptimizer);
+  const pageCount = Math.max(1, Math.ceil(rows.length / optimizerPageSize));
+  optimizerPage = Math.min(optimizerPage, pageCount);
+  const pageRows = rows.slice((optimizerPage - 1) * optimizerPageSize, optimizerPage * optimizerPageSize);
+  $("#license-optimizer-controls").innerHTML = `<label>Category <select id="optimizer-category"><option value="ALL">All</option>${allCategories.map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(key.replaceAll("_", " "))}</option>`).join("")}</select></label><label>Confidence <select id="optimizer-confidence"><option value="ALL">All</option><option>high</option><option>medium</option><option>low</option></select></label><label>Rows per page <select id="optimizer-page-size"><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>`;
+  $("#optimizer-category").value = category; $("#optimizer-confidence").value = confidence; $("#optimizer-page-size").value = String(optimizerPageSize);
+  const table = pageRows.length ? `<table><thead><tr><th>Display Name</th><th>Licenses</th><th>Flag(s)</th><th>Confidence</th><th>Detail</th><th>Recommended Action</th></tr></thead><tbody>${pageRows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml((row.licenses || []).join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td><span class="badge confidence-${escapeHtml(row.flag.confidence)}">${escapeHtml(row.flag.confidence)}</span></td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`).join("")}</tbody></table><div class="pagination"><button class="plain-button" id="optimizer-previous" type="button" ${optimizerPage === 1 ? "disabled" : ""}>Previous</button><span>Page ${optimizerPage} of ${pageCount}</span><button class="plain-button" id="optimizer-next" type="button" ${optimizerPage === pageCount ? "disabled" : ""}>Next</button></div>` : `<p class="empty-state">No flagged users found</p>`;
+  $("#license-optimizer-table").innerHTML = table;
+  $("#optimizer-category").addEventListener("change", () => { optimizerPage = 1; renderOptimizer(); }); $("#optimizer-confidence").addEventListener("change", () => { optimizerPage = 1; renderOptimizer(); });
+  $("#optimizer-page-size").addEventListener("change", (event) => { optimizerPageSize = Number(event.target.value); optimizerPage = 1; renderOptimizer(); });
+  $("#optimizer-previous")?.addEventListener("click", () => { optimizerPage -= 1; renderOptimizer(); }); $("#optimizer-next")?.addEventListener("click", () => { optimizerPage += 1; renderOptimizer(); });
 }
 let sharepointData = {};
 function renderSharePoint() {
@@ -71,16 +80,32 @@ function renderSharePoint() {
   $("#sharepoint-summary-cards").innerHTML = [["Total sites", sites.length], ["Active sites", active], ["Orphaned sites", sharepointData.orphaned?.length || 0], ["External sharing enabled", external.size]].map(([label, count]) => `<article class="card"><div class="summary-label">${label}</div><div class="summary-value">${count}</div></article>`).join("");
   const sort = $("#sharepoint-sort")?.value || "activity";
   const sorted = [...sites].sort((a, b) => sort === "storage" ? Number(b.storage_used_byte || 0) - Number(a.storage_used_byte || 0) : String(b.last_activity_date || "").localeCompare(String(a.last_activity_date || "")));
-  $("#sharepoint-sites-table").innerHTML = `<div class="detail-controls"><label>Sort <select id="sharepoint-sort"><option value="activity">Last activity</option><option value="storage">Storage</option></select></label></div>` + (sorted.length ? `<table><thead><tr><th>Display Name</th><th>Last Activity</th><th>Storage Used</th><th>Owner</th></tr></thead><tbody>${sorted.map((site) => `<tr><th>${escapeHtml(site.display_name)}</th><td>${escapeHtml(site.last_activity_date || "")}</td><td>${escapeHtml(storage(site.storage_used_byte))}</td><td>${escapeHtml(site.owner_display_name || "")}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">No SharePoint site usage data found</p>`);
+  const siteUrlCell = (site) => {
+    const raw = site.site_url;
+    if (raw === null || raw === undefined || String(raw).trim() === "") return `<span class="muted-cell">—</span>`;
+    return escapeHtml(raw);
+  };
+  const nameLooksLikeOwner = (name) => {
+    const text = String(name || "").trim();
+    if (!text) return false;
+    return /\b(Owners?|Administrators?)\b/i.test(text);
+  };
+  const rows = sorted.map((site) => {
+    const name = escapeHtml(site.display_name);
+    const ownerNote = nameLooksLikeOwner(site.display_name)
+      ? `<div class="muted-note">SharePoint group site</div>`
+      : "";
+    return `<tr><th><div class="site-name">${name}</div>${ownerNote}</th><td>${escapeHtml(site.last_activity_date || "")}</td><td>${escapeHtml(storage(site.storage_used_byte))}</td><td>${siteUrlCell(site)}</td></tr>`;
+  }).join("");
+  const table = sorted.length
+    ? `<table class="sharepoint-sites"><thead><tr><th>Display Name</th><th>Last Activity</th><th>Storage Used</th><th>Site URL</th></tr></thead><tbody>${rows}</tbody></table>`
+    : `<p class="empty-state">No SharePoint site usage data found</p>`;
+  const note = `<p class="sharepoint-privacy-note">Site URLs are not available. This may be due to tenant privacy settings in Microsoft 365.</p>`;
+  $("#sharepoint-sites-table").innerHTML = `<div class="detail-controls"><label>Sort <select id="sharepoint-sort"><option value="activity">Last activity</option><option value="storage">Storage</option></select></label></div>${table}${note}`;
   $("#sharepoint-sort").addEventListener("change", renderSharePoint);
 }
 const workloadNames = { exchange: '<i class="ti ti-mail" aria-hidden="true"></i>', onedrive: '<i class="ti ti-cloud" aria-hidden="true"></i>', sharepoint: '<i class="ti ti-layout-grid" aria-hidden="true"></i>' };
 const usageLevel = (date, reference) => { if (!date || date === "UNKNOWN") return "NO DATA"; const age = Math.floor((new Date(reference) - new Date(date)) / 86400000); return age <= 1 ? "HIGH" : age <= 7 ? "MEDIUM" : age > 7 ? "LOW" : "NO DATA"; };
-// Exchange capacity presentation is active-only. The authoritative usage_level
-// (LOW/MEDIUM/HIGH/NO DATA) comes from the analytics view per user; we only
-// surface ACTIVE Exchange users in customer-facing capacity views. INACTIVE and
-// UNKNOWN users are excluded from detail + summary while remaining in the
-// backend evidence.
 const exchangeLevel = (u) => (u.exchange_usage_level || "no_data").replace("no_data", "NO DATA").toUpperCase();
 const exchangeBucket = (u) => { const level = exchangeLevel(u); return level === "NO DATA" ? "no_data" : level.toLowerCase(); };
 const exchangeActiveUsers = () => correlationUsers.filter((u) => u.exchange_status === "ACTIVE");
@@ -112,46 +137,137 @@ function renderDetail(workload, filter = detailState.filter, page = 1) {
 }
 $("#back-overview").addEventListener("click", () => { $("#usage-detail").classList.add("hidden"); });
 async function renderInactivity(days = 30) { try { const data = await get(`/api/operations/inactivity?days=${days}`); const item = data.status === "READY" ? (data.data || {}) : {}; $("#inactivity").innerHTML = [["Inactive users", item.inactive_users], ["Active users", item.active_users], ["Insufficient evidence", item.unknown_users], ["Workload inactivity signals", item.multi_workload_inactive_users]].map(([label, number], index) => `<div class="inactivity-cell"><div class="inactivity-number">${data.status === "READY" ? (number ?? 0) : "Data currently unavailable"}</div><div class="inactivity-label">${label}</div>${index === 3 ? '<div class="inactivity-caption">Users with inactivity evidence across evaluated workloads.</div>' : ""}</div>`).join(""); } catch (_) { showUnavailable(); $("#inactivity").innerHTML = `<div class="inactivity-cell">Data currently unavailable</div>`; } }
+
+const PANEL_REGISTRY = {
+  usage: { sectionId: "usage-overview-section", loader: loadUsagePanel },
+  licenses: { sectionId: "entitlements-section", loader: loadLicensesPanel },
+  optimizer: { sectionId: "license-optimizer-section", loader: loadOptimizerPanel },
+  sharepoint: { sectionId: "sharepoint-section", loader: loadSharePointPanel },
+};
+const panelLoadState = {};
+const STAGGER_DELAY = PANEL_LOAD_DELAY_MS;
+
+function renderPanelSkeleton(panelKey) {
+  const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
+  if (!section) return;
+  const target = section.querySelector(".panel-body") || section;
+  if (!target.querySelector(".panel-skeleton")) {
+    const skeleton = document.createElement("div");
+    skeleton.className = "panel-skeleton";
+    skeleton.dataset.panel = panelKey;
+    skeleton.innerHTML = `<div class="skeleton-card-grid">${[0,1,2].map(() => `<div class="skeleton-card"><div class="skeleton-bar skeleton-bar-title"></div><div class="skeleton-bar skeleton-bar-value"></div><div class="skeleton-bar skeleton-bar-sub"></div></div>`).join("")}</div><div class="skeleton-table">${[0,1,2,3].map(() => `<div class="skeleton-row"></div>`).join("")}</div>`;
+    const actions = document.createElement("div");
+    actions.className = "panel-actions";
+    actions.innerHTML = `<button type="button" class="plain-button panel-load-btn" data-panel="${panelKey}">Load</button>`;
+    skeleton.appendChild(actions);
+    target.appendChild(skeleton);
+  }
+}
+
+function renderPanelError(panelKey, retry) {
+  const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
+  if (!section) return;
+  const target = section.querySelector(".panel-body") || section;
+  target.innerHTML = `<div class="panel-error"><p>Failed to load. Retry?</p><button type="button" class="plain-button panel-retry-btn" data-panel="${panelKey}">Retry</button></div>`;
+  target.querySelector(".panel-retry-btn").addEventListener("click", retry);
+}
+
+async function loadPanel(panelKey) {
+  const state = panelLoadState[panelKey];
+  if (state && (state.loading || state.loaded)) return;
+  panelLoadState[panelKey] = { loading: true, loaded: false };
+  const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
+  const target = section?.querySelector(".panel-body") || section;
+  if (target) {
+    const skeleton = target.querySelector(".panel-skeleton");
+    if (skeleton) skeleton.remove();
+  }
+  try {
+    await PANEL_REGISTRY[panelKey].loader();
+    panelLoadState[panelKey] = { loading: false, loaded: true };
+  } catch (error) {
+    panelLoadState[panelKey] = { loading: false, loaded: false };
+    renderPanelError(panelKey, () => loadPanel(panelKey));
+  }
+}
+
+function showLoadButtons() {
+  Object.keys(PANEL_REGISTRY).forEach((panelKey) => {
+    renderPanelSkeleton(panelKey);
+    const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
+    const btn = section?.querySelector(`.panel-load-btn[data-panel="${panelKey}"]`);
+    if (btn) btn.addEventListener("click", () => loadPanel(panelKey));
+  });
+}
+
+async function loadUsagePanel() {
+  const onedriveAdoption = await get("/api/operations/adoption/onedrive").catch(() => null);
+  const kpiOnedrive = window.dashboardData?.onedrive || {};
+  const adoptionOnedrive = onedriveAdoption?.data;
+  const onedriveOwnedFields = ["capacity_usage", "data_last_refreshed", "account_details", "total_storage_used", "total_file_count"];
+  const mergedOnedrive = { ...kpiOnedrive };
+  if (adoptionOnedrive && typeof adoptionOnedrive === "object") {
+    onedriveOwnedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(adoptionOnedrive, field)) mergedOnedrive[field] = adoptionOnedrive[field];
+    });
+  }
+  window.dashboardOnedrive = mergedOnedrive;
+  renderWorkloads({ onedrive: mergedOnedrive });
+}
+
+async function loadLicensesPanel() {
+  const data = window.dashboardData || {};
+  renderLicenses(data, !!Object.keys(data.license || {}).length || data.license_status === "READY");
+}
+
+async function loadOptimizerPanel() {
+  optimizerReport = await get("/api/license/optimizer-report").catch(() => null);
+  renderOptimizer();
+}
+
+async function loadSharePointPanel() {
+  const [sharepointAdoption, orphanedSites, externalSharing] = await Promise.all([
+    get("/api/operations/adoption/sharepoint/sites").catch(() => null),
+    get("/api/operations/sharepoint/orphaned-sites").catch(() => null),
+    get("/api/operations/sharepoint/external-sharing").catch(() => null),
+  ]);
+  const siteData = sharepointAdoption?.data || sharepointAdoption || {};
+  const adoptionSites = Array.isArray(siteData.sites) ? siteData.sites : [];
+  sharepointData = {
+    sites: adoptionSites,
+    orphaned: orphanedSites?.data?.sites || orphanedSites?.sites || [],
+    external: new Set((externalSharing?.data?.tenants || []).flatMap((item) => Array.from({ length: Number(item.sites_with_external_shares || 0) }, (_, index) => `${item.tenant_id}-${index}`))),
+  };
+  renderSharePoint();
+}
+
+function loadPanelsProgressively(keys) {
+  let index = 0;
+  const runNext = () => {
+    if (index >= keys.length) return;
+    const key = keys[index++];
+    loadPanel(key).finally(() => setTimeout(runNext, STAGGER_DELAY));
+  };
+  runNext();
+}
+
 async function start() {
   loadExecSummary().catch(() => {});
   let dashboardReady = false;
   try {
     await get("/health");
     setHealth(true);
-     const [kpi, correlation, onedriveAdoption, licenseOptimizer, sharepointAdoption, orphanedSites, externalSharing] = await Promise.all([
+    const [kpi, correlation] = await Promise.all([
       get("/api/operations/kpi"),
       get("/api/operations/correlation/users"),
-       get("/api/operations/adoption/onedrive").catch(() => null),
-        get("/api/license/optimizer-report").catch(() => null),
-       get("/api/operations/adoption/sharepoint/sites").catch(() => null),
-       get("/api/operations/sharepoint/orphaned-sites").catch(() => null),
-       get("/api/operations/sharepoint/external-sharing").catch(() => null),
-     ]);
+    ]);
     const dashboardData = kpi.data || {};
-    const kpiOnedrive = dashboardData.onedrive || {};
-    const adoptionOnedrive = onedriveAdoption?.data;
-    const onedriveOwnedFields = ["capacity_usage", "data_last_refreshed", "account_details", "total_storage_used", "total_file_count"];
-    const mergedOnedrive = { ...kpiOnedrive };
-    if (adoptionOnedrive && typeof adoptionOnedrive === "object") {
-      onedriveOwnedFields.forEach((field) => {
-        if (Object.prototype.hasOwnProperty.call(adoptionOnedrive, field)) mergedOnedrive[field] = adoptionOnedrive[field];
-      });
-    }
-    const renderData = { ...dashboardData, onedrive: mergedOnedrive };
-    window.dashboardOnedrive = mergedOnedrive;
+    window.dashboardData = dashboardData;
     window.dashboardAsOf = kpi.as_of || correlation.as_of || "--";
     $("#as-of").textContent = window.dashboardAsOf;
     correlationUsers = correlation.data?.users || [];
-    renderSummary(renderData);
-    renderWorkloads(renderData);
-    renderLicenses(renderData, kpi.status === "READY");
-    optimizerReport = licenseOptimizer;
-     renderOptimizer();
-       const siteData = sharepointAdoption?.data || sharepointAdoption || {};
-       const adoptionSites = Array.isArray(siteData.sites) ? siteData.sites : [];
-       sharepointData = { sites: adoptionSites, orphaned: orphanedSites?.data?.sites || orphanedSites?.sites || [], external: new Set((externalSharing?.data?.tenants || []).flatMap((item) => Array.from({ length: Number(item.sites_with_external_shares || 0) }, (_, index) => `${item.tenant_id}-${index}`))) };
-
-     renderSharePoint();
+    renderSummary(dashboardData);
+     showLoadButtons();
      dashboardReady = true;
   } catch (_) {
     setHealth(false);
