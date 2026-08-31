@@ -53,15 +53,26 @@ function renderWorkloads(data) { window.dashboardOnedrive = data.onedrive || {};
 let optimizerReport = null;
 const confidenceRank = { high: 0, medium: 1, low: 2 };
 function renderOptimizer() {
-  const report = optimizerReport || { summary: { flagged_users: 0, by_category: {} }, recommendations: [] };
-  const categories = Object.entries(report.summary.by_category || {});
-  $("#license-optimizer-summary").innerHTML = `<div class="summary-value">${escapeHtml(report.summary.flagged_users ?? 0)}</div><div class="optimizer-badges">${categories.map(([key, count]) => `<span class="badge optimizer-${key}">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(count)}</span>`).join("")}</div>`;
+  const report = optimizerReport?.data || optimizerReport || { summary: { flagged_users: 0, by_category: {} }, recommendations: [] };
+  const allCategories = ["blocked_with_license", "guest_with_license", "inactive_licensed_user", "zero_usage_licensed_user", "over_licensed_user", "duplicate_license_user"];
+  const categories = report.summary?.by_category || {};
+  $("#license-optimizer-summary").innerHTML = `<div><div class="summary-label">Total flagged users</div><div class="summary-value">${escapeHtml(report.summary?.flagged_users ?? 0)}</div></div><div class="optimizer-badges">${allCategories.map((key) => `<span class="badge optimizer-${key}">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(categories[key] ?? 0)}</span>`).join("")}</div><p class="optimizer-recommendation">${escapeHtml(report.recommendation_summary || "No recommendation summary available.")}</p>`;
   const category = $("#optimizer-category")?.value || "ALL", confidence = $("#optimizer-confidence")?.value || "ALL";
-  const rows = (report.recommendations || []).flatMap((user) => user.flags.map((flag) => ({ ...user, flag }))).filter((row) => (category === "ALL" || row.flag.flag === category) && (confidence === "ALL" || row.flag.confidence === confidence)).sort((a, b) => confidenceRank[a.flag.confidence] - confidenceRank[b.flag.confidence] || a.flag.flag.localeCompare(b.flag.flag));
-  $("#license-optimizer-controls").innerHTML = `<label>Category <select id="optimizer-category"><option value="ALL">All</option>${categories.map(([key]) => `<option value="${escapeHtml(key)}">${escapeHtml(key.replaceAll("_", " "))}</option>`).join("")}</select></label><label>Confidence <select id="optimizer-confidence"><option value="ALL">All</option><option>high</option><option>medium</option><option>low</option></select></label>`;
+  const rows = (report.recommendations || []).flatMap((user) => (user.flags || []).map((flag) => ({ ...user, flag }))).filter((row) => (category === "ALL" || row.flag.flag === category) && (confidence === "ALL" || row.flag.confidence === confidence)).sort((a, b) => confidenceRank[a.flag.confidence] - confidenceRank[b.flag.confidence] || a.flag.flag.localeCompare(b.flag.flag));
+  $("#license-optimizer-controls").innerHTML = `<label>Category <select id="optimizer-category"><option value="ALL">All</option>${allCategories.map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(key.replaceAll("_", " "))}</option>`).join("")}</select></label><label>Confidence <select id="optimizer-confidence"><option value="ALL">All</option><option>high</option><option>medium</option><option>low</option></select></label>`;
   $("#optimizer-category").value = category; $("#optimizer-confidence").value = confidence;
-  $("#license-optimizer-table").innerHTML = rows.length ? `<table><thead><tr><th>Display Name</th><th>UPN</th><th>Licenses</th><th>Flag</th><th>Confidence</th><th>Detail</th><th>Recommended Action</th></tr></thead><tbody>${rows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml(row.user_principal_name)}</td><td>${escapeHtml(row.licenses.join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td><span class="badge confidence-${escapeHtml(row.flag.confidence)}">${escapeHtml(row.flag.confidence)}</span></td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">No flagged users found</p>`;
+  $("#license-optimizer-table").innerHTML = rows.length ? `<table><thead><tr><th>Display Name</th><th>Licenses</th><th>Flag(s)</th><th>Confidence</th><th>Detail</th><th>Recommended Action</th></tr></thead><tbody>${rows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml((row.licenses || []).join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td><span class="badge confidence-${escapeHtml(row.flag.confidence)}">${escapeHtml(row.flag.confidence)}</span></td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">No flagged users found</p>`;
   $("#optimizer-category").addEventListener("change", renderOptimizer); $("#optimizer-confidence").addEventListener("change", renderOptimizer);
+}
+let sharepointData = {};
+function renderSharePoint() {
+  const sites = sharepointData.sites || [], external = sharepointData.external || new Set();
+  const active = sites.filter((site) => site.last_activity_date !== null && site.last_activity_date !== undefined && site.last_activity_date !== "").length;
+  $("#sharepoint-summary-cards").innerHTML = [["Total sites", sites.length], ["Active sites", active], ["Orphaned sites", sharepointData.orphaned?.length || 0], ["External sharing enabled", external.size]].map(([label, count]) => `<article class="card"><div class="summary-label">${label}</div><div class="summary-value">${count}</div></article>`).join("");
+  const sort = $("#sharepoint-sort")?.value || "activity";
+  const sorted = [...sites].sort((a, b) => sort === "storage" ? Number(b.storage_used_byte || 0) - Number(a.storage_used_byte || 0) : String(b.last_activity_date || "").localeCompare(String(a.last_activity_date || "")));
+  $("#sharepoint-sites-table").innerHTML = `<div class="detail-controls"><label>Sort <select id="sharepoint-sort"><option value="activity">Last activity</option><option value="storage">Storage</option></select></label></div>` + (sorted.length ? `<table><thead><tr><th>Display Name</th><th>Last Activity</th><th>Storage Used</th><th>Owner</th></tr></thead><tbody>${sorted.map((site) => `<tr><th>${escapeHtml(site.display_name)}</th><td>${escapeHtml(site.last_activity_date || "")}</td><td>${escapeHtml(storage(site.storage_used_byte))}</td><td>${escapeHtml(site.owner_display_name || "")}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">No SharePoint site usage data found</p>`);
+  $("#sharepoint-sort").addEventListener("change", renderSharePoint);
 }
 const workloadNames = { exchange: '<i class="ti ti-mail" aria-hidden="true"></i>', onedrive: '<i class="ti ti-cloud" aria-hidden="true"></i>', sharepoint: '<i class="ti ti-layout-grid" aria-hidden="true"></i>' };
 const usageLevel = (date, reference) => { if (!date || date === "UNKNOWN") return "NO DATA"; const age = Math.floor((new Date(reference) - new Date(date)) / 86400000); return age <= 1 ? "HIGH" : age <= 7 ? "MEDIUM" : age > 7 ? "LOW" : "NO DATA"; };
@@ -107,13 +118,15 @@ async function start() {
   try {
     await get("/health");
     setHealth(true);
-    const [kpi, correlation, onedriveAdoption, licenseOptimizer] = await Promise.all([
+     const [kpi, correlation, onedriveAdoption, licenseOptimizer, sharepointAdoption, orphanedSites, externalSharing] = await Promise.all([
       get("/api/operations/kpi"),
       get("/api/operations/correlation/users"),
        get("/api/operations/adoption/onedrive").catch(() => null),
-       get("/api/license/optimizer-report").catch(() => null),
-
-    ]);
+        get("/api/license/optimizer-report").catch(() => null),
+       get("/api/operations/adoption/sharepoint/sites").catch(() => null),
+       get("/api/operations/sharepoint/orphaned-sites").catch(() => null),
+       get("/api/operations/sharepoint/external-sharing").catch(() => null),
+     ]);
     const dashboardData = kpi.data || {};
     const kpiOnedrive = dashboardData.onedrive || {};
     const adoptionOnedrive = onedriveAdoption?.data;
@@ -133,8 +146,13 @@ async function start() {
     renderWorkloads(renderData);
     renderLicenses(renderData, kpi.status === "READY");
     optimizerReport = licenseOptimizer;
-    renderOptimizer();
-    dashboardReady = true;
+     renderOptimizer();
+       const siteData = sharepointAdoption?.data || sharepointAdoption || {};
+       const adoptionSites = Array.isArray(siteData.sites) ? siteData.sites : [];
+       sharepointData = { sites: adoptionSites, orphaned: orphanedSites?.data?.sites || orphanedSites?.sites || [], external: new Set((externalSharing?.data?.tenants || []).flatMap((item) => Array.from({ length: Number(item.sites_with_external_shares || 0) }, (_, index) => `${item.tenant_id}-${index}`))) };
+
+     renderSharePoint();
+     dashboardReady = true;
   } catch (_) {
     setHealth(false);
     showUnavailable();

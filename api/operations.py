@@ -83,6 +83,28 @@ def _quality(service: OperationsAnalyticsQueryService) -> dict[str, Any]:
     }
 
 
+def _sharepoint_sites(connection: Any, tenant_id: int) -> list[dict[str, Any]]:
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT display_name, site_url, last_activity_date, storage_used,
+               is_deleted, NULL AS owner_display_name
+        FROM core.usage_sharepoint_site_usage
+        WHERE tenant_id = %s
+        ORDER BY last_activity_date DESC NULLS LAST
+    """, (tenant_id,))
+    return [
+        {
+            "display_name": display_name,
+            "site_url": site_url,
+            "last_activity_date": last_activity_date,
+            "storage_used_byte": storage_used_byte,
+            "is_deleted": is_deleted,
+            "owner_display_name": owner_display_name,
+        }
+        for display_name, site_url, last_activity_date, storage_used_byte, is_deleted, owner_display_name in cursor.fetchall()
+    ]
+
+
 def _license_optimizer_report(connection: Any, tenant_id: int) -> dict[str, Any]:
     cursor = connection.cursor()
     cursor.execute("""
@@ -521,6 +543,16 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             if path in routes:
                 service = self._load_service()
                 data = getattr(service, routes[path])()
+                if path == BASE_PATH + "/adoption/sharepoint/sites":
+                    data["sites"] = []
+                    if self.tenant_id is not None:
+                        connection = self.connection_factory()
+                        try:
+                            data["sites"] = _sharepoint_sites(connection, self.tenant_id)
+                        finally:
+                            close = getattr(connection, "close", None)
+                            if close is not None:
+                                close()
                 self._write(200, _response(_service_status(data), data, quality=_quality(service)))
                 return
             if path == BASE_PATH + "/data-quality":
