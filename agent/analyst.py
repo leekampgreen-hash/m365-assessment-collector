@@ -14,7 +14,7 @@ if not logging.root.handlers:
     )
 
 from agent import config
-from agent.anonymizer import Anonymizer
+from agent.anonymizer import session_store
 
 logger = logging.getLogger(__name__)
 
@@ -94,8 +94,8 @@ def _summarize_data(data: dict) -> dict:
         "risk_score": {
             "distribution": risk.get("risk_distribution", {}),
             "top_risks": [
-                {key: item.get(key) for key in ("display_name", "risk_level", "score")}
-                for item in risk.get("top_risks", [])[:3]
+                {key: item.get(key) for key in ("display_name", "risk_level", "score", "risk_factors")}
+                for item in risk.get("top_risks", [])
             ],
         },
         "admin_roles": {key: admin.get(key) for key in ("total_roles_assigned", "high_privilege_roles", "findings")},
@@ -125,8 +125,15 @@ def _plain_text_report(report: str) -> str:
     return "\n".join(lines).strip()
 
 
-def generate_security_report(system_prompt: str = None, choice: str = "", history: list = None) -> dict:
+def generate_security_report(system_prompt: str = None, choice: str = "", session_id: str = None) -> dict:
     """Collect security data and generate an analysis report."""
+    if session_id is None:
+        session_id = session_store.create()
+    session = session_store.get(session_id)
+    if session is None:
+        return {"status": "SESSION_EXPIRED", "session_id": None}
+    anon = session["anonymizer"]
+    history = session["history"]
     from openai import OpenAI
 
     logger.info("Security Analyst: collecting data")
@@ -137,7 +144,6 @@ def generate_security_report(system_prompt: str = None, choice: str = "", histor
             base_url=config.OPENAI_BASE_URL,
             timeout=45.0,
         )
-        anon = Anonymizer()
         summarized = _summarize_data(data)
         anonymized = dict(summarized)
         risk_score = dict(anonymized.get("risk_score", {}))
@@ -152,7 +158,7 @@ def generate_security_report(system_prompt: str = None, choice: str = "", histor
         if system_prompt:
             messages = [
                 {"role": "system", "content": system_prompt},
-                *[{"role": item["role"], "content": item["content"]} for item in (history or [])],
+                *[{"role": item["role"], "content": item["content"]} for item in history],
                 {
                     "role": "user",
                     "content": f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}",
@@ -173,11 +179,15 @@ def generate_security_report(system_prompt: str = None, choice: str = "", histor
         )
         raw_report = _plain_text_report(response.choices[0].message.content or "")
         report = anon.deanonymize(raw_report)
+        user_content = f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}"
+        session_store.append_history(session_id, "user", user_content)
+        session_store.append_history(session_id, "assistant", raw_report)
         tokens_used = getattr(response.usage, "total_tokens", None)
         if tokens_used:
             logger.info("Security Analyst: %s tokens used", tokens_used)
         return {
             "status": "READY",
+            "session_id": session_id,
             "generated_at": datetime.utcnow().isoformat(),
             "report": report,
             "data_sources": list(SECURITY_ENDPOINTS),

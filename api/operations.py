@@ -279,7 +279,7 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                     generate_security_report(
                         system_prompt=payload.get("system_prompt"),
                         choice=payload.get("choice", ""),
-                        history=payload.get("history"),
+                        session_id=payload.get("session_id"),
                     ),
                 )
             except Exception as exc:
