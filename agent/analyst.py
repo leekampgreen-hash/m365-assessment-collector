@@ -2,10 +2,19 @@
 import json
 import logging
 import os
+import sys
 import urllib.request
 from datetime import datetime
 
+if not logging.root.handlers:
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s"
+    )
+
 from agent import config
+from agent.anonymizer import Anonymizer
 
 logger = logging.getLogger(__name__)
 
@@ -128,21 +137,42 @@ def generate_security_report(system_prompt: str = None, choice: str = "", histor
             base_url=config.OPENAI_BASE_URL,
             timeout=45.0,
         )
-        messages = []
+        anon = Anonymizer()
+        summarized = _summarize_data(data)
+        anonymized = dict(summarized)
+        risk_score = dict(anonymized.get("risk_score", {}))
+        if "top_risks" in risk_score:
+            risk_score["top_risks"] = anon.anonymize_data(risk_score["top_risks"])
+        anonymized["risk_score"] = risk_score
+        for section in ("mfa_registration", "signin_summary"):
+            if section in anonymized:
+                anonymized[section] = anon.anonymize_data(anonymized[section])
+        logger.info("ANON_MAPPING: %s", anon.mapping_summary())
+
         if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        if history:
-            messages.extend(history)
-        user_content = _build_data_message(data)
-        if choice:
-            user_content = f"{choice}\n\n{user_content}"
-        messages.append({"role": "user", "content": user_content})
+            messages = [
+                {"role": "system", "content": system_prompt},
+                *[{"role": item["role"], "content": item["content"]} for item in (history or [])],
+                {
+                    "role": "user",
+                    "content": f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}",
+                },
+            ]
+        else:
+            user_content = json.dumps(anonymized, separators=(",", ":"), default=str)
+            if choice:
+                user_content = f"{choice}\n\n{user_content}"
+            messages = [{"role": "user", "content": user_content}]
+
+        logger.info("LLM_PAYLOAD_KEYS: %s", [message["role"] for message in messages])
+        logger.info("LLM_PAYLOAD_DATA: %s", json.dumps(anonymized, separators=(",", ":"), default=str))
         response = client.chat.completions.create(
             model=config.ANALYST_MODEL,
             messages=messages,
             max_tokens=1200,
         )
-        report = _plain_text_report(response.choices[0].message.content or "")
+        raw_report = _plain_text_report(response.choices[0].message.content or "")
+        report = anon.deanonymize(raw_report)
         tokens_used = getattr(response.usage, "total_tokens", None)
         if tokens_used:
             logger.info("Security Analyst: %s tokens used", tokens_used)
