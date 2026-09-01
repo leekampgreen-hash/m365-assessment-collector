@@ -12,6 +12,38 @@ const PANEL_LOAD_DELAY_MS = 500;
 const escapeHtml = (item) => String(item ?? "—").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
 const SKELETON_BAR = '<div class="skeleton-bar"></div>'.repeat(3);
 
+function renderCard(icon, label, value, sublabel, colorClass = "") {
+  return `<article class="card"><div class="kpi-icon ${escapeHtml(colorClass)}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(value)}</div><div class="status ${colorClass === "unavailable" ? "unavailable" : "ready"}">${escapeHtml(sublabel)}</div></article>`;
+}
+
+function renderBadge(text, colorClass = "") {
+  return `<span class="badge ${escapeHtml(colorClass)}">${escapeHtml(text)}</span>`;
+}
+
+function renderTable(columns, rows) {
+  return `<table><thead><tr>${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
+}
+
+function renderEmpty(message) {
+  return `<p class="empty-state">${escapeHtml(message)}</p>`;
+}
+
+function renderError(message, onRetry) {
+  const element = document.createElement("div");
+  element.className = "panel-error";
+  element.innerHTML = `<p>${escapeHtml(message)}</p><button type="button" class="plain-button">Retry</button>`;
+  element.querySelector("button").addEventListener("click", onRetry);
+  return element.outerHTML;
+}
+
+function renderSkeleton(rows = 4) {
+  return `<div class="panel-skeleton"><div class="skeleton-card-grid">${[0, 1, 2].map(() => `<div class="skeleton-card"><div class="skeleton-bar skeleton-bar-title"></div><div class="skeleton-bar skeleton-bar-value"></div><div class="skeleton-bar skeleton-bar-sub"></div></div>`).join("")}</div><div class="skeleton-table">${[0, ...Array(Math.max(0, rows - 1))].map(() => `<div class="skeleton-row"></div>`).join("")}</div></div>`;
+}
+
+function renderStat(value, label) {
+  return `<div><div class="summary-value">${escapeHtml(value)}</div><div class="summary-label">${escapeHtml(label)}</div></div>`;
+}
+
 async function get(path) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DASHBOARD_FETCH_TIMEOUT_MS);
@@ -26,7 +58,7 @@ async function get(path) {
 
 function setHealth(ready) { $("#health-dot").className = `dot ${ready ? "ready" : "error"}`; $("#health-label").textContent = ready ? "Analytics service healthy" : "Analytics service unavailable"; }
 function showUnavailable() { $("#error-banner").textContent = "Analytics service unavailable"; $("#error-banner").classList.remove("hidden"); }
-function metricCard(label, item, icon, iconClass, sublabel) { return `<article class="card"><div class="kpi-icon ${iconClass}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${value(item) === null ? "Data currently unavailable" : escapeHtml(display(item))}</div><div class="status ${value(item) === null ? "unavailable" : "ready"}">${escapeHtml(sublabel || status(item))}</div></article>`; }
+function metricCard(label, item, icon, iconClass, sublabel) { return renderCard(icon, label, value(item) === null ? "Data currently unavailable" : display(item), sublabel || status(item), value(item) === null ? "unavailable" : iconClass); }
 async function loadExecSummary() {
   const paths = ["/api/security/admin-roles", "/api/security/mfa-coverage", "/api/security/ca-policies", "/api/security/signin-summary", "/api/security/mfa-registration"];
   const responses = await Promise.all(paths.map((path) => get(path).catch(() => null)));
@@ -47,7 +79,7 @@ async function loadExecSummary() {
   }
   panel.style.display = "block";
 }
-function renderSummary(data) { const totalUsers = data.tenant?.total_users; const highCount = Number(data.exchange?.capacity_usage?.high ?? 0); const licenseAttention = data.license_attention_count; const card = (label, number, emphasized, icon, iconClass) => `<article class="card"><div class="kpi-icon ${iconClass}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(number)}</div><div class="status ${emphasized ? "unavailable" : "ready"}">${emphasized ? "Attention" : "Normal"}</div></article>`; const personIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="currentColor"></circle><path d="M5 20c.7-3.5 3.1-5.5 7-5.5s6.3 2 7 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>'; const inboxIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M4 16h4l1.5-3h5L16 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path></svg>'; const badgeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M9 14h6v6H9z" fill="none" stroke="currentColor" stroke-width="2"></path></svg>'; $("#summary-cards").innerHTML = [metricCard("Directory Users", totalUsers, personIcon, "kpi-users", "Active in tenant"), card("Mailbox Capacity Risk", `${highCount} HIGH`, highCount > 0, inboxIcon, "kpi-risk"), card("License Attention", licenseAttention ?? "Data currently unavailable", Number(licenseAttention) > 0, badgeIcon, "kpi-license")].join(""); }
+function renderSummary(data) { const totalUsers = data.tenant?.total_users; const highCount = Number(data.exchange?.capacity_usage?.high ?? 0); const licenseAttention = data.license_attention_count; const card = (label, number, emphasized, icon, iconClass) => renderCard(icon, label, number, emphasized ? "Attention" : "Normal", emphasized ? "unavailable" : iconClass); const personIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="currentColor"></circle><path d="M5 20c.7-3.5 3.1-5.5 7-5.5s6.3 2 7 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>'; const inboxIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M4 16h4l1.5-3h5L16 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path></svg>'; const badgeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M9 14h6v6H9z" fill="none" stroke="currentColor" stroke-width="2"></path></svg>'; $("#summary-cards").innerHTML = [metricCard("Directory Users", totalUsers, personIcon, "kpi-users", "Active in tenant"), card("Mailbox Capacity Risk", `${highCount} HIGH`, highCount > 0, inboxIcon, "kpi-risk"), card("License Attention", licenseAttention ?? "Data currently unavailable", Number(licenseAttention) > 0, badgeIcon, "kpi-license")].join(""); }
 function renderLicenses(data, ready = true) { const rows = ready ? Object.entries(data.license || {}) : []; $("#licenses").innerHTML = rows.length ? `<table><thead><tr><th>SKU</th><th>Purchased</th><th>Consumed</th><th>Available</th><th>Utilization</th><th>Assigned users</th></tr></thead><tbody>${rows.map(([sku, item]) => `<tr><th>${escapeHtml(sku)}</th><td>${escapeHtml(item.purchased_units)}</td><td>${escapeHtml(item.consumed_units)}</td><td class="${Number(item.available_units) === 0 ? "available-zero" : ""}">${escapeHtml(item.available_units)}</td><td><span class="utilization-pill utilization-${Number(item.utilization_percent) === 100 ? "full" : Number(item.utilization_percent) <= 10 ? "low" : "mid"}">${escapeHtml(item.utilization_percent)}%</span></td><td>${escapeHtml(item.assigned_user_count)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty-state">License data currently unavailable</p>`; }
 function workloadCard(name, item, fields) { return `<article class="card"><div class="card-head"><h3>${name}</h3></div>${fields.map(([label, key, suffix, kind]) => { const rendered = kind === "primitive" ? primitive(item[key]) : kind === "storage" ? storageValue(item[key]) : display(item[key], suffix); return `<div class="detail-row"><span class="detail-label">${label}</span><strong>${rendered}</strong></div>`; }).join("")}</article>`; }
 function renderWorkloads(data) { window.dashboardOnedrive = data.onedrive || {}; renderUsageSummaries(); }
@@ -67,7 +99,7 @@ function renderOptimizer() {
   const pageRows = rows.slice((optimizerPage - 1) * optimizerPageSize, optimizerPage * optimizerPageSize);
   $("#license-optimizer-controls").innerHTML = `<label>Category <select id="optimizer-category"><option value="ALL">All</option>${allCategories.map((key) => `<option value="${escapeHtml(key)}">${escapeHtml(key.replaceAll("_", " "))}</option>`).join("")}</select></label><label>Confidence <select id="optimizer-confidence"><option value="ALL">All</option><option>high</option><option>medium</option><option>low</option></select></label><label>Rows per page <select id="optimizer-page-size"><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>`;
   $("#optimizer-category").value = category; $("#optimizer-confidence").value = confidence; $("#optimizer-page-size").value = String(optimizerPageSize);
-  const table = pageRows.length ? `<table><thead><tr><th>Display Name</th><th>Licenses</th><th>Flag(s)</th><th>Confidence</th><th>Detail</th><th>Recommended Action</th></tr></thead><tbody>${pageRows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml((row.licenses || []).join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td><span class="badge confidence-${escapeHtml(row.flag.confidence)}">${escapeHtml(row.flag.confidence)}</span></td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`).join("")}</tbody></table><div class="pagination"><button class="plain-button" id="optimizer-previous" type="button" ${optimizerPage === 1 ? "disabled" : ""}>Previous</button><span>Page ${optimizerPage} of ${pageCount}</span><button class="plain-button" id="optimizer-next" type="button" ${optimizerPage === pageCount ? "disabled" : ""}>Next</button></div>` : `<p class="empty-state">No flagged users found</p>`;
+  const table = pageRows.length ? `${renderTable(["Display Name", "Licenses", "Flag(s)", "Confidence", "Detail", "Recommended Action"], pageRows.map((row) => `<tr><th>${escapeHtml(row.display_name)}</th><td>${escapeHtml((row.licenses || []).join(", "))}</td><td>${escapeHtml(row.flag.flag)}</td><td>${renderBadge(row.flag.confidence, `confidence-${row.flag.confidence}`)}</td><td>${escapeHtml(row.flag.detail)}</td><td>${escapeHtml(row.recommended_action)}</td></tr>`))}<div class="pagination"><button class="plain-button" id="optimizer-previous" type="button" ${optimizerPage === 1 ? "disabled" : ""}>Previous</button><span>Page ${optimizerPage} of ${pageCount}</span><button class="plain-button" id="optimizer-next" type="button" ${optimizerPage === pageCount ? "disabled" : ""}>Next</button></div>` : renderEmpty("No flagged users found");
   $("#license-optimizer-table").innerHTML = table;
   $("#optimizer-category").addEventListener("change", () => { optimizerPage = 1; renderOptimizer(); }); $("#optimizer-confidence").addEventListener("change", () => { optimizerPage = 1; renderOptimizer(); });
   $("#optimizer-page-size").addEventListener("change", (event) => { optimizerPageSize = Number(event.target.value); optimizerPage = 1; renderOptimizer(); });
@@ -99,7 +131,7 @@ function renderSharePoint() {
   }).join("");
   const table = sorted.length
     ? `<table class="sharepoint-sites"><thead><tr><th>Display Name</th><th>Last Activity</th><th>Storage Used</th><th>Site URL</th></tr></thead><tbody>${rows}</tbody></table>`
-    : `<p class="empty-state">No SharePoint site usage data found</p>`;
+    : renderEmpty("No SharePoint site usage data found");
   const note = `<p class="sharepoint-privacy-note">Site URLs are not available. This may be due to tenant privacy settings in Microsoft 365.</p>`;
   $("#sharepoint-sites-table").innerHTML = `<div class="detail-controls"><label>Sort <select id="sharepoint-sort"><option value="activity">Last activity</option><option value="storage">Storage</option></select></label></div>${table}${note}`;
   $("#sharepoint-sort").addEventListener("change", renderSharePoint);
@@ -153,14 +185,14 @@ function renderPanelSkeleton(panelKey) {
   const target = section.querySelector(".panel-body") || section;
   if (!target.querySelector(".panel-skeleton")) {
     const skeleton = document.createElement("div");
-    skeleton.className = "panel-skeleton";
-    skeleton.dataset.panel = panelKey;
-    skeleton.innerHTML = `<div class="skeleton-card-grid">${[0,1,2].map(() => `<div class="skeleton-card"><div class="skeleton-bar skeleton-bar-title"></div><div class="skeleton-bar skeleton-bar-value"></div><div class="skeleton-bar skeleton-bar-sub"></div></div>`).join("")}</div><div class="skeleton-table">${[0,1,2,3].map(() => `<div class="skeleton-row"></div>`).join("")}</div>`;
+    skeleton.innerHTML = renderSkeleton(4);
+    const renderedSkeleton = skeleton.firstElementChild;
+    renderedSkeleton.dataset.panel = panelKey;
     const actions = document.createElement("div");
     actions.className = "panel-actions";
     actions.innerHTML = `<button type="button" class="plain-button panel-load-btn" data-panel="${panelKey}">Load</button>`;
-    skeleton.appendChild(actions);
-    target.appendChild(skeleton);
+    renderedSkeleton.appendChild(actions);
+    target.appendChild(renderedSkeleton);
   }
 }
 
@@ -168,8 +200,8 @@ function renderPanelError(panelKey, retry) {
   const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
   if (!section) return;
   const target = section.querySelector(".panel-body") || section;
-  target.innerHTML = `<div class="panel-error"><p>Failed to load. Retry?</p><button type="button" class="plain-button panel-retry-btn" data-panel="${panelKey}">Retry</button></div>`;
-  target.querySelector(".panel-retry-btn").addEventListener("click", retry);
+target.innerHTML = renderError("Failed to load. Retry?", retry);
+   target.querySelector("button").classList.add("panel-retry-btn");
 }
 
 async function loadPanel(panelKey) {
