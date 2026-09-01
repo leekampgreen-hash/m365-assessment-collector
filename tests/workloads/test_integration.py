@@ -435,13 +435,11 @@ class EventDispatchTests(unittest.TestCase):
         self.assertEqual(envelope.event_row["is_interactive"], True)
 
     def test_event_rows_are_appended_to_the_same_table(self):
-        # G01-005 and G01-006 share ``core.audit_event``.
+        # G01-005 uses core.audit_event; G01-006 uses core.signin_log.
         audit_envelope = normalize_record("G01-005", _audit_record(), LINEAGE)
         signin_envelope = normalize_record("G01-006", _sign_in_record(), LINEAGE)
-        self.assertEqual(
-            REGISTRY["G01-005"].event_table,
-            REGISTRY["G01-006"].event_table,
-        )
+        self.assertEqual(REGISTRY["G01-005"].event_table, "core.audit_event")
+        self.assertEqual(REGISTRY["G01-006"].event_table, "core.signin_log")
         self.assertEqual(audit_envelope.event_row["event_source"], "DIRECTORY_AUDIT")
         self.assertEqual(signin_envelope.event_row["event_source"], "SIGN_IN")
 
