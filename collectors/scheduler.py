@@ -69,6 +69,8 @@ class CollectionScheduler:
             self._run_command(f"Rule {rule_id}", ["--security-rule", rule_id], permissions)
         if schedule.get("special") == "usage_reports":
             self._run_command("Usage reports", ["--all"], permissions)
+        if schedule.get("special") == "sharepoint_audit":
+            self._run_command("SharePoint audit", ["--sharepoint-audit"], permissions)
         logger.info("Schedule %s complete", name)
 
     def _run_initial_phases(self) -> None:

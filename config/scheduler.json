@@ -39,6 +39,27 @@
       "enabled": true
     },
     {
+      "name": "risk_scoring_daily",
+      "description": "Sign-in risk scoring per user",
+      "phase": 2,
+      "data_type": "security",
+      "endpoints": ["G01-007"],
+      "interval_hours": 24,
+      "granted_permissions": ["AuditLog.Read.All", "IdentityRiskyUser.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "sharepoint_audit_daily",
+      "description": "SharePoint audit events",
+      "phase": 1,
+      "data_type": "event",
+      "endpoints": [],
+      "special": "sharepoint_audit",
+      "interval_hours": 24,
+      "granted_permissions": ["ActivityFeed.Read"],
+      "enabled": true
+    },
+    {
       "name": "usage_reports_daily",
       "description": "M365 usage reports — adoption data",
       "phase": 1,
