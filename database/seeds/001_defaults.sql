@@ -24,8 +24,7 @@ INSERT INTO core.system_setting (setting_key, setting_value, setting_type, descr
 ('totp_issuer', 'm365-assessment', 'STRING', 'TOTP issuer name shown in authenticator app')
 ON CONFLICT (setting_key) DO NOTHING;
 
-INSERT INTO auth."user" (email, password_hash, totp_secret, totp_enrolled, role, tenant_id, is_active)
-VALUES ('admin@localhost', '$2b$12$9/3BShBEYatfqWi8q6Uo4umQm3oqC2MWhTdC93HNg3JhGdTjxfni.', 'LPRTYQKIIKNQ5XXZTCYMK473VU3AMJVG', FALSE, 'SUPER_ADMIN', NULL, TRUE)
-ON CONFLICT (email) DO NOTHING;
+-- Super admin password must be set manually after seeding via:
+-- docker exec graph-agent-collector-dev python3 -m collectors.auth_service reset_password admin@localhost
 
 COMMIT;
