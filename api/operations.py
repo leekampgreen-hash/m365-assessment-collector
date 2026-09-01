@@ -22,6 +22,7 @@ from api.agent import handle_chat
 from agent.orchestrator import RejectedInputError
 from agent import config
 from collectors.persistence import open_database_connection
+from collectors.sku_pricing import load_pricing, get_sku_name, calculate_user_monthly_cost, calculate_savings
 from capabilities.persistence import CapabilityQueryService
 
 
@@ -106,6 +107,7 @@ def _sharepoint_sites(connection: Any, tenant_id: int) -> list[dict[str, Any]]:
 
 
 def _license_optimizer_report(connection: Any, tenant_id: int) -> dict[str, Any]:
+    pricing = load_pricing(Path(__file__).resolve().parents[1] / "config" / "sku_pricing.json")
     cursor = connection.cursor()
     cursor.execute("""
         SELECT u.user_id, u.display_name, u.user_principal_name, u.user_type,
@@ -157,13 +159,15 @@ def _license_optimizer_report(connection: Any, tenant_id: int) -> dict[str, Any]
         if flags:
             recommendations.append({"user_id": user["user_id"], "display_name": user["display_name"],
                 "user_principal_name": user["user_principal_name"], "licenses": user["licenses"],
+                "licenses_named": [get_sku_name(sku, pricing) for sku in user["licenses"]],
+                "monthly_cost": calculate_user_monthly_cost(user["licenses"], pricing),
                 "flags": flags, "recommended_action": "Review and consider license reclaim"})
     summary = {"total_users_with_license": len(users), "flagged_users": len(recommendations), "by_category": categories}
     try:
         recommendation_summary = _generate_license_recommendation(summary)
     except Exception:
         recommendation_summary = "A license optimization recommendation could not be generated at this time. Review the flagged users and category counts to identify reclaim and assignment cleanup opportunities."
-    return {"summary": summary, "recommendation_summary": recommendation_summary, "recommendations": recommendations}
+    return {"summary": summary, "savings": calculate_savings(recommendations, pricing), "recommendation_summary": recommendation_summary, "recommendations": recommendations}
 
 
 def _generate_license_recommendation(summary: dict[str, Any]) -> str:
