@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, urlsplit
 from analytics import OperationsAnalyticsQueryService
 from api.security import SecurityFindingQueryService, validate_filters
 from api.signin import SigninSummaryService
-from api.auth import verify_api_key
+from api.auth import handle_auth, verify_api_key
 from api.agent import handle_chat
 from agent.orchestrator import RejectedInputError
 from agent import config
@@ -289,6 +289,8 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlsplit(self.path)
+        if handle_auth(self, "POST", parsed.path.rstrip("/")):
+            return
         if parsed.path.rstrip("/") == "/api/agent/analyze/security":
             if not verify_api_key(self):
                 self.send_response(401)
@@ -334,6 +336,8 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlsplit(self.path)
         path = parsed.path.rstrip("/")
+        if handle_auth(self, "GET", path):
+            return
         if path == "/api/scheduler/status":
             try:
                 config_path = Path("config/scheduler.json")
