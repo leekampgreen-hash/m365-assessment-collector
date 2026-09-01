@@ -245,7 +245,7 @@ class SecurityFindingQueryService:
         scored.sort(key=lambda item: item["score"], reverse=True)
         distribution = {level: sum(item["risk_level"] == level for item in scored) for level in ("CRITICAL", "HIGH", "MEDIUM", "LOW")}
         return {"scoring_model_version": "1.0", "total_users_scored": len(scored), "risk_distribution": distribution,
-                "top_risks": scored[:10], "tenant_wide_risks": tenant_risks}
+                "top_risks": scored, "tenant_wide_risks": tenant_risks}
 
     def mfa_coverage(self) -> dict[str, Any]:
         rows = self._fetchall(

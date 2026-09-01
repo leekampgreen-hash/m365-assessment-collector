@@ -114,6 +114,20 @@ def _build_data_message(data: dict) -> str:
     return json.dumps(_summarize_data(data), separators=(",", ":"), default=str)
 
 
+def _build_analysis_prompt(data: dict, choice: str = "") -> str:
+    """Build the fallback analysis prompt."""
+    user_content = json.dumps(data, separators=(",", ":"), default=str)
+    if choice:
+        user_content = f"{choice}\n\n{user_content}"
+    return (
+        "Analyze the security data and provide a concise report. "
+        "When referring to users, always use their exact token identifier "
+        "(e.g. USER_A, USER_B) -- never paraphrase, modify, or combine tokens "
+        "with other text. The system will replace tokens with real names automatically.\n\n"
+        f"{user_content}"
+    )
+
+
 def _plain_text_report(report: str) -> str:
     lines = []
     for line in report.replace("```", "").splitlines():
@@ -161,14 +175,11 @@ def generate_security_report(system_prompt: str = None, choice: str = "", sessio
                 *[{"role": item["role"], "content": item["content"]} for item in history],
                 {
                     "role": "user",
-                    "content": f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}",
+                    "content": f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}\n\nImportant: always refer to users by their exact token (USER_A, USER_B, etc). Do not modify or paraphrase tokens.",
                 },
             ]
         else:
-            user_content = json.dumps(anonymized, separators=(",", ":"), default=str)
-            if choice:
-                user_content = f"{choice}\n\n{user_content}"
-            messages = [{"role": "user", "content": user_content}]
+            messages = [{"role": "user", "content": _build_analysis_prompt(anonymized, choice)}]
 
         logger.info("LLM_PAYLOAD_KEYS: %s", [message["role"] for message in messages])
         logger.info("LLM_PAYLOAD_DATA: %s", json.dumps(anonymized, separators=(",", ":"), default=str))

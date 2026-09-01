@@ -79,9 +79,17 @@ EXPECTED_TABLES = {
     "core.sharepoint_tenant_settings",
     "core.sharepoint_high_value_audit_event",
     "core.signin_log",
+    'auth."user"',
+    "auth.session",
+    "auth.auth_event",
+    "auth.admin_audit",
+    "auth.api_access_log",
+    "core.feature_flag",
+    "core.tenant_feature",
+    "core.system_setting",
 }
 
-EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security"}
+EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security", "auth"}
 
 EXPECTED_FILES_IN_ORDER = [
     "001_create_schemas.sql",
@@ -110,6 +118,9 @@ EXPECTED_FILES_IN_ORDER = [
     "022_sharepoint_high_value_audit.sql",
     "023_subscribed_sku_lifecycle.sql",
     "024_teams_user_activity.sql",
+    "025_auth_schema.sql",
+    "026_feature_flags.sql",
+    "027_auth_indexes.sql",
 ]
 
 
@@ -281,8 +292,8 @@ class TableInventoryTests(unittest.TestCase):
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            54,
-            f"expected exactly 54 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            62,
+            f"expected exactly 62 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:
@@ -636,7 +647,7 @@ class IndexTests(unittest.TestCase):
             re.IGNORECASE | re.MULTILINE,
         )
         for p in _load_migrations():
-            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql"):
+            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql", "027_auth_indexes.sql"):
                 continue
             text = p.read_text(encoding="utf-8")
             self.assertNotRegex(
