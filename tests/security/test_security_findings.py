@@ -238,7 +238,7 @@ class NoDependencyTests(unittest.TestCase):
         # requests, graph sdk, or AI module is imported.
         import sys
         loaded = ".".join(sys.modules)
-        for forbidden in ("requests", "msgraph", "httpx"):
+        for forbidden in ("requests", "msgraph", "httpx", "openai", "torch"):
             # only flag top-level modules actually imported
             self.assertFalse(any(m == forbidden or m.startswith(forbidden + ".") for m in sys.modules),
                              f"unexpected dependency {forbidden} loaded")

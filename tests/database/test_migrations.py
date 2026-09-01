@@ -78,7 +78,6 @@ EXPECTED_TABLES = {
     "control.collector_checkpoint",
     "core.sharepoint_tenant_settings",
     "core.sharepoint_high_value_audit_event",
-    "core.signin_log",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security"}
@@ -105,7 +104,6 @@ EXPECTED_FILES_IN_ORDER = [
     "018_onedrive_high_value_audit_event.sql",
     "019_collector_checkpoint.sql",
     "020_onedrive_high_value_audit_analytics.sql",
-    "020_signin_log.sql",
     "021_sharepoint_tenant_settings.sql",
     "022_sharepoint_high_value_audit.sql",
     "023_subscribed_sku_lifecycle.sql",
@@ -245,7 +243,7 @@ class MigrationDiscoveryTests(unittest.TestCase):
         from collections import Counter
 
         repeated = {p for p, c in Counter(prefixes).items() if c > 1}
-        self.assertEqual(repeated, {13, 20})
+        self.assertEqual(repeated, {13})
 
 
 class SchemaTests(unittest.TestCase):
@@ -281,8 +279,8 @@ class TableInventoryTests(unittest.TestCase):
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            54,
-            f"expected exactly 54 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            53,
+            f"expected exactly 53 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:
@@ -636,7 +634,7 @@ class IndexTests(unittest.TestCase):
             re.IGNORECASE | re.MULTILINE,
         )
         for p in _load_migrations():
-            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql"):
+            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "022_sharepoint_high_value_audit.sql"):
                 continue
             text = p.read_text(encoding="utf-8")
             self.assertNotRegex(
