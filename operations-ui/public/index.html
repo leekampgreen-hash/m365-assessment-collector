@@ -37,7 +37,13 @@
         <h1>Microsoft 365 Operations Intelligence</h1>
         <p class="subtitle">Tenant-level view of adoption, activity, and license utilization.</p><p style="margin-top:12px"><a class="plain-button" href="/security-analyst.html">Security Analyst</a></p>
       </div>
-      <div class="health-wrap"><span id="health-dot" class="dot pending"></span><span id="health-label">Checking analytics service</span></div>
+      <div class="flex items-center gap-4">
+        <div class="health-wrap"><span id="health-dot" class="dot pending"></span><span id="health-label">Checking analytics service</span></div>
+        <div id="user-logout-wrap" class="flex items-center gap-2 hidden">
+          <span id="user-email" class="text-xs text-secondary"></span>
+          <button id="logout-btn" class="plain-button" type="button">Logout</button>
+        </div>
+      </div>
     </header>
 
     <div id="error-banner" class="banner error hidden" role="alert"></div>
@@ -105,7 +111,7 @@
         send.disabled = true;
         const thinking = addMessage("agent", "Thinking...");
         try {
-          const response = await fetch("/api/agent/chat", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", "X-API-Key": window.API_KEY || "" }, body: JSON.stringify({ message, history }) });
+          const response = await fetch("/api/agent/chat", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", "X-API-Key": window.API_KEY || "", "X-Session-ID": sessionStorage.getItem("session_id") || "" }, body: JSON.stringify({ message, history }) });
           if (!response.ok) throw new Error("request failed");
           const data = await response.json();
           thinking.textContent = data.reply || "Sorry, I couldn't reach the assistant. Please try again.";

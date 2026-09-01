@@ -1,3 +1,5 @@
+const sid = sessionStorage.getItem("session_id");
+if (!sid) window.location.href = "/login.html";
 const $ = (selector) => document.querySelector(selector);
 const metric = (object) => object && typeof object === "object" ? object : {};
 const value = (object) => metric(object).status === "READY" ? metric(object).value : null;
@@ -48,7 +50,7 @@ async function get(path) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DASHBOARD_FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(path, { headers: { Accept: "application/json", "X-API-Key": window.API_KEY || "" }, signal: controller.signal });
+    const response = await fetch(path, { headers: { Accept: "application/json", "X-API-Key": window.API_KEY || "", "X-Session-ID": sid }, signal: controller.signal });
     if (!response.ok) throw new Error("request failed");
     return await response.json();
   } finally {
@@ -285,7 +287,37 @@ function loadPanelsProgressively(keys) {
   runNext();
 }
 
+async function initAuth() {
+  const emailEl = $("#user-email");
+  const wrapEl = $("#user-logout-wrap");
+  const logoutBtn = $("#logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "X-API-Key": window.API_KEY || "",
+            "X-Session-ID": sid
+          }
+        });
+      } catch (_) {}
+      sessionStorage.removeItem("session_id");
+      window.location.href = "/login.html";
+    });
+  }
+  try {
+    const res = await get("/api/auth/me");
+    if (res && res.user && res.user.email) {
+      if (emailEl) emailEl.textContent = res.user.email;
+      if (wrapEl) wrapEl.classList.remove("hidden");
+    }
+  } catch (_) {}
+}
+
 async function start() {
+  initAuth().catch(() => {});
   loadExecSummary().catch(() => {});
   let dashboardReady = false;
   try {
