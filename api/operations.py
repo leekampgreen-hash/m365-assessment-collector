@@ -18,6 +18,7 @@ from analytics import OperationsAnalyticsQueryService
 from api.security import SecurityFindingQueryService, validate_filters
 from api.signin import SigninSummaryService
 from api.auth import handle_auth, verify_api_key
+from api.admin import handle_admin
 from api.agent import handle_chat
 from agent.orchestrator import RejectedInputError
 from agent import config
@@ -287,8 +288,22 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
         self._capability_connection = connection
         return CapabilityQueryService.from_connection(connection, self.tenant_id)
 
+    def do_PATCH(self) -> None:
+        parsed = urlsplit(self.path)
+        if handle_admin(self, "PATCH", parsed.path.rstrip("/")):
+            return
+        self._write(404, _response("NOT_FOUND"))
+
+    def do_DELETE(self) -> None:
+        parsed = urlsplit(self.path)
+        if handle_admin(self, "DELETE", parsed.path.rstrip("/")):
+            return
+        self._write(404, _response("NOT_FOUND"))
+
     def do_POST(self) -> None:
         parsed = urlsplit(self.path)
+        if handle_admin(self, "POST", parsed.path.rstrip("/")):
+            return
         if handle_auth(self, "POST", parsed.path.rstrip("/")):
             return
         if parsed.path.rstrip("/") == "/api/agent/analyze/security":
@@ -336,6 +351,8 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlsplit(self.path)
         path = parsed.path.rstrip("/")
+        if handle_admin(self, "GET", path):
+            return
         if handle_auth(self, "GET", path):
             return
         if path == "/api/scheduler/status":
