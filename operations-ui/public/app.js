@@ -9,7 +9,7 @@ const primitive = (value) => value === null || value === undefined || value === 
 const storageValue = (object) => storage(metric(object).value ?? object);
 const DASHBOARD_FETCH_TIMEOUT_MS = 10000;
 const PANEL_LOAD_DELAY_MS = 500;
-const escapeHtml = (item) => String(item ?? "—").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+const escapeHtml = (item) => String(item ?? "-").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
 const SKELETON_BAR = '<div class="skeleton-bar"></div>'.repeat(3);
 
 function renderCard(icon, label, value, sublabel, colorClass = "") {
@@ -70,7 +70,7 @@ async function loadExecSummary() {
   const count = findings.length;
   if (!count) {
     $("#exec-summary-icon").textContent = "OK";
-    $("#exec-summary-count").textContent = "No issues found — tenant looks healthy";
+    $("#exec-summary-count").textContent = "No issues found - tenant looks healthy";
     $("#exec-summary-items").innerHTML = "";
   } else {
     $("#exec-summary-icon").textContent = count >= 3 ? "!" : "!";
@@ -114,7 +114,7 @@ function renderSharePoint() {
   const sorted = [...sites].sort((a, b) => sort === "storage" ? Number(b.storage_used_byte || 0) - Number(a.storage_used_byte || 0) : String(b.last_activity_date || "").localeCompare(String(a.last_activity_date || "")));
   const siteUrlCell = (site) => {
     const raw = site.site_url;
-    if (raw === null || raw === undefined || String(raw).trim() === "") return `<span class="muted-cell">—</span>`;
+    if (raw === null || raw === undefined || String(raw).trim() === "") return `<span class="muted-cell">-</span>`;
     return escapeHtml(raw);
   };
   const nameLooksLikeOwner = (name) => {
@@ -147,9 +147,9 @@ let correlationUsers = [];
 function usageSummary(workload) { const pool = workload === "exchange" ? exchangeActiveUsers() : workload === "onedrive" ? onedriveDetails() : correlationUsers; const levelOf = workload === "exchange" ? exchangeLevel : workload === "onedrive" ? onedriveLevel : (u) => usageLevel(u[`${workload}_last_activity`], window.dashboardAsOf); const counts = ["HIGH","MEDIUM","LOW","NO DATA"].map((level) => pool.filter((u) => levelOf(u) === level).length); return `<button class="card usage-card" data-workload="${workload}" type="button"><div class="summary-label">${workloadNames[workload]}</div>${counts.map((n,i) => `<div class="usage-count"><span>${["High","Medium","Low","No Data"][i]}</span><strong>${n}</strong></div>`).join("")}</button>`; }
 function renderUsageSummaries() { $("#usage-summaries").innerHTML = Object.keys(workloadNames).map(usageSummary).join(""); document.querySelectorAll("[data-workload]").forEach((b) => b.addEventListener("click", () => renderDetail(b.dataset.workload))); }
 const formatGb = (number) => { if (number === null || number === undefined || number === "") return "Data currently unavailable"; const gb = Number(number) / (1024 ** 3); return `${gb >= 100 ? gb.toFixed(0) : gb.toFixed(2).replace(/\.00$/, "")} GB`; };
-const formatPercent = (number) => number === null || number === undefined || number === "" ? "—" : `${Number(number).toFixed(2).replace(/\.00$/, "")}%`;
-const formatFiles = (number) => { if (number === null || number === undefined || number === "") return "—"; const value = Number(number); return value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1).replace(/\.0$/, "")}K` : String(value); };
-const assignedSkus = (u) => { const skus = u.assigned_skus || u.assignedSkus || []; const items = Array.isArray(skus) ? skus : [skus]; const labels = items.map((sku) => typeof sku === "object" ? (sku.sku_part_number || sku.skuPartNumber || sku.display_name || sku.displayName || sku.product_name || sku.productName || sku.id || "") : sku).map((sku) => String(sku || "").trim()).filter(Boolean); return labels.length ? labels.map(escapeHtml).join("<br>") : "—"; };
+const formatPercent = (number) => number === null || number === undefined || number === "" ? "-" : `${Number(number).toFixed(2).replace(/\.00$/, "")}%`;
+const formatFiles = (number) => { if (number === null || number === undefined || number === "") return "-"; const value = Number(number); return value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1).replace(/\.0$/, "")}K` : String(value); };
+const assignedSkus = (u) => { const skus = u.assigned_skus || u.assignedSkus || []; const items = Array.isArray(skus) ? skus : [skus]; const labels = items.map((sku) => typeof sku === "object" ? (sku.sku_part_number || sku.skuPartNumber || sku.display_name || sku.displayName || sku.product_name || sku.productName || sku.id || "") : sku).map((sku) => String(sku || "").trim()).filter(Boolean); return labels.length ? labels.map(escapeHtml).join("<br>") : "-"; };
 let detailState = { workload: null, filter: "ALL", search: "", page: 1, pageSize: 25 };
 function renderDetail(workload, filter = detailState.filter, page = 1) {
   detailState = { ...detailState, workload, filter, page };
@@ -164,7 +164,7 @@ function renderDetail(workload, filter = detailState.filter, page = 1) {
   $("#detail-page-size").value = String(detailState.pageSize);
   const headers = workload === "exchange" ? "<th>Storage Used</th><th>Mailbox Capacity</th><th>Utilization %</th>" : workload === "onedrive" ? "<th>Storage Used</th><th>Storage Allocated</th><th>Utilization %</th><th>Files</th>" : "";
   const onedriveTable = workload === "onedrive";
-  $("#detail-users").innerHTML = `<table><thead><tr><th>Display Name</th><th>Usage Level</th>${headers}${onedriveTable ? "" : `<th>${workload === "exchange" ? "Last Email Activity" : "Last Activity"}</th><th>Days Since Activity</th>${workload === "exchange" ? "" : `<th>SharePoint Status</th>`}<th>Licensed</th><th>Assigned SKUs</th>`}</tr></thead><tbody>${shown.map((u) => { const date=u[`${workload}_last_activity`], days=date ? Math.floor((new Date(window.dashboardAsOf)-new Date(date))/86400000) : "—"; const cells = workload === "exchange" ? `<td>${formatGb(u.exchange_storage_used ?? u.storage_used)}</td><td>${formatGb(u.mailbox_capacity)}</td><td>${formatPercent(u.exchange_utilization_percent)}</td>` : onedriveTable ? `<td>${escapeHtml(storage(u.storage_used))}</td><td>${escapeHtml(storage(u.storage_allocated))}</td><td>${formatPercent(u.utilization_percent)}</td><td>${formatFiles(u.file_count)}</td>` : ""; return `<tr><th>${escapeHtml(u.display_name || u.user_principal_name)}</th><td>${escapeHtml(levelOf(u))}</td>${cells}${onedriveTable ? "" : `<td>${escapeHtml(date)}</td><td>${days}</td>${workload === "exchange" ? "" : `<td>${escapeHtml(u[`${workload}_status`])}</td>`}<td>${escapeHtml(u.licensed)}</td><td class="sku-cell">${assignedSkus(u)}</td>`}</tr>`; }).join("")}</tbody></table><div class="pagination"><span>Showing ${first}–${last} of ${sorted.length}</span><button class="plain-button" id="detail-prev" ${detailState.page <= 1 ? "disabled" : ""}>Previous</button><span>Page ${detailState.page} of ${pages}</span><button class="plain-button" id="detail-next" ${detailState.page >= pages ? "disabled" : ""}>Next</button></div>`;
+  $("#detail-users").innerHTML = `<table><thead><tr><th>Display Name</th><th>Usage Level</th>${headers}${onedriveTable ? "" : `<th>${workload === "exchange" ? "Last Email Activity" : "Last Activity"}</th><th>Days Since Activity</th>${workload === "exchange" ? "" : `<th>SharePoint Status</th>`}<th>Licensed</th><th>Assigned SKUs</th>`}</tr></thead><tbody>${shown.map((u) => { const date=u[`${workload}_last_activity`], days=date ? Math.floor((new Date(window.dashboardAsOf)-new Date(date))/86400000) : "-"; const cells = workload === "exchange" ? `<td>${formatGb(u.exchange_storage_used ?? u.storage_used)}</td><td>${formatGb(u.mailbox_capacity)}</td><td>${formatPercent(u.exchange_utilization_percent)}</td>` : onedriveTable ? `<td>${escapeHtml(storage(u.storage_used))}</td><td>${escapeHtml(storage(u.storage_allocated))}</td><td>${formatPercent(u.utilization_percent)}</td><td>${formatFiles(u.file_count)}</td>` : ""; return `<tr><th>${escapeHtml(u.display_name || u.user_principal_name)}</th><td>${escapeHtml(levelOf(u))}</td>${cells}${onedriveTable ? "" : `<td>${escapeHtml(date)}</td><td>${days}</td>${workload === "exchange" ? "" : `<td>${escapeHtml(u[`${workload}_status`])}</td>`}<td>${escapeHtml(u.licensed)}</td><td class="sku-cell">${assignedSkus(u)}</td>`}</tr>`; }).join("")}</tbody></table><div class="pagination"><span>Showing ${first}-${last} of ${sorted.length}</span><button class="plain-button" id="detail-prev" ${detailState.page <= 1 ? "disabled" : ""}>Previous</button><span>Page ${detailState.page} of ${pages}</span><button class="plain-button" id="detail-next" ${detailState.page >= pages ? "disabled" : ""}>Next</button></div>`;
   $("#detail-search").addEventListener("input", (e) => { detailState.search = e.target.value; renderDetail(workload, detailState.filter, 1); }); $("#detail-page-size").addEventListener("change", (e) => { detailState.pageSize = Number(e.target.value); renderDetail(workload, detailState.filter, 1); }); document.querySelectorAll(".filter-button").forEach((button) => button.addEventListener("click", () => renderDetail(workload, button.dataset.filter, 1))); $("#detail-prev").addEventListener("click", () => renderDetail(workload, detailState.filter, detailState.page - 1)); $("#detail-next").addEventListener("click", () => renderDetail(workload, detailState.filter, detailState.page + 1));
 }
 $("#back-overview").addEventListener("click", () => { $("#usage-detail").classList.add("hidden"); });

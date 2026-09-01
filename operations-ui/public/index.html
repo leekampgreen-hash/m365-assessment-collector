@@ -1,16 +1,37 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Microsoft 365 Operations Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'bg-darkest': '#172233',
+            'bg-dark': '#1a1f2e',
+            'bg-card': '#1e2438',
+            'bg-elevated': '#222840',
+            'text-primary': '#e8eaf0',
+            'text-secondary': '#8b92a8',
+            'accent-blue': '#2563eb',
+            'accent-green': '#138a62',
+            danger: '#b42318'
+          }
+        }
+      }
+    };
+  </script>
   <script>window.API_KEY = "__API_KEY_PLACEHOLDER__";</script>
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
+  <main class="shell p-4 md:p-8">
+    <header class="topbar flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
         <p class="eyebrow">Operations control plane</p>
         <h1>Microsoft 365 Operations Intelligence</h1>
@@ -28,33 +49,33 @@
     <div id="dashboard" class="hidden">
       <div id="exec-summary" class="exec-summary" style="display:none">
         <div class="exec-summary-header">
-          <span id="exec-summary-icon">⚠️</span>
+          <span id="exec-summary-icon">Warning</span>
           <span id="exec-summary-count"></span>
         </div>
         <div id="exec-summary-items" class="exec-summary-items"></div>
       </div>
       <section id="overview-section">
         <div class="section-heading"><div><p class="eyebrow">At a glance</p><h2>Overview</h2></div></div>
-        <div id="summary-cards" class="card-grid three"></div>
+        <div id="summary-cards" class="card-grid three !grid-cols-1 md:!grid-cols-3 gap-4"></div>
       </section>
       <section id="usage-overview-section">
         <div class="section-heading"><div><p class="eyebrow">Usage overview</p><h2>Usage</h2></div></div>
-        <div class="panel-body"><div id="usage-summaries" class="card-grid three"></div></div>
+        <div class="panel-body"><div id="usage-summaries" class="card-grid three !grid-cols-1 md:!grid-cols-3 gap-4"></div></div>
       </section>
       <section id="usage-drilldown-section"><div id="usage-detail" class="panel hidden"><div class="section-heading"><div><p class="eyebrow">Usage drilldown</p><h2 id="detail-title">Workload usage</h2></div><button id="back-overview" class="plain-button" type="button">Back to overview</button></div><div id="detail-summary" class="usage-filter-grid"></div><div id="detail-metrics" class="metric-list"></div><div id="detail-users" class="table-wrap"></div></div></section>
        <section id="entitlements-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Entitlements</p><h2>License</h2></div></div><div class="panel-body"><div id="licenses" class="table-wrap"></div></div></section>
         <section id="license-optimizer-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Optimization</p><h2>License optimizer</h2></div></div><div class="panel-body"><div id="license-optimizer-summary" class="optimizer-summary"></div><div id="license-optimizer-controls" class="detail-controls"></div><div id="license-optimizer-table" class="table-wrap"></div></div></section>
-        <section id="sharepoint-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Site usage</p><h2>SharePoint sites</h2></div></div><div class="panel-body"><div id="sharepoint-summary-cards" class="card-grid four"></div><div id="sharepoint-sites-table" class="table-wrap"></div></div></section>
+        <section id="sharepoint-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Site usage</p><h2>SharePoint sites</h2></div></div><div class="panel-body"><div id="sharepoint-summary-cards" class="card-grid four grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div><div id="sharepoint-sites-table" class="table-wrap"></div></div></section>
 
 
 
     </div>
   </main>
-  <button id="chat-toggle" class="chat-toggle" type="button" aria-label="Open M365 assistant">&#128172;</button>
+  <button id="chat-toggle" class="chat-toggle" type="button" aria-label="Open M365 assistant">Chat</button>
   <section id="chat-panel" class="chat-panel" aria-label="M365 Assistant">
-    <header class="chat-header"><span class="chat-avatar">AI</span><div><strong>M365 Assistant</strong><small>Ask about your tenant</small></div><button id="chat-expand" class="chat-expand" type="button" aria-label="Expand assistant"><i class="ti ti-arrows-maximize"></i></button><button id="chat-close" class="chat-close" type="button" aria-label="Close assistant">×</button></header>
+    <header class="chat-header"><span class="chat-avatar">AI</span><div><strong>M365 Assistant</strong><small>Ask about your tenant</small></div><button id="chat-expand" class="chat-expand" type="button" aria-label="Expand assistant"><i class="ti ti-arrows-maximize"></i></button><button id="chat-close" class="chat-close" type="button" aria-label="Close assistant">Close</button></header>
     <div id="chat-messages" class="chat-messages"></div>
-    <div class="chat-input-area"><input id="chat-input" type="text" placeholder="Ask about your tenant..." autocomplete="off"><button id="chat-send" type="button" aria-label="Send message">➤</button></div>
+    <div class="chat-input-area"><input id="chat-input" type="text" placeholder="Ask about your tenant..." autocomplete="off"><button id="chat-send" type="button" aria-label="Send message">Send</button></div>
   </section>
   <script src="/app.js"></script>
   <script>
@@ -103,7 +124,7 @@
        close.addEventListener("click", () => panel.classList.remove("open"));
       send.addEventListener("click", submit);
       input.addEventListener("keydown", (event) => { if (event.key === "Enter") submit(); });
-      addMessage("agent", "Hi! Ask me anything about your M365 tenant — adoption, licenses, inactivity, or health.");
+      addMessage("agent", "Hi! Ask me anything about your M365 tenant - adoption, licenses, inactivity, or health.");
     })();
   </script>
 </body>
