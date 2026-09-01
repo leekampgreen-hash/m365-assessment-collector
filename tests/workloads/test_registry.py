@@ -115,7 +115,7 @@ EXPECTED_TABLE_MAPPING = {
         "snapshot": "core.subscribed_sku_snapshot",
     },
     "G01-005": {"current": "core.audit_event", "event": "core.audit_event"},
-    "G01-006": {"current": "core.audit_event", "event": "core.audit_event"},
+    "G01-006": {"current": "core.signin_log", "event": "core.signin_log"},
     "G01-007": {"current": "core.application"},
     "G01-008": {"current": "core.service_principal"},
     "G01-009": {"current": "core.device"},
