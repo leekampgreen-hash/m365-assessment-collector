@@ -309,10 +309,11 @@ async function initAuth() {
   }
   try {
     const res = await get("/api/auth/me");
-    if (res && res.user && res.user.email) {
-      if (emailEl) emailEl.textContent = res.user.email;
-      if (wrapEl) wrapEl.classList.remove("hidden");
-    }
+if (res && res.user && res.user.email) {
+       if (emailEl) emailEl.textContent = res.user.email;
+       if (wrapEl) wrapEl.classList.remove("hidden");
+       if (res.user.role === "SUPER_ADMIN") document.getElementById("admin-link")?.classList.remove("hidden");
+     }
   } catch (_) {}
 }
 
