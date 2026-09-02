@@ -14,8 +14,8 @@ const primitive = (value) => value === null || value === undefined || value === 
 const storageValue = (object) => storage(metric(object).value ?? object);
 const DASHBOARD_FETCH_TIMEOUT_MS = 10000;
 const escapeHtml = (item) => String(item ?? "-").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
-function renderCard(icon, label, value, sublabel, colorClass = "") {
-  return `<article class="card"><div class="kpi-icon ${escapeHtml(colorClass)}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(value)}</div><div class="status ${colorClass === "unavailable" ? "unavailable" : "ready"}">${escapeHtml(sublabel)}</div></article>`;
+function renderCard(icon, label, value, sublabel, colorClass = "", cardClass = "") {
+  return `<article class="card ${escapeHtml(cardClass)}"><div class="kpi-icon ${escapeHtml(colorClass)}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(value)}</div><div class="status ${colorClass === "unavailable" ? "unavailable" : "ready"}">${escapeHtml(sublabel)}</div></article>`;
 }
 
 function renderBadge(text, colorClass = "") {
@@ -235,10 +235,10 @@ async function loadEntraAuthMethodsPanel() {
   const [summary, response] = await Promise.all([get("/api/entra/auth-methods-summary"), get("/api/entra/auth-methods-users")]);
   const data = summary.data || {};
   const topMethod = Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const cards = [["MFA", "MFA Registered", `${data.mfa_registered || 0} (${data.mfa_registration_rate_pct || 0}%)`, "REGISTERED", ""], ["Alert", "Not Registered", data.mfa_not_registered || 0, "NOT REGISTERED", (data.mfa_not_registered || 0) > (data.total_users || 0) / 2 ? "unavailable" : ""], ["Key", "Passwordless capable", data.passwordless_capable || 0, "CAPABLE", ""], ["Phone", "Top method used", (METHOD_NAMES[topMethod] || topMethod || "None").slice(0, 20), "MOST USED", ""]];
-  $("#entra-auth-methods-summary-cards").innerHTML = cards.map(([icon, label, item, sublabel, colorClass]) => renderCard(icon, label, item, sublabel, colorClass)).join("");
+  const cards = [["MFA", "MFA Registered", `${data.mfa_registered || 0} (${data.mfa_registration_rate_pct || 0}%)`, "REGISTERED", "", ""], ["Alert", "Not Registered", data.mfa_not_registered || 0, "NOT REGISTERED", (data.mfa_not_registered || 0) > (data.total_users || 0) / 2 ? "unavailable" : "", ""], ["Key", "Passwordless capable", data.passwordless_capable || 0, "CAPABLE", "", ""], ["Phone", "Top method used", METHOD_NAMES[topMethod] || topMethod || "None", "MOST USED", "", "card-top-method"]];
+  $("#entra-auth-methods-summary-cards").innerHTML = cards.map(([icon, label, item, sublabel, colorClass, cardClass]) => renderCard(icon, label, item, sublabel, colorClass, cardClass)).join("");
   const names = METHOD_NAMES;
-  $("#entra-auth-methods-breakdown").innerHTML = Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1]).map(([method, count]) => `<div class="inactivity-cell"><div class="summary-value">${escapeHtml(count)}</div><div class="summary-label">${escapeHtml(names[method] || method)}</div></div>`).join("") || renderEmpty("No authentication methods found");
+  $("#entra-auth-methods-breakdown").innerHTML = `<div class="auth-methods-grid">${Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1]).map(([method, count]) => `<div class="auth-method-item"><div class="summary-value">${escapeHtml(count)}</div><div class="summary-label">${escapeHtml(names[method] || method)}</div></div>`).join("") || renderEmpty("No authentication methods found")}</div>`;
   const users = response.data?.users || [];
   const pageSize = 10;
   const pages = Math.max(1, Math.ceil(users.length / pageSize));
