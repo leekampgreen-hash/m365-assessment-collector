@@ -115,6 +115,50 @@
       "enabled": true
     },
     {
+      "name": "intune_enrollment_daily",
+      "description": "Intune device enrollment inventory",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "intune_enrollment",
+      "interval_hours": 24,
+      "granted_permissions": ["DeviceManagementManagedDevices.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "entra_stale_devices_daily",
+      "description": "Entra stale device inventory",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "entra_stale_devices",
+      "interval_hours": 24,
+      "granted_permissions": ["Device.Read.All"],
+      "enabled": true
+    },
+    {
+      "name": "entra_pim_daily",
+      "description": "Entra PIM assignments",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "entra_pim",
+      "interval_hours": 24,
+      "granted_permissions": ["RoleManagement.Read.Directory"],
+      "enabled": true
+    },
+    {
+      "name": "defender_devices_daily",
+      "description": "Defender device threats",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "defender_devices",
+      "interval_hours": 24,
+      "granted_permissions": ["DeviceManagementManagedDevices.Read.All"],
+      "enabled": true
+    },
+    {
       "name": "license_daily",
       "description": "License inventory and SKU data",
       "phase": 1,

@@ -138,6 +138,38 @@ def _intune_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     return {"total_devices": total, **totals, "compliance_rate_pct": round(totals["compliant"] * 100 / total, 1) if total else 0.0, "by_os": by_os}
 
 
+def _intune_stale(connection: Any, tenant_id: int, days: int = 30) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SELECT device_name, operating_system, user_display_name, last_sync_datetime FROM core.intune_device WHERE tenant_id=%s AND (last_sync_datetime IS NULL OR last_sync_datetime < NOW() - (%s * INTERVAL '1 day')) ORDER BY last_sync_datetime NULLS FIRST", (tenant_id, days))
+    now = datetime.now(timezone.utc)
+    devices = []
+    for name, operating_system, user, last_sync in cursor.fetchall():
+        days_since = (now - (last_sync.replace(tzinfo=timezone.utc) if last_sync and last_sync.tzinfo is None else last_sync)).days if last_sync else None
+        devices.append({"device_name": name, "operating_system": operating_system, "user_display_name": user, "last_sync_datetime": last_sync, "days_since_sync": days_since})
+    return {"threshold_days": days, "stale_devices": devices, "total": len(devices)}
+
+
+def _entra_stale(connection: Any, tenant_id: int, days: int = 90) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SELECT display_name, operating_system, os_version, last_signin_datetime, is_managed, is_compliant, trust_type FROM core.entra_device WHERE tenant_id=%s AND (last_signin_datetime IS NULL OR last_signin_datetime < NOW() - (%s * INTERVAL '1 day')) ORDER BY last_signin_datetime NULLS FIRST", (tenant_id, days))
+    devices = [{"display_name": row[0], "operating_system": row[1], "os_version": row[2], "last_signin_datetime": row[3], "is_managed": row[4], "is_compliant": row[5], "trust_type": row[6]} for row in cursor.fetchall()]
+    return {"devices": devices, "total": len(devices)}
+
+
+def _entra_pim_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SELECT role_display_name, assignment_type, count(*) FROM core.entra_pim_assignment WHERE tenant_id=%s GROUP BY role_display_name, assignment_type ORDER BY role_display_name", (tenant_id,))
+    rows = cursor.fetchall()
+    return {"assignments": [{"role_display_name": row[0], "assignment_type": row[1], "count": row[2]} for row in rows], "total": sum(row[2] for row in rows)}
+
+
+def _defender_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SELECT threat_state, count(*) FROM core.defender_threat WHERE tenant_id=%s GROUP BY threat_state ORDER BY threat_state", (tenant_id,))
+    rows = cursor.fetchall()
+    return {"by_threat_state": {row[0] or "unknown": row[1] for row in rows}, "total_devices": sum(row[1] for row in rows)}
+
+
 def _intune_noncompliant(connection: Any, tenant_id: int) -> dict[str, Any]:
     cur = connection.cursor()
     cur.execute("SELECT device_name, compliance_state, operating_system, os_version, user_display_name, last_sync_datetime, owner_type FROM core.intune_device WHERE tenant_id=%s AND compliance_state='noncompliant' ORDER BY device_name", (tenant_id,))
@@ -535,6 +567,42 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 connection = self.connection_factory()
                 try:
                     self._write(200, _response("READY", _entra_auth_methods_users(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/intune/stale-devices":
+                values = parse_qs(parsed.query).get("days", ["30"])
+                if len(values) != 1 or not values[0].isdigit() or int(values[0]) not in VALID_INACTIVITY_WINDOWS:
+                    self._write(400, _response("INVALID_INACTIVITY_WINDOW"))
+                    return
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _intune_stale(connection, self.tenant_id, int(values[0]))))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/entra/stale-devices":
+                values = parse_qs(parsed.query).get("days", ["90"])
+                if len(values) != 1 or not values[0].isdigit() or int(values[0]) not in VALID_INACTIVITY_WINDOWS:
+                    self._write(400, _response("INVALID_INACTIVITY_WINDOW"))
+                    return
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_stale(connection, self.tenant_id, int(values[0]))))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/entra/pim-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_pim_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/security/defender-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _defender_summary(connection, self.tenant_id)))
                 finally:
                     connection.close()
                 return

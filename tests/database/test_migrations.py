@@ -128,6 +128,10 @@ EXPECTED_FILES_IN_ORDER = [
     "029_intune_compliance.sql",
     "030_entra_guests.sql",
     "031_entra_auth_methods.sql",
+    "032_intune_enrollment.sql",
+    "033_entra_stale_devices.sql",
+    "034_entra_pim.sql",
+    "035_defender_devices.sql",
 ]
 
 
@@ -299,8 +303,8 @@ class TableInventoryTests(unittest.TestCase):
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            65,
-            f"expected exactly 65 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            69,
+            f"expected exactly 69 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:

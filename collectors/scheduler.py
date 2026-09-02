@@ -79,6 +79,15 @@ class CollectionScheduler:
             self._run_command("Entra guests", ["--entra-guests"], permissions)
         if schedule.get("special") == "entra_auth_methods":
             self._run_command("Entra authentication methods", ["--entra-auth-methods"], permissions)
+        special_flags = {
+            "intune_enrollment": ("Intune enrollment", "--intune-enrollment"),
+            "entra_stale_devices": ("Entra stale devices", "--entra-stale"),
+            "entra_pim": ("Entra PIM", "--entra-pim"),
+            "defender_devices": ("Defender devices", "--defender-summary"),
+        }
+        if schedule.get("special") in special_flags:
+            label, flag = special_flags[schedule["special"]]
+            self._run_command(label, [flag], permissions)
         logger.info("Schedule %s complete", name)
 
     def _run_initial_phases(self) -> None:

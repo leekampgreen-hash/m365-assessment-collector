@@ -93,6 +93,10 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--entra-guests", action="store_true", help="Collect Entra guest users.")
     parser.add_argument("--entra-auth-methods", action="store_true", help="Collect Entra authentication methods.")
+    parser.add_argument("--intune-enrollment", action="store_true", help="Collect stale Intune devices.")
+    parser.add_argument("--entra-stale-devices", action="store_true", help="Collect stale Entra devices.")
+    parser.add_argument("--entra-pim", action="store_true", help="Collect Entra PIM assignments.")
+    parser.add_argument("--defender-devices", action="store_true", help="Collect Defender device threat state.")
     parser.add_argument(
         "--granted-graph-permissions", nargs="*", default=(),
         help="Explicit app permissions granted to this collector identity.",
@@ -278,7 +282,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except SystemExit:
         return 2
 
-    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit) + int(args.sharepoint_sites) + int(args.intune_compliance) + int(args.entra_guests) + int(args.entra_auth_methods)
+    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit) + int(args.sharepoint_sites) + int(args.intune_compliance) + int(args.entra_guests) + int(args.entra_auth_methods) + int(args.intune_enrollment) + int(args.entra_stale_devices) + int(args.entra_pim) + int(args.defender_devices)
     if selected_count == 0 and not args.dry_run:
         parser.error("one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, --sharepoint-audit, or --sharepoint-sites is required")
     if selected_count > 1:
@@ -299,6 +303,38 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     auth_source = _select_auth_source(args)
 
     options = RuntimeOptions(max_retries=args.max_retries, tenant_resolver=_trusted_tenant_resolver)
+    specialized = {
+        "intune_enrollment": ("collectors.intune_enrollment", "collect_and_persist_intune_enrollment", "intune_enrollment"),
+        "entra_stale_devices": ("collectors.entra_stale_devices", "collect_and_persist_entra_stale_devices", "entra_stale_devices"),
+        "entra_pim": ("collectors.entra_pim", "collect_and_persist_entra_pim", "entra_pim"),
+        "defender_devices": ("collectors.defender_devices", "collect_and_persist_defender_devices", "defender_devices"),
+    }
+    for flag, (module_name, function_name, label) in specialized.items():
+        if getattr(args, flag) and args.dry_run:
+            print(safe_dumps({"mode": "dry-run", "collector": label, "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: collector={} no_token_requested=True no_graph_requested=True".format(label))
+            return 0
+        if getattr(args, flag):
+            try:
+                from importlib import import_module
+                from collectors.core.config import load_auth_config
+                from collectors.core.auth import CollectorTokenProvider
+                from collectors.core.transport import GraphTransport
+                collector_module = import_module(module_name)
+                required_permission = collector_module.REQUIRED_PERMISSION
+                if required_permission not in args.granted_graph_permissions:
+                    print("ERROR: missing required permission: {}".format(required_permission), file=sys.stderr)
+                    return 3
+                database_connection, _ = _build_persistence()
+                auth_config = load_auth_config(auth_source)
+                tenant_id = _trusted_tenant_resolver(auth_config, database_connection)
+                transport = GraphTransport(CollectorTokenProvider(auth_config, http_open=urlopen).get_token, url_open=urlopen)
+                result = getattr(collector_module, function_name)(tenant_id=tenant_id, transport=transport, connection=database_connection)
+                database_connection.close()
+                print(safe_dumps({label: result}) if args.json else "{} run complete".format(label))
+                return 0
+            except Exception as exc:
+                print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)
+                return 3
     if args.entra_guests and args.dry_run:
         print(safe_dumps({"mode": "dry-run", "collector": "entra_guests", "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: collector=entra_guests no_token_requested=True no_graph_requested=True")
         return 0
