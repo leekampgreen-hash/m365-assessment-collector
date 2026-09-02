@@ -60,6 +60,17 @@
       "enabled": true
     },
     {
+      "name": "sharepoint_sites_daily",
+      "description": "SharePoint site URLs from Graph API",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "sharepoint_sites",
+      "interval_hours": 24,
+      "granted_permissions": ["Sites.Read.All"],
+      "enabled": true
+    },
+    {
       "name": "usage_reports_daily",
       "description": "M365 usage reports — adoption data",
       "phase": 1,

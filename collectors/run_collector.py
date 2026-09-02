@@ -86,6 +86,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "--sharepoint-audit", action="store_true", help="Collect the bounded SharePoint Audit.SharePoint feed."
     )
     parser.add_argument(
+        "--sharepoint-sites", action="store_true", help="Collect SharePoint site URLs."
+    )
+    parser.add_argument(
         "--granted-graph-permissions", nargs="*", default=(),
         help="Explicit app permissions granted to this collector identity.",
     )
@@ -270,11 +273,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except SystemExit:
         return 2
 
-    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit)
+    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit) + int(args.sharepoint_sites)
     if selected_count == 0 and not args.dry_run:
-        parser.error("one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, or --sharepoint-settings is required")
+        parser.error("one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, --sharepoint-audit, or --sharepoint-sites is required")
     if selected_count > 1:
-        parser.error("only one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, or --sharepoint-audit may be provided")
+        parser.error("only one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, --sharepoint-audit, or --sharepoint-sites may be provided")
     if args.sharepoint_settings:
         args.endpoint = "G01-020"
     if args.sharepoint_audit:
@@ -379,6 +382,28 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         except Exception as exc:
             print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)
             return 3
+    if args.sharepoint_sites:
+        if args.dry_run:
+            print(safe_dumps({"mode": "dry-run", "collector": "sharepoint_sites", "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: collector=sharepoint_sites no_token_requested=True no_graph_requested=True")
+            return 0
+        try:
+            from collectors.core.config import load_auth_config
+            from collectors.core.auth import CollectorTokenProvider
+            from collectors.core.transport import GraphTransport
+            from collectors.sharepoint_sites import collect_sharepoint_site_urls
+            database_connection, _ = _build_persistence()
+            auth_config = load_auth_config(auth_source)
+            tenant_id = _trusted_tenant_resolver(auth_config, database_connection)
+            token_provider = CollectorTokenProvider(auth_config, http_open=urlopen)
+            transport = GraphTransport(token_provider.get_token, url_open=urlopen)
+            result = collect_sharepoint_site_urls(tenant_id=tenant_id, auth_config=auth_config, transport=transport)
+            database_connection.close()
+            print(safe_dumps({"sharepoint_sites": result}) if args.json else "sharepoint sites run complete")
+            return 0
+        except Exception as exc:
+            print("ERROR: {}".format(type(exc).__name__), file=sys.stderr)
+            return 3
+
     if args.sharepoint_settings and not args.dry_run:
         try:
             from collectors.core.config import load_auth_config
