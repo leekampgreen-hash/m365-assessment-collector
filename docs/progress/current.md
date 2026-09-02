@@ -24,18 +24,21 @@
 - INFRA-P01: Scheduled collector (phase-ordered) — SEALED
 - AUTH-P01: API Key authentication — SEALED
 - LIC-P01: License Parking Report — PASS
+- AUTH-METHODS-FIX: Methods breakdown grid layout + top method card overflow - SEALED
+- BATCH-2: DEF-P02 (Defender for Office 365), DEF-P03 (Cloud Apps Discovery), DLP-P01 (DLP policy violations), DLP-P02 (Sensitivity label adoption) - SEALED
 
 ## Active Task
-Planning next sprint
+UI fixes sprint
 
 ## Next Steps
 
-1. INFRA-P02 — Scheduled email report (designed, ready to implement)
-2. Multi-tenant architecture design
-3. UI polish — mobile responsive, loading states
-4. AGT-P11/P12 — Web fetch + research integration (blocked, defer)
-5. Security Analyst Agent (future)
-6. License Optimizer Agent (future)
+1. UI-FONT-03 — Fix section heading hierarchy
+2. SEC-ANALYST-P05-FIX2 — Token format [ANON:X] fix
+3. Tailwind CDN warning fix
+4. ENTRA-P05 — Named locations panel
+5. INT-P05 — Compliance policy inventory panel
+6. INT-P06 — App deployment status panel
+7. INFRA-P02 — Scheduled email report
 
 
 ## Available API Endpoints

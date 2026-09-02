@@ -155,3 +155,33 @@ MSP can rebrand dashboard with own logo and colors.
 **Description:**
 Protect API from abuse — per key rate limiting.
 
+## DEF-P02 - Defender for Office 365
+Status: SEALED
+
+## DEF-P03 - Cloud Apps Discovery
+Status: SEALED
+
+## DLP-P01 - DLP Policy Violations
+Status: SEALED
+
+## DLP-P02 - Sensitivity Label Adoption
+Status: SEALED
+
+## ENTRA-P05 - Named Locations
+Status: PLANNED. Priority: MEDIUM. New collector + UI panel for Entra named locations inventory.
+
+## INT-P05 - Compliance Policy Inventory
+Status: PLANNED. Priority: MEDIUM. New collector + UI panel for Intune compliance policy inventory.
+
+## INT-P06 - App Deployment Status
+Status: PLANNED. Priority: MEDIUM. New collector + UI panel for Intune app deployment status.
+
+## SEC-ANALYST-P05-FIX2 - Token Format [ANON:X]
+Status: PLANNED. Priority: HIGH. Fix token format display issue in Security Analyst agent output.
+
+## UI-FONT-03 - Fix Section Heading Hierarchy
+Status: PLANNED. Priority: LOW. CSS only. Section headings too small - increase to 1.25rem font-weight 600. Labels stay 11px uppercase muted.
+
+## TAILWIND-CDN-FIX - Tailwind CDN Warning
+Status: PLANNED. Priority: LOW. Fix Tailwind CDN warning in UI. CSS/config only.
+
