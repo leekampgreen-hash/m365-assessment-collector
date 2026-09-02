@@ -59,10 +59,12 @@ or an independent blocking security/correctness finding.
 ## ACTIVE TASK
 <!-- Update this section each time you begin a new task -->
 
-**ACTIVE TASK:** UI fixes sprint
-**Current phase:** UI fixes sprint
+**ACTIVE TASK:** UI-BATCH-01 - Font hierarchy, anonymized token badges, Tailwind CDN fix
+**Current phase:** UI fixes implemented; verification pending
 **Blocker:** None
-**Next planned:** UI-FONT-03, SEC-ANALYST-P05-FIX2, Tailwind CDN fix, ENTRA-P05, INT-P05, INT-P06, INFRA-P02
+**Last commit:** 32b700b — DOCS-UPDATE
+**Backlog:** ENTRA-P05, INT-P05, INT-P06, INFRA-P02
+**Next planned:** Verify UI-BATCH-01, then continue backlog
 
 **Deferred until STD-22 closes:**
 - Entra security-posture expansion
