@@ -102,6 +102,26 @@ def _entra_guests(connection: Any, tenant_id: int) -> dict[str, Any]:
     return {"guests": guests, "total": len(guests)}
 
 
+def _entra_auth_methods_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cur = connection.cursor()
+    cur.execute("SELECT count(*), count(*) FILTER (WHERE is_mfa_registered), count(*) FILTER (WHERE is_passwordless_capable) FROM core.entra_auth_method WHERE tenant_id=%s", (tenant_id,))
+    total, registered, passwordless = cur.fetchone()
+    cur.execute("SELECT methods_registered FROM core.entra_auth_method WHERE tenant_id=%s", (tenant_id,))
+    by_method: dict[str, int] = {}
+    for (methods,) in cur.fetchall():
+        for method in (methods or "").split(","):
+            if method:
+                by_method[method] = by_method.get(method, 0) + 1
+    return {"total_users": total, "mfa_registered": registered, "mfa_not_registered": total - registered, "passwordless_capable": passwordless, "mfa_registration_rate_pct": round(registered * 100 / total, 2) if total else 0.0, "by_method": by_method}
+
+
+def _entra_auth_methods_users(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cur = connection.cursor()
+    cur.execute("SELECT display_name, is_mfa_registered, is_passwordless_capable, methods_registered, default_mfa_method FROM core.entra_auth_method WHERE tenant_id=%s ORDER BY display_name", (tenant_id,))
+    users = [{"display_name": row[0], "is_mfa_registered": row[1], "is_passwordless_capable": row[2], "methods_registered": row[3], "default_mfa_method": row[4]} for row in cur.fetchall()]
+    return {"users": users, "total": len(users)}
+
+
 def _intune_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     cur = connection.cursor()
     cur.execute("SELECT compliance_state, operating_system, count(*) FROM core.intune_device WHERE tenant_id=%s GROUP BY compliance_state, operating_system", (tenant_id,))
@@ -501,6 +521,20 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 connection = self.connection_factory()
                 try:
                     self._write(200, _response("READY", _entra_guests(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/entra/auth-methods-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_auth_methods_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/entra/auth-methods-users":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_auth_methods_users(connection, self.tenant_id)))
                 finally:
                     connection.close()
                 return

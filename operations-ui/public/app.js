@@ -181,6 +181,7 @@ const PANEL_REGISTRY = {
   sharepoint: { sectionId: "sharepoint-section", loader: loadSharePointPanel },
   intune: { sectionId: "intune-section", loader: loadIntunePanel },
   entraGuests: { sectionId: "entra-guests-section", loader: loadEntraGuestsPanel },
+  entraAuthMethods: { sectionId: "entra-auth-methods-section", loader: loadEntraAuthMethodsPanel },
 };
 const panelLoadState = {};
 const STAGGER_DELAY = PANEL_LOAD_DELAY_MS;
@@ -276,9 +277,24 @@ async function loadEntraGuestsPanel() {
   const [summary, response] = await Promise.all([get("/api/entra/guest-summary"), get("/api/entra/guests")]);
   const data = summary.data || {};
   const cards = [["Total guests", data.total_guests, "INVENTORY", ""], ["Active guests", data.active_guests, "SIGNED IN LAST 30 DAYS", ""], ["Licensed guests", data.licensed_guests, "COST CONCERN", "unavailable"], ["Never signed in", data.never_signed_in, "SECURITY CONCERN", "unavailable"]];
-  $("#entra-guests-summary-cards").innerHTML = cards.map(([label, item, sublabel, colorClass]) => renderCard("", label, item ?? 0, sublabel, colorClass)).join("");
+  const icons = ["👥", "✅", "💳", "⚠️"];
+  $("#entra-guests-summary-cards").innerHTML = cards.map(([label, item, sublabel, colorClass], index) => renderCard(icons[index], label, item ?? 0, sublabel, colorClass)).join("");
   const guests = response.data?.guests || [];
   $("#entra-guests-table").innerHTML = guests.length ? renderTable(["Display Name", "Created", "Last Sign-in", "Days Since Sign-in", "Licensed", "Status"], guests.map((guest) => { const status = guest.account_enabled === false ? "Disabled" : guest.days_since_signin === null ? "Never signed in" : guest.days_since_signin <= 30 ? "Active" : "Inactive"; const rowClass = guest.account_enabled === false ? "muted-cell" : guest.days_since_signin === null ? "danger" : guest.has_license ? "warning" : ""; return `<tr class="${rowClass}"><th>${escapeHtml(guest.display_name)}</th><td>${escapeHtml(guest.created_datetime)}</td><td>${escapeHtml(guest.last_signin_datetime)}</td><td>${escapeHtml(guest.days_since_signin)}</td><td>${guest.has_license ? renderBadge("Licensed", "warning") : "No"}</td><td>${escapeHtml(status)}</td></tr>`; })) : renderEmpty("No guest users found");
+}
+
+async function loadEntraAuthMethodsPanel() {
+  const [summary, response] = await Promise.all([get("/api/entra/auth-methods-summary"), get("/api/entra/auth-methods-users")]);
+  const data = summary.data || {};
+  const cards = [["🔐", "MFA Registered", `${data.mfa_registered || 0} (${data.mfa_registration_rate_pct || 0}%)`, "REGISTERED", ""], ["⚠️", "Not Registered", data.mfa_not_registered || 0, "NOT REGISTERED", (data.mfa_not_registered || 0) > (data.total_users || 0) / 2 ? "unavailable" : ""], ["🔑", "Passwordless capable", data.passwordless_capable || 0, "CAPABLE", ""], ["📱", "Top method used", Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || "None", "MOST USED", ""]];
+  $("#entra-auth-methods-summary-cards").innerHTML = cards.map(([icon, label, item, sublabel, colorClass]) => renderCard(icon, label, item, sublabel, colorClass)).join("");
+  const names = { microsoftAuthenticatorPush: "Microsoft Authenticator", softwareOneTimePasscode: "Software OTP", email: "Email", sms: "SMS", voiceMobile: "Voice call", fido2: "FIDO2 security key" };
+  $("#entra-auth-methods-breakdown").innerHTML = Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1]).map(([method, count]) => `<div class="inactivity-cell"><div class="summary-value">${escapeHtml(count)}</div><div class="summary-label">${escapeHtml(names[method] || method)}</div></div>`).join("") || renderEmpty("No authentication methods found");
+  const users = response.data?.users || [];
+  const pageSize = 10;
+  const pages = Math.max(1, Math.ceil(users.length / pageSize));
+  const shown = users.slice(0, pageSize);
+  $("#entra-auth-methods-table").innerHTML = users.length ? renderTable(["Display Name", "MFA Registered", "Passwordless", "Default Method", "Methods Registered"], shown.map((user) => `<tr class="${user.is_mfa_registered ? "" : "danger"}"><th>${escapeHtml(user.display_name)}</th><td>${user.is_mfa_registered ? "Yes" : "No"}</td><td>${user.is_passwordless_capable ? "Yes" : "No"}</td><td>${escapeHtml(names[user.default_mfa_method] || user.default_mfa_method)}</td><td>${escapeHtml((user.methods_registered || "").split(",").map((method) => names[method] || method).join(", "))}</td></tr>`)).join("") + `<div class="pagination"><span>Showing 1-${shown.length} of ${users.length}</span><span>Page 1 of ${pages}</span></div>` : renderEmpty("No users found");
 }
 
 async function loadSharePointPanel() {

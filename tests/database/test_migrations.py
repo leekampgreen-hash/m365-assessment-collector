@@ -89,6 +89,7 @@ EXPECTED_TABLES = {
     "core.system_setting",
     "core.intune_device",
     "core.entra_guest",
+    "core.entra_auth_method",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security", "auth"}
@@ -126,6 +127,7 @@ EXPECTED_FILES_IN_ORDER = [
     "028_grants_consolidation.sql",
     "029_intune_compliance.sql",
     "030_entra_guests.sql",
+    "031_entra_auth_methods.sql",
 ]
 
 
@@ -290,15 +292,15 @@ class SchemaTests(unittest.TestCase):
 
 
 class TableInventoryTests(unittest.TestCase):
-    def test_exactly_51_create_table_definitions(self) -> None:
+    def test_exactly_65_create_table_definitions(self) -> None:
         sql = _all_sql()
         tables = _extract_create_tables(sql)
         # Sanity: drop any duplicate literal entries but expect no
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            64,
-            f"expected exactly 64 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            65,
+            f"expected exactly 65 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:
@@ -652,7 +654,7 @@ class IndexTests(unittest.TestCase):
             re.IGNORECASE | re.MULTILINE,
         )
         for p in _load_migrations():
-            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql", "027_auth_indexes.sql", "029_intune_compliance.sql", "030_entra_guests.sql"):
+            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql", "027_auth_indexes.sql", "029_intune_compliance.sql", "030_entra_guests.sql", "031_entra_auth_methods.sql"):
                 continue
             text = p.read_text(encoding="utf-8")
             self.assertNotRegex(

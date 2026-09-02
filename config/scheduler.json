@@ -104,6 +104,17 @@
       "enabled": true
     },
     {
+      "name": "entra_auth_methods_daily",
+      "description": "Entra authentication methods per user",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "entra_auth_methods",
+      "interval_hours": 24,
+      "granted_permissions": ["UserAuthenticationMethod.Read.All"],
+      "enabled": true
+    },
+    {
       "name": "license_daily",
       "description": "License inventory and SKU data",
       "phase": 1,
