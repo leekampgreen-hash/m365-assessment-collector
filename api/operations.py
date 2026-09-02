@@ -138,6 +138,20 @@ def _intune_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     return {"total_devices": total, **totals, "compliance_rate_pct": round(totals["compliant"] * 100 / total, 1) if total else 0.0, "by_os": by_os}
 
 
+def _intune_enrollment_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SELECT operating_system, enrollment_type, count(*) FROM core.intune_enrollment WHERE tenant_id=%s GROUP BY operating_system, enrollment_type ORDER BY operating_system, enrollment_type", (tenant_id,))
+    rows = cursor.fetchall()
+    return {"by_operating_system": {str(row[0] or "unknown"): row[2] for row in rows}, "by_enrollment_type": {str(row[1] or "unknown"): row[2] for row in rows}, "total_devices": sum(row[2] for row in rows)}
+
+
+def _entra_device_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SELECT operating_system, count(*) FROM core.entra_device WHERE tenant_id=%s GROUP BY operating_system ORDER BY operating_system", (tenant_id,))
+    rows = cursor.fetchall()
+    return {"by_operating_system": {str(row[0] or "unknown"): row[1] for row in rows}, "total_devices": sum(row[1] for row in rows)}
+
+
 def _intune_stale(connection: Any, tenant_id: int, days: int = 30) -> dict[str, Any]:
     cursor = connection.cursor()
     cursor.execute("SELECT device_name, operating_system, user_display_name, last_sync_datetime FROM core.intune_device WHERE tenant_id=%s AND (last_sync_datetime IS NULL OR last_sync_datetime < NOW() - (%s * INTERVAL '1 day')) ORDER BY last_sync_datetime NULLS FIRST", (tenant_id, days))
@@ -567,6 +581,20 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 connection = self.connection_factory()
                 try:
                     self._write(200, _response("READY", _entra_auth_methods_users(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/intune/enrollment-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _intune_enrollment_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/entra/device-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_device_summary(connection, self.tenant_id)))
                 finally:
                     connection.close()
                 return
