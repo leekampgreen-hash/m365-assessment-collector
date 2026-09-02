@@ -121,6 +121,7 @@ EXPECTED_FILES_IN_ORDER = [
     "025_auth_schema.sql",
     "026_feature_flags.sql",
     "027_auth_indexes.sql",
+    "028_grants_consolidation.sql",
 ]
 
 

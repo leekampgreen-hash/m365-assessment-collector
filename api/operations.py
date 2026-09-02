@@ -17,12 +17,13 @@ from urllib.parse import parse_qs, urlsplit
 from analytics import OperationsAnalyticsQueryService
 from api.security import SecurityFindingQueryService, validate_filters
 from api.signin import SigninSummaryService
-from api.auth import handle_auth, verify_api_key
+from api.auth import handle_auth, session_id as session_id_from_request, verify_api_key
 from api.admin import handle_admin
 from api.agent import handle_chat
 from agent.orchestrator import RejectedInputError
 from agent import config
 from collectors.persistence import open_database_connection
+from collectors import auth_service
 from collectors.feature_flags import is_feature_enabled
 from collectors.sku_pricing import load_pricing, get_sku_name, calculate_user_monthly_cost, calculate_savings
 from capabilities.persistence import CapabilityQueryService
@@ -268,6 +269,21 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         return
 
+    def _resolve_tenant_id(self) -> int:
+        sid = session_id_from_request(self)
+        if sid:
+            connection = self.connection_factory()
+            try:
+                session = auth_service.get_session(connection, sid)
+            finally:
+                connection.close()
+            if session and session.get("tenant_id"):
+                return int(session["tenant_id"])
+        tenant_header = self.headers.get("X-Tenant-ID")
+        if tenant_header and verify_api_key(self):
+            return int(tenant_header)
+        return 2
+
     def check_feature_flag(self, path: str) -> bool:
         """Return True when the request is blocked by a disabled feature."""
         flag_names = PATH_FEATURE_FLAGS.get(path, ())
@@ -335,6 +351,7 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             return
         if handle_admin(self, "POST", path):
             return
+        self.tenant_id = self._resolve_tenant_id()
         if self.check_feature_flag(path):
             return
         if path == "/api/agent/analyze/security":
@@ -386,6 +403,7 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             return
         if handle_admin(self, "GET", path):
             return
+        self.tenant_id = self._resolve_tenant_id()
         if self.check_feature_flag(path):
             return
         if path == "/api/scheduler/status":
@@ -473,7 +491,7 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                         self._write(200, _response("READY", service.risk_score()))
                         return
                     if path == "/api/security/signin-summary":
-                        service = SigninSummaryService(self._load_security_service().connection, 2)
+                        service = SigninSummaryService(self._load_security_service().connection, self.tenant_id)
                         self._write(200, _response("READY", service.summary()))
                         return
                     if path == "/api/security/signin-risk":
