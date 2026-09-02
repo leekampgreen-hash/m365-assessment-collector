@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from collectors.core.transport import GraphTransport
 
 REQUIRED_PERMISSION = "DeviceManagementManagedDevices.Read.All"
-PATH = "/v1.0/deviceManagement/managedDevices?$select=id,deviceName,threatState&$top=100"
+PATH = "/v1.0/deviceManagement/managedDevices?$select=id,deviceName&$top=100"
 
 def collect_and_persist_defender_devices(*, tenant_id, transport: GraphTransport, connection):
     rows, url = [], PATH

@@ -1,15 +1,22 @@
 """Collect Entra PIM role assignment schedule instances."""
 from datetime import datetime, timezone
-from collectors.core.transport import GraphTransport
+from collectors.core.transport import GraphHttpError, GraphTransport
 
 REQUIRED_PERMISSION = "RoleManagement.Read.Directory"
-PATH = "/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$expand=principal($select=displayName),roleDefinition($select=displayName)&$top=100"
+PATH = "/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$top=100"
+BETA_PATH = "https://graph.microsoft.com/beta/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$top=100"
 
 def collect_and_persist_entra_pim(*, tenant_id, transport: GraphTransport, connection):
     rows, url = [], PATH
     observed_at = datetime.now(timezone.utc)
-    while url:
+    try:
         payload = transport.get_json(url)
+    except GraphHttpError:
+        url = BETA_PATH
+        payload = transport.get_json(url)
+    while url:
+        if url != PATH and url != BETA_PATH:
+            payload = transport.get_json(url)
         for item in payload.get("value", []):
             rows.append((item.get("id"), tenant_id, (item.get("principal") or {}).get("displayName"), (item.get("roleDefinition") or {}).get("displayName"), item.get("assignmentType"), item.get("startDateTime"), item.get("endDateTime"), observed_at))
         url = payload.get("@odata.nextLink")
