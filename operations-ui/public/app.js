@@ -56,6 +56,7 @@ async function get(path) {
 
 function setHealth(ready) { $("#health-dot").className = `dot ${ready ? "ready" : "error"}`; $("#health-label").textContent = ready ? "Analytics service healthy" : "Analytics service unavailable"; }
 function showUnavailable() { $("#error-banner").textContent = "Analytics service unavailable"; $("#error-banner").classList.remove("hidden"); }
+function hideUnavailable() { $("#error-banner").classList.add("hidden"); $("#error-banner").textContent = ""; }
 function metricCard(label, item, icon, iconClass, sublabel) { return renderCard(icon, label, value(item) === null ? "Data currently unavailable" : display(item), sublabel || status(item), value(item) === null ? "unavailable" : iconClass); }
 async function loadExecSummary() {
   const paths = ["/api/security/admin-roles", "/api/security/mfa-coverage", "/api/security/ca-policies", "/api/security/signin-summary", "/api/security/mfa-registration"];
@@ -291,11 +292,8 @@ async function start() {
   let dashboardReady = false;
   try {
     await get("/health");
-    setHealth(true);
-    const [kpi, correlation] = await Promise.all([
-      get("/api/operations/kpi"),
-      get("/api/operations/correlation/users"),
-    ]);
+    const kpi = await get("/api/operations/kpi");
+    const correlation = await get("/api/operations/correlation/users").catch(() => ({}));
     const dashboardData = kpi.data || {};
     window.dashboardData = dashboardData;
     window.dashboardAsOf = kpi.as_of || correlation.as_of || "--";
@@ -310,8 +308,10 @@ async function start() {
         loadIntunePanel(),
         loadEntraGuestsPanel(),
         loadEntraAuthMethodsPanel(),
-      ]);
+      ]).catch(() => {});
       dashboardReady = true;
+      setHealth(true);
+      hideUnavailable();
   } catch (_) {
     setHealth(false);
     showUnavailable();
