@@ -93,6 +93,17 @@
       "enabled": true
     },
     {
+      "name": "entra_guests_daily",
+      "description": "Entra guest user inventory",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "entra_guests",
+      "interval_hours": 24,
+      "granted_permissions": ["User.Read.All"],
+      "enabled": true
+    },
+    {
       "name": "license_daily",
       "description": "License inventory and SKU data",
       "phase": 1,

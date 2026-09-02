@@ -83,6 +83,25 @@ def _service_status(value: Any) -> str:
     return "DATA_DEPENDENCY_UNAVAILABLE" if _contains_status(value, "DATA_DEPENDENCY_UNAVAILABLE") else "READY"
 
 
+def _entra_guest_summary(connection: Any, tenant_id: int) -> dict[str, int]:
+    cur = connection.cursor()
+    cur.execute("SELECT count(*), count(*) FILTER (WHERE last_signin_datetime >= NOW() - INTERVAL '30 days'), count(*) FILTER (WHERE last_signin_datetime < NOW() - INTERVAL '30 days'), count(*) FILTER (WHERE has_license), count(*) FILTER (WHERE account_enabled = false), count(*) FILTER (WHERE last_signin_datetime IS NULL) FROM core.entra_guest WHERE tenant_id=%s", (tenant_id,))
+    total, active, inactive, licensed, disabled, never = cur.fetchone()
+    return {"total_guests": total, "active_guests": active, "inactive_guests": inactive, "licensed_guests": licensed, "disabled_guests": disabled, "never_signed_in": never}
+
+
+def _entra_guests(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cur = connection.cursor()
+    cur.execute("SELECT display_name, created_datetime, last_signin_datetime, account_enabled, has_license FROM core.entra_guest WHERE tenant_id=%s ORDER BY display_name", (tenant_id,))
+    now = datetime.now(timezone.utc)
+    guests = []
+    for display_name, created, last_signin, enabled, licensed in cur.fetchall():
+        if last_signin and last_signin.tzinfo is None:
+            last_signin = last_signin.replace(tzinfo=timezone.utc)
+        guests.append({"display_name": display_name, "created_datetime": created, "last_signin_datetime": last_signin, "days_since_signin": (now - last_signin).days if last_signin else None, "account_enabled": enabled, "has_license": licensed})
+    return {"guests": guests, "total": len(guests)}
+
+
 def _intune_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     cur = connection.cursor()
     cur.execute("SELECT compliance_state, operating_system, count(*) FROM core.intune_device WHERE tenant_id=%s GROUP BY compliance_state, operating_system", (tenant_id,))
@@ -461,16 +480,30 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 if close is not None:
                     close()
             return
-        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path == "/api/capabilities") and not verify_api_key(self):
+        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path.startswith("/api/entra") or path == "/api/capabilities") and not verify_api_key(self):
             self.send_response(401)
             self.send_header("WWW-Authenticate", "X-API-Key")
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and path != "/api/capabilities":
+        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and not path.startswith("/api/entra") and path != "/api/capabilities":
             self._write(404, _response("NOT_FOUND"))
             return
         try:
+            if path == "/api/entra/guest-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_guest_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/entra/guests":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _entra_guests(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
             if path == "/api/intune/compliance-summary":
                 connection = self.connection_factory()
                 try:

@@ -180,6 +180,7 @@ const PANEL_REGISTRY = {
   optimizer: { sectionId: "license-optimizer-section", loader: loadOptimizerPanel },
   sharepoint: { sectionId: "sharepoint-section", loader: loadSharePointPanel },
   intune: { sectionId: "intune-section", loader: loadIntunePanel },
+  entraGuests: { sectionId: "entra-guests-section", loader: loadEntraGuestsPanel },
 };
 const panelLoadState = {};
 const STAGGER_DELAY = PANEL_LOAD_DELAY_MS;
@@ -269,6 +270,15 @@ async function loadIntunePanel() {
   $("#intune-summary-cards").innerHTML = cards.map(([icon, label, item, sublabel, colorClass]) => renderCard(icon, label, item, sublabel, colorClass)).join("");
   const devices = noncompliant.data?.devices || [];
   $("#intune-devices-table").innerHTML = devices.length ? renderTable(["Device Name", "OS", "OS Version", "User", "Last Sync", "Days Since Sync"], devices.map((device) => `<tr class="${device.days_since_sync > 7 ? "danger" : ""}"><td>${escapeHtml(device.device_name)}</td><td>${escapeHtml(device.operating_system)}</td><td>${escapeHtml(device.os_version)}</td><td>${escapeHtml(device.user_display_name)}</td><td>${escapeHtml(device.last_sync_datetime)}</td><td>${escapeHtml(device.days_since_sync)}</td></tr>`)) : renderEmpty("No non-compliant devices");
+}
+
+async function loadEntraGuestsPanel() {
+  const [summary, response] = await Promise.all([get("/api/entra/guest-summary"), get("/api/entra/guests")]);
+  const data = summary.data || {};
+  const cards = [["Total guests", data.total_guests, "INVENTORY", ""], ["Active guests", data.active_guests, "SIGNED IN LAST 30 DAYS", ""], ["Licensed guests", data.licensed_guests, "COST CONCERN", "unavailable"], ["Never signed in", data.never_signed_in, "SECURITY CONCERN", "unavailable"]];
+  $("#entra-guests-summary-cards").innerHTML = cards.map(([label, item, sublabel, colorClass]) => renderCard("", label, item ?? 0, sublabel, colorClass)).join("");
+  const guests = response.data?.guests || [];
+  $("#entra-guests-table").innerHTML = guests.length ? renderTable(["Display Name", "Created", "Last Sign-in", "Days Since Sign-in", "Licensed", "Status"], guests.map((guest) => { const status = guest.account_enabled === false ? "Disabled" : guest.days_since_signin === null ? "Never signed in" : guest.days_since_signin <= 30 ? "Active" : "Inactive"; const rowClass = guest.account_enabled === false ? "muted-cell" : guest.days_since_signin === null ? "danger" : guest.has_license ? "warning" : ""; return `<tr class="${rowClass}"><th>${escapeHtml(guest.display_name)}</th><td>${escapeHtml(guest.created_datetime)}</td><td>${escapeHtml(guest.last_signin_datetime)}</td><td>${escapeHtml(guest.days_since_signin)}</td><td>${guest.has_license ? renderBadge("Licensed", "warning") : "No"}</td><td>${escapeHtml(status)}</td></tr>`; })) : renderEmpty("No guest users found");
 }
 
 async function loadSharePointPanel() {

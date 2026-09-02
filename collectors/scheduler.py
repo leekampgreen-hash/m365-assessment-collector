@@ -75,6 +75,8 @@ class CollectionScheduler:
             self._run_command("SharePoint sites", ["--sharepoint-sites"], permissions)
         if schedule.get("special") == "intune_compliance":
             self._run_command("Intune compliance", ["--intune-compliance"], permissions)
+        if schedule.get("special") == "entra_guests":
+            self._run_command("Entra guests", ["--entra-guests"], permissions)
         logger.info("Schedule %s complete", name)
 
     def _run_initial_phases(self) -> None:
