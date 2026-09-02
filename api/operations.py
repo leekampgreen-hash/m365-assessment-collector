@@ -83,6 +83,33 @@ def _service_status(value: Any) -> str:
     return "DATA_DEPENDENCY_UNAVAILABLE" if _contains_status(value, "DATA_DEPENDENCY_UNAVAILABLE") else "READY"
 
 
+def _intune_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cur = connection.cursor()
+    cur.execute("SELECT compliance_state, operating_system, count(*) FROM core.intune_device WHERE tenant_id=%s GROUP BY compliance_state, operating_system", (tenant_id,))
+    rows = cur.fetchall()
+    totals = {"compliant": 0, "noncompliant": 0, "unknown": 0, "notApplicable": 0}
+    by_os: dict[str, dict[str, int]] = {}
+    for state, operating_system, count in rows:
+        state = state or "unknown"
+        totals[state] = totals.get(state, 0) + count
+        os_data = by_os.setdefault(operating_system or "unknown", {"total": 0, "compliant": 0})
+        os_data["total"] += count
+        if state == "compliant": os_data["compliant"] += count
+    total = sum(totals.values())
+    return {"total_devices": total, **totals, "compliance_rate_pct": round(totals["compliant"] * 100 / total, 1) if total else 0.0, "by_os": by_os}
+
+
+def _intune_noncompliant(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cur = connection.cursor()
+    cur.execute("SELECT device_name, compliance_state, operating_system, os_version, user_display_name, last_sync_datetime, owner_type FROM core.intune_device WHERE tenant_id=%s AND compliance_state='noncompliant' ORDER BY device_name", (tenant_id,))
+    now = datetime.now(timezone.utc)
+    devices = []
+    for name, state, os, version, user, last_sync, owner in cur.fetchall():
+        days = (now - (last_sync.replace(tzinfo=timezone.utc) if last_sync and last_sync.tzinfo is None else last_sync)).days if last_sync else None
+        devices.append({"device_name": name, "compliance_state": state, "operating_system": os, "os_version": version, "user_display_name": user, "last_sync_datetime": last_sync, "owner_type": owner, "days_since_sync": days})
+    return {"devices": devices, "total": len(devices)}
+
+
 def _aggregate_inactivity(candidates: list[dict[str, Any]], days: int) -> dict[str, int]:
     key = str(days)
     counts = {"inactive_users": 0, "active_users": 0, "unknown_users": 0, "multi_workload_inactive_users": 0}
@@ -434,7 +461,7 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 if close is not None:
                     close()
             return
-        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path == "/api/capabilities") and not verify_api_key(self):
+        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path == "/api/capabilities") and not verify_api_key(self):
             self.send_response(401)
             self.send_header("WWW-Authenticate", "X-API-Key")
             self.send_header("Content-Length", "0")
@@ -444,6 +471,20 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             self._write(404, _response("NOT_FOUND"))
             return
         try:
+            if path == "/api/intune/compliance-summary":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _intune_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/intune/noncompliant-devices":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _intune_noncompliant(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
             if path == "/api/license/optimizer-report":
                 connection = self.connection_factory()
                 try:

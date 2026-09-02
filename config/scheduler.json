@@ -71,6 +71,17 @@
       "enabled": true
     },
     {
+      "name": "intune_compliance_daily",
+      "description": "Intune device compliance data",
+      "phase": 1,
+      "data_type": "snapshot",
+      "endpoints": [],
+      "special": "intune_compliance",
+      "interval_hours": 24,
+      "granted_permissions": ["DeviceManagementManagedDevices.Read.All"],
+      "enabled": true
+    },
+    {
       "name": "usage_reports_daily",
       "description": "M365 usage reports — adoption data",
       "phase": 1,

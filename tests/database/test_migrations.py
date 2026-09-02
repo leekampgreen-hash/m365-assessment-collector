@@ -87,6 +87,7 @@ EXPECTED_TABLES = {
     "core.feature_flag",
     "core.tenant_feature",
     "core.system_setting",
+    "core.intune_device",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security", "auth"}
@@ -122,6 +123,7 @@ EXPECTED_FILES_IN_ORDER = [
     "026_feature_flags.sql",
     "027_auth_indexes.sql",
     "028_grants_consolidation.sql",
+    "029_intune_compliance.sql",
 ]
 
 
@@ -293,8 +295,8 @@ class TableInventoryTests(unittest.TestCase):
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            62,
-            f"expected exactly 62 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            63,
+            f"expected exactly 63 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:
@@ -648,7 +650,7 @@ class IndexTests(unittest.TestCase):
             re.IGNORECASE | re.MULTILINE,
         )
         for p in _load_migrations():
-            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql", "027_auth_indexes.sql"):
+            if p.name in ("007_indexes.sql", "011_security_findings_persistence.sql", "018_onedrive_high_value_audit_event.sql", "020_signin_log.sql", "022_sharepoint_high_value_audit.sql", "027_auth_indexes.sql", "029_intune_compliance.sql"):
                 continue
             text = p.read_text(encoding="utf-8")
             self.assertNotRegex(

@@ -179,6 +179,7 @@ const PANEL_REGISTRY = {
   licenses: { sectionId: "entitlements-section", loader: loadLicensesPanel },
   optimizer: { sectionId: "license-optimizer-section", loader: loadOptimizerPanel },
   sharepoint: { sectionId: "sharepoint-section", loader: loadSharePointPanel },
+  intune: { sectionId: "intune-section", loader: loadIntunePanel },
 };
 const panelLoadState = {};
 const STAGGER_DELAY = PANEL_LOAD_DELAY_MS;
@@ -259,6 +260,14 @@ async function loadLicensesPanel() {
 async function loadOptimizerPanel() {
   optimizerReport = await get("/api/license/optimizer-report").catch(() => null);
   renderOptimizer();
+}
+
+async function loadIntunePanel() {
+  const [summary, noncompliant] = await Promise.all([get("/api/intune/compliance-summary"), get("/api/intune/noncompliant-devices")]);
+  const data = summary.data || {};
+  $("#intune-summary-cards").innerHTML = [["Total devices", data.total_devices], ["Compliant", data.compliant], ["Non-compliant", data.noncompliant], ["Compliance rate", `${data.compliance_rate_pct}%`]].map(([label, item]) => renderCard("", label, item, "Ready", label === "Non-compliant" ? "unavailable" : "")).join("");
+  const devices = noncompliant.data?.devices || [];
+  $("#intune-devices-table").innerHTML = devices.length ? renderTable(["Device Name", "OS", "OS Version", "User", "Last Sync", "Days Since Sync"], devices.map((device) => `<tr class="${device.days_since_sync > 7 ? "danger" : ""}"><td>${escapeHtml(device.device_name)}</td><td>${escapeHtml(device.operating_system)}</td><td>${escapeHtml(device.os_version)}</td><td>${escapeHtml(device.user_display_name)}</td><td>${escapeHtml(device.last_sync_datetime)}</td><td>${escapeHtml(device.days_since_sync)}</td></tr>`))) : renderEmpty("No non-compliant devices");
 }
 
 async function loadSharePointPanel() {
