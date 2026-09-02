@@ -20,10 +20,11 @@ def verify_api_key(handler: BaseHTTPRequestHandler) -> bool:
 
 def session_id(handler):
     value = handler.headers.get("X-Session-ID")
-    if value:
+    if value and value.lower() not in {"null", "undefined"}:
         return value
     cookie = SimpleCookie(handler.headers.get("Cookie", ""))
-    return cookie.get("session_id").value if cookie.get("session_id") else None
+    cookie_value = cookie.get("session_id").value if cookie.get("session_id") else None
+    return cookie_value if cookie_value and cookie_value.lower() not in {"null", "undefined"} else None
 
 
 def handle_auth(handler, method: str, path: str) -> bool:

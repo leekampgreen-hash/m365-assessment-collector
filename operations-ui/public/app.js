@@ -1,5 +1,8 @@
 const sid = sessionStorage.getItem("session_id");
-if (!sid) window.location.href = "/login.html";
+if (!sid || sid === "null" || sid === "undefined") {
+  sessionStorage.removeItem("session_id");
+  window.location.href = "/login.html";
+}
 const $ = (selector) => document.querySelector(selector);
 const metric = (object) => object && typeof object === "object" ? object : {};
 const value = (object) => metric(object).status === "READY" ? metric(object).value : null;
