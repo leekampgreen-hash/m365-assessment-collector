@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from collectors.core.transport import GraphHttpError, GraphTransport
 
 REQUIRED_PERMISSION = "RoleManagement.Read.Directory"
-PATH = "/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$top=100"
-BETA_PATH = "https://graph.microsoft.com/beta/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$top=100"
+PATH = "/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$expand=principal($select=displayName),roleDefinition($select=displayName)&$top=100"
+BETA_PATH = "https://graph.microsoft.com/beta/roleManagement/directory/roleAssignmentScheduleInstances?$select=id,principalId,roleDefinitionId,assignmentType,startDateTime,endDateTime&$expand=principal($select=displayName),roleDefinition($select=displayName)&$top=100"
 
 def collect_and_persist_entra_pim(*, tenant_id, transport: GraphTransport, connection):
     rows, url = [], PATH

@@ -172,9 +172,9 @@ def _entra_stale(connection: Any, tenant_id: int, days: int = 90) -> dict[str, A
 
 def _entra_pim_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     cursor = connection.cursor()
-    cursor.execute("SELECT role_display_name, assignment_type, count(*) FROM core.entra_pim_assignment WHERE tenant_id=%s GROUP BY role_display_name, assignment_type ORDER BY role_display_name", (tenant_id,))
+    cursor.execute("SELECT principal_display_name, role_display_name, assignment_type, count(*) FROM core.entra_pim_assignment WHERE tenant_id=%s GROUP BY principal_display_name, role_display_name, assignment_type ORDER BY role_display_name, principal_display_name", (tenant_id,))
     rows = cursor.fetchall()
-    return {"assignments": [{"role_display_name": row[0], "assignment_type": row[1], "count": row[2]} for row in rows], "total": sum(row[2] for row in rows)}
+    return {"assignments": [{"principal_display_name": row[0], "role_display_name": row[1], "assignment_type": row[2], "count": row[3]} for row in rows], "total": sum(row[3] for row in rows)}
 
 
 def _defender_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
