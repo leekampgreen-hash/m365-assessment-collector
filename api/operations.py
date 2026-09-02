@@ -467,7 +467,7 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and path != "/api/capabilities":
+        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and path != "/api/capabilities":
             self._write(404, _response("NOT_FOUND"))
             return
         try:
