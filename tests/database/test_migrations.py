@@ -91,6 +91,7 @@ EXPECTED_TABLES = {
     "core.entra_guest",
     "core.entra_auth_method",
     "core.intune_enrollment",
+    "core.entra_device",
     "core.entra_pim_assignment",
     "core.defender_threat",
 }
