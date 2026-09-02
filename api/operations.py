@@ -23,12 +23,31 @@ from api.agent import handle_chat
 from agent.orchestrator import RejectedInputError
 from agent import config
 from collectors.persistence import open_database_connection
+from collectors.feature_flags import is_feature_enabled
 from collectors.sku_pricing import load_pricing, get_sku_name, calculate_user_monthly_cost, calculate_savings
 from capabilities.persistence import CapabilityQueryService
 
 
 BASE_PATH = "/api/operations"
 VALID_INACTIVITY_WINDOWS = (30, 60, 90)
+PATH_FEATURE_FLAGS = {
+    "/api/agent/analyze/security": ("security_analyst",),
+    "/api/license/optimizer-report": ("license_optimizer", "cost_analysis"),
+    "/api/license/parking-report": ("license_optimizer",),
+    "/api/operations/sharepoint/audit-summary": ("sharepoint_sites",),
+    "/api/operations/sharepoint/orphaned-sites": ("sharepoint_sites",),
+    "/api/operations/sharepoint/external-sharing": ("sharepoint_sites",),
+    "/api/operations/adoption/sharepoint/sites": ("sharepoint_sites",),
+    "/api/security/mfa-coverage": ("mfa_coverage",),
+    "/api/security/mfa-registration": ("mfa_coverage",),
+    "/api/security/admin-roles": ("admin_roles",),
+    "/api/security/ca-policies": ("ca_policies",),
+    "/api/security/signin-risk": ("signin_analytics",),
+    "/api/security/signin-summary": ("signin_analytics",),
+    "/api/reports/email": ("email_report",),
+}
+
+
 LICENSE_PRICES = {
     "SPB": 22.00,
     "AAD_PREMIUM_P2": 9.00,
@@ -249,6 +268,15 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         return
 
+    def check_feature_flag(self, path: str) -> bool:
+        """Return True when the request is blocked by a disabled feature."""
+        flag_names = PATH_FEATURE_FLAGS.get(path, ())
+        for flag_name in flag_names:
+            if not is_feature_enabled(flag_name, self.tenant_id):
+                self._write(503, {"error": f"Feature '{flag_name}' is disabled for this tenant"})
+                return True
+        return False
+
     def _write(self, http_status: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, separators=(",", ":"), default=str).encode("utf-8")
         self.send_response(http_status)
@@ -302,11 +330,14 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlsplit(self.path)
-        if handle_admin(self, "POST", parsed.path.rstrip("/")):
+        path = parsed.path.rstrip("/")
+        if handle_auth(self, "POST", path):
             return
-        if handle_auth(self, "POST", parsed.path.rstrip("/")):
+        if handle_admin(self, "POST", path):
             return
-        if parsed.path.rstrip("/") == "/api/agent/analyze/security":
+        if self.check_feature_flag(path):
+            return
+        if path == "/api/agent/analyze/security":
             if not verify_api_key(self):
                 self.send_response(401)
                 self.send_header("WWW-Authenticate", "X-API-Key")
@@ -351,9 +382,11 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlsplit(self.path)
         path = parsed.path.rstrip("/")
+        if handle_auth(self, "GET", path):
+            return
         if handle_admin(self, "GET", path):
             return
-        if handle_auth(self, "GET", path):
+        if self.check_feature_flag(path):
             return
         if path == "/api/scheduler/status":
             try:
