@@ -10,10 +10,7 @@ const status = (object) => metric(object).status === "READY" ? "Ready" : "Data c
 const primitive = (value) => value === null || value === undefined || value === "" ? "Data currently unavailable" : `${value}`;
 const storageValue = (object) => storage(metric(object).value ?? object);
 const DASHBOARD_FETCH_TIMEOUT_MS = 10000;
-const PANEL_LOAD_DELAY_MS = 500;
 const escapeHtml = (item) => String(item ?? "-").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
-const SKELETON_BAR = '<div class="skeleton-bar"></div>'.repeat(3);
-
 function renderCard(icon, label, value, sublabel, colorClass = "") {
   return `<article class="card"><div class="kpi-icon ${escapeHtml(colorClass)}">${icon}</div><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(value)}</div><div class="status ${colorClass === "unavailable" ? "unavailable" : "ready"}">${escapeHtml(sublabel)}</div></article>`;
 }
@@ -36,10 +33,6 @@ function renderError(message, onRetry) {
   element.innerHTML = `<p>${escapeHtml(message)}</p><button type="button" class="plain-button">Retry</button>`;
   element.querySelector("button").addEventListener("click", onRetry);
   return element.outerHTML;
-}
-
-function renderSkeleton(rows = 4) {
-  return `<div class="panel-skeleton"><div class="skeleton-card-grid">${[0, 1, 2].map(() => `<div class="skeleton-card"><div class="skeleton-bar skeleton-bar-title"></div><div class="skeleton-bar skeleton-bar-value"></div><div class="skeleton-bar skeleton-bar-sub"></div></div>`).join("")}</div><div class="skeleton-table">${[0, ...Array(Math.max(0, rows - 1))].map(() => `<div class="skeleton-row"></div>`).join("")}</div></div>`;
 }
 
 function renderStat(value, label) {
@@ -154,7 +147,7 @@ const formatGb = (number) => { if (number === null || number === undefined || nu
 const formatPercent = (number) => number === null || number === undefined || number === "" ? "-" : `${Number(number).toFixed(2).replace(/\.00$/, "")}%`;
 const formatFiles = (number) => { if (number === null || number === undefined || number === "") return "-"; const value = Number(number); return value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1).replace(/\.0$/, "")}K` : String(value); };
 const assignedSkus = (u) => { const skus = u.assigned_skus || u.assignedSkus || []; const items = Array.isArray(skus) ? skus : [skus]; const labels = items.map((sku) => typeof sku === "object" ? (sku.sku_part_number || sku.skuPartNumber || sku.display_name || sku.displayName || sku.product_name || sku.productName || sku.id || "") : sku).map((sku) => String(sku || "").trim()).filter(Boolean); return labels.length ? labels.map(escapeHtml).join("<br>") : "-"; };
-let detailState = { workload: null, filter: "ALL", search: "", page: 1, pageSize: 25 };
+let detailState = { workload: null, filter: "ALL", search: "", page: 1, pageSize: 10 };
 function renderDetail(workload, filter = detailState.filter, page = 1) {
   detailState = { ...detailState, workload, filter, page };
   $("#usage-detail").classList.remove("hidden"); $("#detail-title").innerHTML = workloadNames[workload];
@@ -164,7 +157,7 @@ function renderDetail(workload, filter = detailState.filter, page = 1) {
   const filtered = pool.filter((u) => (detailState.filter === "ALL" || levelOf(u) === detailState.filter) && (!query || [u.display_name, u.user_principal_name, ...(u.assigned_skus || [])].some((v) => String(v || "").toLowerCase().includes(query))));
   const sorted = filtered.sort((a,b) => workload === "exchange" ? ((b.exchange_utilization_percent ?? -1) - (a.exchange_utilization_percent ?? -1)) : String(a[`${workload}_last_activity`] || "").localeCompare(String(b[`${workload}_last_activity`] || "")));
   const pages = Math.max(1, Math.ceil(sorted.length / detailState.pageSize)); detailState.page = Math.min(detailState.page, pages); const shown = sorted.slice((detailState.page - 1) * detailState.pageSize, detailState.page * detailState.pageSize); const first = sorted.length ? (detailState.page - 1) * detailState.pageSize + 1 : 0; const last = Math.min(detailState.page * detailState.pageSize, sorted.length);
-  $("#detail-summary").innerHTML = `<div class="detail-controls"><input id="detail-search" type="search" placeholder="Search name, UPN, or SKU" value="${escapeHtml(detailState.search)}"><label>Page size <select id="detail-page-size"><option>25</option><option>50</option><option>100</option></select></label></div><div class="usage-filter-grid">${["HIGH","MEDIUM","LOW","NO DATA"].map((level) => `<button class="filter-button ${detailState.filter === level ? "active" : ""}" data-filter="${level}">${level}: ${pool.filter((u) => levelOf(u) === level).length}</button>`).join("")}<button class="filter-button ${detailState.filter === "ALL" ? "active" : ""}" data-filter="ALL">ALL: ${pool.length}</button></div>`;
+  $("#detail-summary").innerHTML = `<div class="detail-controls"><input id="detail-search" type="search" placeholder="Search name, UPN, or SKU" value="${escapeHtml(detailState.search)}"><label>Page size <select id="detail-page-size"><option>10</option><option>25</option><option>50</option></select></label></div><div class="usage-filter-grid">${["HIGH","MEDIUM","LOW","NO DATA"].map((level) => `<button class="filter-button ${detailState.filter === level ? "active" : ""}" data-filter="${level}">${level}: ${pool.filter((u) => levelOf(u) === level).length}</button>`).join("")}<button class="filter-button ${detailState.filter === "ALL" ? "active" : ""}" data-filter="ALL">ALL: ${pool.length}</button></div>`;
   $("#detail-page-size").value = String(detailState.pageSize);
   const headers = workload === "exchange" ? "<th>Storage Used</th><th>Mailbox Capacity</th><th>Utilization %</th>" : workload === "onedrive" ? "<th>Storage Used</th><th>Storage Allocated</th><th>Utilization %</th><th>Files</th>" : "";
   const onedriveTable = workload === "onedrive";
@@ -174,70 +167,6 @@ function renderDetail(workload, filter = detailState.filter, page = 1) {
 $("#back-overview").addEventListener("click", () => { $("#usage-detail").classList.add("hidden"); });
 async function renderInactivity(days = 30) { try { const data = await get(`/api/operations/inactivity?days=${days}`); const item = data.status === "READY" ? (data.data || {}) : {}; $("#inactivity").innerHTML = [["Inactive users", item.inactive_users], ["Active users", item.active_users], ["Insufficient evidence", item.unknown_users], ["Workload inactivity signals", item.multi_workload_inactive_users]].map(([label, number], index) => `<div class="inactivity-cell"><div class="inactivity-number">${data.status === "READY" ? (number ?? 0) : "Data currently unavailable"}</div><div class="inactivity-label">${label}</div>${index === 3 ? '<div class="inactivity-caption">Users with inactivity evidence across evaluated workloads.</div>' : ""}</div>`).join(""); } catch (_) { showUnavailable(); $("#inactivity").innerHTML = `<div class="inactivity-cell">Data currently unavailable</div>`; } }
 
-const PANEL_REGISTRY = {
-  usage: { sectionId: "usage-overview-section", loader: loadUsagePanel },
-  licenses: { sectionId: "entitlements-section", loader: loadLicensesPanel },
-  optimizer: { sectionId: "license-optimizer-section", loader: loadOptimizerPanel },
-  sharepoint: { sectionId: "sharepoint-section", loader: loadSharePointPanel },
-  intune: { sectionId: "intune-section", loader: loadIntunePanel },
-  entraGuests: { sectionId: "entra-guests-section", loader: loadEntraGuestsPanel },
-  entraAuthMethods: { sectionId: "entra-auth-methods-section", loader: loadEntraAuthMethodsPanel },
-};
-const panelLoadState = {};
-const STAGGER_DELAY = PANEL_LOAD_DELAY_MS;
-
-function renderPanelSkeleton(panelKey) {
-  const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
-  if (!section) return;
-  const target = section.querySelector(".panel-body") || section;
-  if (!target.querySelector(".panel-skeleton")) {
-    const skeleton = document.createElement("div");
-    skeleton.innerHTML = renderSkeleton(4);
-    const renderedSkeleton = skeleton.firstElementChild;
-    renderedSkeleton.dataset.panel = panelKey;
-    const actions = document.createElement("div");
-    actions.className = "panel-actions";
-    actions.innerHTML = `<button type="button" class="plain-button panel-load-btn" data-panel="${panelKey}">Load</button>`;
-    renderedSkeleton.appendChild(actions);
-    target.appendChild(renderedSkeleton);
-  }
-}
-
-function renderPanelError(panelKey, retry) {
-  const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
-  if (!section) return;
-  const target = section.querySelector(".panel-body") || section;
-target.innerHTML = renderError("Failed to load. Retry?", retry);
-   target.querySelector("button").classList.add("panel-retry-btn");
-}
-
-async function loadPanel(panelKey) {
-  const state = panelLoadState[panelKey];
-  if (state && (state.loading || state.loaded)) return;
-  panelLoadState[panelKey] = { loading: true, loaded: false };
-  const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
-  const target = section?.querySelector(".panel-body") || section;
-  if (target) {
-    const skeleton = target.querySelector(".panel-skeleton");
-    if (skeleton) skeleton.remove();
-  }
-  try {
-    await PANEL_REGISTRY[panelKey].loader();
-    panelLoadState[panelKey] = { loading: false, loaded: true };
-  } catch (error) {
-    panelLoadState[panelKey] = { loading: false, loaded: false };
-    renderPanelError(panelKey, () => loadPanel(panelKey));
-  }
-}
-
-function showLoadButtons() {
-  Object.keys(PANEL_REGISTRY).forEach((panelKey) => {
-    renderPanelSkeleton(panelKey);
-    const section = document.getElementById(PANEL_REGISTRY[panelKey].sectionId);
-    const btn = section?.querySelector(`.panel-load-btn[data-panel="${panelKey}"]`);
-    if (btn) btn.addEventListener("click", () => loadPanel(panelKey));
-  });
-}
 
 async function loadUsagePanel() {
   const onedriveAdoption = await get("/api/operations/adoption/onedrive").catch(() => null);
@@ -277,7 +206,7 @@ async function loadEntraGuestsPanel() {
   const [summary, response] = await Promise.all([get("/api/entra/guest-summary"), get("/api/entra/guests")]);
   const data = summary.data || {};
   const cards = [["Total guests", data.total_guests, "INVENTORY", ""], ["Active guests", data.active_guests, "SIGNED IN LAST 30 DAYS", ""], ["Licensed guests", data.licensed_guests, "COST CONCERN", "unavailable"], ["Never signed in", data.never_signed_in, "SECURITY CONCERN", "unavailable"]];
-  const icons = ["👥", "✅", "💳", "⚠️"];
+  const icons = ["Users", "OK", "Card", "Alert"];
   $("#entra-guests-summary-cards").innerHTML = cards.map(([label, item, sublabel, colorClass], index) => renderCard(icons[index], label, item ?? 0, sublabel, colorClass)).join("");
   const guests = response.data?.guests || [];
   $("#entra-guests-table").innerHTML = guests.length ? renderTable(["Display Name", "Created", "Last Sign-in", "Days Since Sign-in", "Licensed", "Status"], guests.map((guest) => { const status = guest.account_enabled === false ? "Disabled" : guest.days_since_signin === null ? "Never signed in" : guest.days_since_signin <= 30 ? "Active" : "Inactive"; const rowClass = guest.account_enabled === false ? "muted-cell" : guest.days_since_signin === null ? "danger" : guest.has_license ? "warning" : ""; return `<tr class="${rowClass}"><th>${escapeHtml(guest.display_name)}</th><td>${escapeHtml(guest.created_datetime)}</td><td>${escapeHtml(guest.last_signin_datetime)}</td><td>${escapeHtml(guest.days_since_signin)}</td><td>${guest.has_license ? renderBadge("Licensed", "warning") : "No"}</td><td>${escapeHtml(status)}</td></tr>`; })) : renderEmpty("No guest users found");
@@ -286,7 +215,7 @@ async function loadEntraGuestsPanel() {
 async function loadEntraAuthMethodsPanel() {
   const [summary, response] = await Promise.all([get("/api/entra/auth-methods-summary"), get("/api/entra/auth-methods-users")]);
   const data = summary.data || {};
-  const cards = [["🔐", "MFA Registered", `${data.mfa_registered || 0} (${data.mfa_registration_rate_pct || 0}%)`, "REGISTERED", ""], ["⚠️", "Not Registered", data.mfa_not_registered || 0, "NOT REGISTERED", (data.mfa_not_registered || 0) > (data.total_users || 0) / 2 ? "unavailable" : ""], ["🔑", "Passwordless capable", data.passwordless_capable || 0, "CAPABLE", ""], ["📱", "Top method used", Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || "None", "MOST USED", ""]];
+  const cards = [["MFA", "MFA Registered", `${data.mfa_registered || 0} (${data.mfa_registration_rate_pct || 0}%)`, "REGISTERED", ""], ["Alert", "Not Registered", data.mfa_not_registered || 0, "NOT REGISTERED", (data.mfa_not_registered || 0) > (data.total_users || 0) / 2 ? "unavailable" : ""], ["Key", "Passwordless capable", data.passwordless_capable || 0, "CAPABLE", ""], ["Phone", "Top method used", Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || "None", "MOST USED", ""]];
   $("#entra-auth-methods-summary-cards").innerHTML = cards.map(([icon, label, item, sublabel, colorClass]) => renderCard(icon, label, item, sublabel, colorClass)).join("");
   const names = { microsoftAuthenticatorPush: "Microsoft Authenticator", softwareOneTimePasscode: "Software OTP", email: "Email", sms: "SMS", voiceMobile: "Voice call", fido2: "FIDO2 security key" };
   $("#entra-auth-methods-breakdown").innerHTML = Object.entries(data.by_method || {}).sort((a, b) => b[1] - a[1]).map(([method, count]) => `<div class="inactivity-cell"><div class="summary-value">${escapeHtml(count)}</div><div class="summary-label">${escapeHtml(names[method] || method)}</div></div>`).join("") || renderEmpty("No authentication methods found");
@@ -369,9 +298,17 @@ async function start() {
     window.dashboardAsOf = kpi.as_of || correlation.as_of || "--";
     $("#as-of").textContent = window.dashboardAsOf;
     correlationUsers = correlation.data?.users || [];
-    renderSummary(dashboardData);
-     showLoadButtons();
-     dashboardReady = true;
+      renderSummary(dashboardData);
+      await Promise.all([
+        loadUsagePanel(),
+        loadLicensesPanel(),
+        loadOptimizerPanel(),
+        loadSharePointPanel(),
+        loadIntunePanel(),
+        loadEntraGuestsPanel(),
+        loadEntraAuthMethodsPanel(),
+      ]);
+      dashboardReady = true;
   } catch (_) {
     setHealth(false);
     showUnavailable();
