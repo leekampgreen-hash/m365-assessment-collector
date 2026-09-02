@@ -3,7 +3,7 @@
   "schedules": [
     {
       "name": "identity_daily",
-      "description": "Directory data — users, groups, roles",
+      "description": "Directory data - users, groups, roles",
       "phase": 1,
       "data_type": "snapshot",
       "endpoints": ["G01-001", "G01-002", "G01-003", "G01-018"],
@@ -30,7 +30,7 @@
     },
     {
       "name": "signin_logs_hourly",
-      "description": "Sign-in logs — fresh every hour",
+      "description": "Sign-in logs - fresh every hour",
       "phase": 3,
       "data_type": "event",
       "endpoints": ["G01-006"],
@@ -83,7 +83,7 @@
     },
     {
       "name": "usage_reports_daily",
-      "description": "M365 usage reports — adoption data",
+      "description": "M365 usage reports - adoption data",
       "phase": 1,
       "data_type": "snapshot",
       "endpoints": [],
@@ -168,6 +168,7 @@
       "granted_permissions": ["Directory.Read.All"],
       "enabled": true
     },
+    {"name":"batch2_security_dlp_daily","description":"Defender and DLP security inventory","phase":1,"data_type":"snapshot","special":"batch2","interval_hours":24,"granted_permissions":["SecurityEvents.Read.All","SecurityIncident.Read.All","InformationProtectionPolicy.Read"],"enabled":true},
     {
       "name": "event_cleanup_daily",
       "description": "Remove event data older than 90 days",

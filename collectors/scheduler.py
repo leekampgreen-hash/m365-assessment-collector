@@ -47,7 +47,7 @@ class CollectionScheduler:
                 cursor.execute("DELETE FROM core.signin_log WHERE tenant_id = %s AND observed_at < NOW() - INTERVAL '90 days'", (2,))
                 deleted = cursor.rowcount
             connection.commit()
-            logger.info("Event cleanup complete — deleted %s rows", deleted)
+            logger.info("Event cleanup complete - deleted %s rows", deleted)
         except Exception as exc:
             logger.error("Event cleanup failed: %s", exc)
             if connection is not None:
@@ -79,6 +79,9 @@ class CollectionScheduler:
             self._run_command("Entra guests", ["--entra-guests"], permissions)
         if schedule.get("special") == "entra_auth_methods":
             self._run_command("Entra authentication methods", ["--entra-auth-methods"], permissions)
+        if schedule.get("special") == "batch2":
+            for source in ("DEF-P02", "DEF-P03", "DLP-P01", "DLP-P02"):
+                self._run_command(source, ["--batch2-source", source], permissions)
         special_flags = {
             "intune_enrollment": ("Intune enrollment", "--intune-enrollment"),
             "entra_stale_devices": ("Entra stale devices", "--entra-stale"),
@@ -94,10 +97,10 @@ class CollectionScheduler:
         schedules = [s for s in self.config.get("schedules", []) if s.get("enabled", True)]
         for schedule in sorted((s for s in schedules if s.get("phase", 1) == 1), key=lambda s: s["name"]):
             self._run_endpoints(schedule)
-        logger.info("Phase 1 complete — starting Phase 2 security evaluation")
+        logger.info("Phase 1 complete - starting Phase 2 security evaluation")
         for schedule in sorted((s for s in schedules if s.get("phase") == 2), key=lambda s: s["name"]):
             self._run_endpoints(schedule)
-        logger.info("Phase 2 complete — security findings updated")
+        logger.info("Phase 2 complete - security findings updated")
         for schedule in sorted((s for s in schedules if s.get("phase") == 3), key=lambda s: s["name"]):
             self._run_endpoints(schedule)
 
@@ -117,14 +120,14 @@ class CollectionScheduler:
 
     def start(self) -> None:
         delay = self.config.get("settings", {}).get("startup_delay_seconds", 30)
-        logger.info("Scheduler starting — waiting %ss before first run", delay)
+        logger.info("Scheduler starting - waiting %ss before first run", delay)
         time.sleep(delay)
         try:
             self._run_initial_phases()
         except Exception as exc:
             logger.error("Initial phased collection failed: %s", exc)
         self.register_jobs()
-        logger.info("Scheduler started — running jobs on schedule")
+        logger.info("Scheduler started - running jobs on schedule")
         try:
             self.scheduler.start()
         except Exception:

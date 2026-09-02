@@ -46,6 +46,10 @@ PATH_FEATURE_FLAGS = {
     "/api/security/signin-risk": ("signin_analytics",),
     "/api/security/signin-summary": ("signin_analytics",),
     "/api/reports/email": ("email_report",),
+    "/api/security/defender-o365-summary": ("defender_o365",),
+    "/api/security/defender-cloud-app-summary": ("defender_cloud_app",),
+    "/api/security/dlp-alerts-summary": ("dlp_alerts",),
+    "/api/security/dlp-labels-summary": ("dlp_labels",),
 }
 
 
@@ -182,6 +186,29 @@ def _defender_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     cursor.execute("SELECT threat_state, count(*) FROM core.defender_threat WHERE tenant_id=%s GROUP BY threat_state ORDER BY threat_state", (tenant_id,))
     rows = cursor.fetchall()
     return {"by_threat_state": {row[0] or "unknown": row[1] for row in rows}, "total_devices": sum(row[1] for row in rows)}
+
+
+def _batch2_summary(connection: Any, tenant_id: int, table: str) -> dict[str, Any]:
+    cursor = connection.cursor()
+    date_filter = " AND created_at >= NOW() - INTERVAL '7 days'" if table == "core.dlp_alert" else ""
+    cursor.execute("SELECT name, status, severity, category FROM {} WHERE tenant_id=%s{} ORDER BY name".format(table, date_filter), (tenant_id,))
+    rows = cursor.fetchall()
+    severity_keys = ("Low", "Medium", "High") if table == "core.dlp_alert" else ("Low", "Medium", "High", "Informational")
+    severity = {key: 0 for key in severity_keys}
+    for row in rows:
+        if row[2] in severity:
+            severity[row[2]] += 1
+    data = {"total": len(rows), "severity": severity}
+    if table == "core.dlp_label":
+        data["labels"] = [{"name": row[0], "sensitivity_type": row[3]} for row in rows]
+    else:
+        counts = {}
+        for row in rows:
+            value = row[0] if table in ("core.dlp_alert", "core.defender_cloud_app_alert") else row[3]
+            if value:
+                counts[value] = counts.get(value, 0) + 1
+        data["top_policies" if table == "core.dlp_alert" else "top_apps_flagged" if table == "core.defender_cloud_app_alert" else "threat_types"] = [{"name": key, "count": value} for key, value in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:10]]
+    return data
 
 
 def _intune_noncompliant(connection: Any, tenant_id: int) -> dict[str, Any]:
@@ -624,6 +651,19 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 connection = self.connection_factory()
                 try:
                     self._write(200, _response("READY", _entra_pim_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            batch2_routes = {
+                "/api/security/defender-o365-summary": "core.defender_o365_alert",
+                "/api/security/defender-cloud-app-summary": "core.defender_cloud_app_alert",
+                "/api/security/dlp-alerts-summary": "core.dlp_alert",
+                "/api/security/dlp-labels-summary": "core.dlp_label",
+            }
+            if path in batch2_routes:
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response("READY", _batch2_summary(connection, self.tenant_id, batch2_routes[path])))
                 finally:
                     connection.close()
                 return

@@ -46,7 +46,7 @@ from .models import (
 
 EXPECTED_ENDPOINT_IDS: Tuple[str, ...] = tuple(
     "G01-{:03d}".format(index) for index in range(1, 21)
-) + ("SP-A01", "TM-001")
+) + ("SP-A01", "TM-001", "DEF-P02", "DEF-P03", "DLP-P01", "DLP-P02")
 
 
 # ---------------------------------------------------------------------------
@@ -502,6 +502,25 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         adapter=_wrap_g07b(g07b_adapters.adapt_sharepoint_audit_logs),
         description="SharePoint high-value audit events (sharing, anonymous links)",
     )
+
+    from .. import batch2 as batch2_collectors
+    batch2_entries = {
+        "DEF-P02": ("core.defender_o365_alert", "Defender for Office 365", "SecurityEvents.Read.All"),
+        "DEF-P03": ("core.defender_cloud_app_alert", "Defender Cloud App", "SecurityEvents.Read.All"),
+        "DLP-P01": ("core.dlp_alert", "Data Loss Prevention", "SecurityEvents.Read.All"),
+        "DLP-P02": ("core.dlp_label", "Sensitivity Labels", "InformationProtectionPolicy.Read"),
+    }
+    for endpoint_id, (table, workload_name, permission) in batch2_entries.items():
+        entries[endpoint_id] = _entry(
+            endpoint_id,
+            PERSISTENCE_CURRENT,
+            current_table=table,
+            workload=workload_name,
+            retention_class="STANDARD",
+            owner="security_service",
+            adapter=lambda record, lineage, endpoint_id=endpoint_id: batch2_collectors.normalize_record(endpoint_id, dict(record), lineage.tenant_id, lineage.observed_at),
+            description="Batch-2 security and DLP current data",
+        )
 
     from ..usage_reports import adapters as usage_adapters
     entries["TM-001"] = _entry(

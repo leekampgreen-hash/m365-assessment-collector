@@ -94,6 +94,10 @@ EXPECTED_TABLES = {
     "core.entra_device",
     "core.entra_pim_assignment",
     "core.defender_threat",
+    "core.defender_o365_alert",
+    "core.defender_cloud_app_alert",
+    "core.dlp_alert",
+    "core.dlp_label",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security", "auth"}
@@ -136,6 +140,7 @@ EXPECTED_FILES_IN_ORDER = [
     "033_entra_stale_devices.sql",
     "034_entra_pim.sql",
     "035_defender_devices.sql",
+    "036_batch2_security_dlp.sql",
 ]
 
 
@@ -300,15 +305,15 @@ class SchemaTests(unittest.TestCase):
 
 
 class TableInventoryTests(unittest.TestCase):
-    def test_exactly_65_create_table_definitions(self) -> None:
+    def test_exactly_69_create_table_definitions(self) -> None:
         sql = _all_sql()
         tables = _extract_create_tables(sql)
         # Sanity: drop any duplicate literal entries but expect no
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            69,
-            f"expected exactly 69 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            73,
+            f"expected exactly 73 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:

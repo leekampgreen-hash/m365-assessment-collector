@@ -439,5 +439,9 @@
     "report_key": "sharepoint_site_usage",
     "period": "D7",
     "path": "/v1.0/reports/getSharePointSiteUsageDetail(period='D7')"
-  }
+  },
+  {"id":"DEF-P02","key":"defender_o365","name":"Defender for Office 365 Alerts","workload":"Microsoft Defender","method":"GET","path":"/v1.0/security/alerts_v2?$filter=serviceSource%20eq%20%20%27microsoftDefenderForOffice365%27","auth":"application","documented_permissions":["SecurityEvents.Read.All"],"pagination":true,"enabled":true},
+  {"id":"DEF-P03","key":"defender_cloud_app","name":"Defender Cloud App Alerts","workload":"Microsoft Defender","method":"GET","path":"/v1.0/security/alerts_v2?$filter=serviceSource%20eq%20%20%27microsoftCloudAppSecurity%27","auth":"application","documented_permissions":["SecurityEvents.Read.All"],"pagination":true,"enabled":true},
+  {"id":"DLP-P01","key":"dlp_alerts","name":"DLP Alerts","workload":"Microsoft Purview DLP","method":"GET","path":"/v1.0/security/alerts_v2?$filter=category%20eq%20%27DataLossPrevention%27","auth":"application","documented_permissions":["SecurityEvents.Read.All"],"pagination":true,"enabled":true},
+  {"id":"DLP-P02","key":"dlp_labels","name":"DLP Sensitivity Labels","workload":"Microsoft Purview DLP","method":"GET","path":"/v1.0/informationProtection/policy/labels","auth":"application","documented_permissions":["InformationProtectionPolicy.Read"],"pagination":true,"enabled":true}
 ]
