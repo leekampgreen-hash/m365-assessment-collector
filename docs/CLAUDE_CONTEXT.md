@@ -57,13 +57,13 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-SIDEBAR-TOGGLE-FIX6
-Active task: UI-V2-LAYOUT-FIX - Fix content area width and sidebar collapse expansion
+Last commit: UI-V2-LAYOUT-FIX2
+Active task: UI-V2-LAYOUT-FIX2 - Fix sidebar gap and toggle button position
 Backlog: UI-V2 panels remaining
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-LAYOUT-FIX: Fix content area width and sidebar collapse expand"
+    git commit -m "UI-V2-LAYOUT-FIX2: Fix sidebar gap and toggle button position"
     git push origin main
 
 ### Acceptance Criteria
