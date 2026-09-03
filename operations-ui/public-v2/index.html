@@ -1,320 +1,39 @@
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M365 Assessment Collector - V2</title>
-    
-    <!-- Tabler CSS via CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/iconset/tabler-icons.min.css">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M365 Assessment Collector</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="antialiased">
-    <!-- Preloader -->
-    <div id="preloader"></div>
-    
-    <!-- Main wrapper -->
-    <div class="page">
-        <!-- Sidebar -->
-        <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="light">
-            <div class="container-fluid">
-                <!-- Sidebar header -->
-                <button class="navbar-brand d-none d-md-flex" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-label="Toggle navigation">
-                    <h1 class="navbar-brand m-0">M365 Dashboard</h1>
-                </button>
-                
-                <!-- Toggle button for mobile -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-label="Toggle sidebar">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                
-                <div class="collapse navbar-collapse flex-column" id="sidebar-menu">
-                    <div class="navbar-btn d-none d-md-flex">
-                        <a href="/v2/" class="navbar-link navbar-dark mb-2">
-                            <span class="d-none d-sm-inline">Dashboard</span>
-                            <span class="d-sm-none"><i class="ti ti-home"></i></span>
-                        </a>
-                        <a href="#" class="navbar-link navbar-dark mt-2">
-                            <span class="d-none d-sm-inline">Settings</span>
-                            <span class="d-sm-none"><i class="ti ti-settings"></i></span>
-                        </a>
-                    </div>
-                    
-                    <!-- Workspace Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">WORKSPACE</p>
-                    <div class="collapse show" id="workspace-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="#/overview">
-                                    <i class="ti ti-home"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Overview</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Users Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">USERS</p>
-                    <div class="collapse" id="users-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/user-intelligence">
-                                    <i class="ti ti-users"></i>
-                                    <span class="ms-2 d-none d-sm-inline">User Intelligence</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Security Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">SECURITY</p>
-                    <div class="collapse" id="security-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/mfa-coverage">
-                                    <i class="ti ti-shield-check"></i>
-                                    <span class="ms-2 d-none d-sm-inline">MFA Coverage</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/conditional-access">
-                                    <i class="ti ti-lock"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Conditional Access</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/admin-roles">
-                                    <i class="ti ti-crown"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Admin Roles</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/risky-users">
-                                    <i class="ti ti-alert-triangle"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Risky Users</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/sign-in-activity">
-                                    <i class="ti ti-activity"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Sign-in Activity</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Productivity Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">PRODUCTIVITY</p>
-                    <div class="collapse" id="productivity-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/exchange">
-                                    <i class="ti ti-mail"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Exchange</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/onedrive">
-                                    <i class="ti ti-cloud"></i>
-                                    <span class="ms-2 d-none d-sm-inline">OneDrive</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/sharepoint">
-                                    <i class="ti ti-layout"></i>
-                                    <span class="ms-2 d-none d-sm-inline">SharePoint</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/teams">
-                                    <i class="ti ti-message-circle"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Teams</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- License Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">LICENSE</p>
-                    <div class="collapse" id="license-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/utilization">
-                                    <i class="ti ti-chart-bar"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Utilization</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/optimizer">
-                                    <i class="ti ti-sparkles"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Optimizer</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/parking-report">
-                                    <i class="ti ti-car"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Parking Report</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Protection Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">PROTECTION</p>
-                    <div class="collapse" id="protection-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/defender-office365">
-                                    <i class="ti ti-shield"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Defender for Office 365</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/cloud-app-discovery">
-                                    <i class="ti ti-search"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Cloud App Discovery</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/dlp-violations">
-                                    <i class="ti ti-alert-circle"></i>
-                                    <span class="ms-2 d-none d-sm-inline">DLP Violations</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/sensitivity-labels">
-                                    <i class="ti ti-tag"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Sensitivity Labels</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Identity Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">IDENTITY</p>
-                    <div class="collapse" id="identity-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/guest-users">
-                                    <i class="ti ti-user-plus"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Guest Users</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/auth-methods">
-                                    <i class="ti ti-key"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Auth Methods</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/named-locations">
-                                    <i class="ti ti-map-pin"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Named Locations</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Compliance Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">COMPLIANCE</p>
-                    <div class="collapse" id="compliance-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/intune-devices">
-                                    <i class="ti ti-device-laptop"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Intune Devices</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/compliance-policies">
-                                    <i class="ti ti-clipboard-check"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Compliance Policies</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/mobile-apps">
-                                    <i class="ti ti-device-mobile"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Mobile Apps</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Settings Section -->
-                    <p class="navbar-heading mt-4 ms-2 text-uppercase">SETTINGS</p>
-                    <div class="collapse" id="settings-submenu">
-                        <ul class="nav nav-xs flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/api-keys">
-                                    <i class="ti ti-terminal"></i>
-                                    <span class="ms-2 d-none d-sm-inline">API Keys</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/email-reports">
-                                    <i class="ti ti-send"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Email Reports</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#/tenants">
-                                    <i class="ti ti-building"></i>
-                                    <span class="ms-2 d-none d-sm-inline">Tenants</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </aside>
-        
-        <!-- Topbar -->
-        <header class="navbar navbar-expand-md navbar-light d-print-none">
-            <div class="container-fluid">
-                <button class="navbar-toggler" onclick="toggleSidebar()" aria-label="Toggle sidebar">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                
-                <form action="" class="d-none d-sm-block" style="max-width: 300px;">
-                    <div class="input-input input-prepend">
-                        <span class="input-icon"><i class="ti ti-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Search...">
-                    </div>
-                </form>
-                
-                <div class="ms-auto">
-                    <div class="d-flex align-items-center">
-                        <a href="#" class="navbar-link dropdown-toggle" data-bs-toggle="dropdown" aria-label="Open user menu">
-                            <span class="avatar avatar rounded-circle me-2">A</span>
-                            <span class="d-none d-sm-inline">admin@localhost</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </header>
-        
-        <!-- Page content -->
-        <div class="page-wrapper" id="pageWrapper">
-            <div class="container-fluid py-4">
-                <div id="contentContainer">
-                    <!-- Dynamic content will be loaded here -->
-                </div>
-            </div>
-            
-            <!-- Footer -->
-            <footer class="footer footer-transparent d-print-none px-4">
-                <div class="container-fluid d-flex justify-content-between align-items-center">
-                    <div class="text-center text-md-start">
-                        <div class="text-body-secondary">© 2024 M365 Assessment Collector</div>
-                    </div>
-                </div>
-            </footer>
+<body>
+  <div class="page">
+    <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+      <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <h1 class="navbar-brand navbar-brand-autodark"><span class="navbar-brand-image">M365</span><span>Assessment Collector</span></h1>
+        <div class="collapse navbar-collapse" id="sidebar-menu">
+          <ul class="navbar-nav pt-lg-3" id="navigation"></ul>
         </div>
+      </div>
+    </aside>
+    <div class="page-wrapper">
+      <header class="page-header d-print-none">
+        <div class="container-xl">
+          <div class="row g-2 align-items-center">
+            <div class="col"><div class="page-pretitle">Microsoft 365</div><h2 class="page-title" id="header-title">Overview</h2></div>
+            <div class="col-auto"><span class="avatar">A</span></div>
+          </div>
+        </div>
+      </header>
+      <div class="page-body">
+        <div class="container-xl" id="content"></div>
+      </div>
     </div>
-    
-    <!-- Tabler JS via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
-    <script src="app.js"></script>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

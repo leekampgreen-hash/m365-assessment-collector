@@ -1,100 +1,42 @@
-/* Custom Tabler overrides - minimal CSS for layout adjustments */
-
-/* Page wrapper flex behavior */
-.page-wrapper {
-    flex: 1;
-    min-height: 100vh;
+:root {
+  --tblr-body-bg: #f6f8fb;
 }
-
-/* Content container styling */
-#contentContainer {
-    padding: 24px;
+.navbar-brand {
+  gap: .65rem;
+  white-space: normal;
 }
-
-/* Sidebar toggle button positioning */
-.navbar-brand h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: inherit;
+.navbar-brand-image {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: .5rem;
+  background: #206bc4;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
 }
-
-/* Navbar vertical adjustments */
-.navbar-vertical {
-    min-height: 100vh;
-}
-
-/* Adjust navbar heading spacing */
 .navbar-heading {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+  margin-top: 1rem;
+  margin-bottom: .35rem;
 }
-
-/* Card container for dummy pages */
-.page-card {
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 32px;
-    max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
+.navbar-nav .nav-link-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-/* Page title styling */
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #212529;
-    margin-bottom: 12px;
+.page-body {
+  min-height: calc(100vh - 4rem);
 }
-
-/* Subtitle styling */
-.page-subtitle {
-    font-size: 1rem;
-    color: #6c757d;
-    margin-bottom: 24px;
+.placeholder-card {
+  max-width: 52rem;
 }
-
-/* Description styling */
-.page-description {
-    font-size: 0.9375rem;
-    color: #495057;
-    line-height: 1.6;
-}
-
-/* Placeholder icon */
 .placeholder-icon {
-    font-size: 3rem;
-    color: #adb5bd;
-    margin-bottom: 16px;
+  font-size: 2rem;
+  color: var(--tblr-primary);
 }
-
-/* Preloader styling */
-#preloader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    z-index: 9999;
-    display: none;
-}
-
-/* Input group style fix for search */
-.input-input {
-    position: relative;
-}
-
-.input-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #adb5bd;
-}
-
-.input-icon i {
-    font-size: 1.125rem;
+@media (min-width: 992px) {
+  .navbar-vertical .navbar-brand {
+    min-height: 4rem;
+  }
 }
