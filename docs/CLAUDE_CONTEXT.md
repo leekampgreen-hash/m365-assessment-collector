@@ -57,13 +57,13 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-SIDEBAR-TOGGLE-FIX
-Active task: UI-V2-SIDEBAR-TOGGLE-FIX - Fix sidebar toggle button visibility
+Last commit: UI-V2-SIDEBAR-TOGGLE-FIX4
+Active task: UI-V2-SIDEBAR-TOGGLE-FIX4 - Clean up toggle button styling
 Backlog: UI-V2 panels remaining
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-SIDEBAR-TOGGLE-FIX: Fix sidebar toggle button visibility"
+    git commit -m "UI-V2-SIDEBAR-TOGGLE-FIX4: Clean up toggle button styling"
     git push origin main
 
 ### Acceptance Criteria
