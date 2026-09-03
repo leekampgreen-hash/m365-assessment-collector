@@ -60,6 +60,7 @@ Synthetic residue: NONE
 Last commit: UI-V2-REBUILD-CLEAN
 Active task: UI-V2-REBUILD-CLEAN - Full rebuild with correct layout, toggle, tooltips, pagination
 Backlog: UI-V2 panels remaining
+Verification: Rebuilt operations-ui with docker compose; /v2/ and /v2/styles.css return HTTP 200; operations-ui container healthy.
 
 ### Commit
     git add -A
