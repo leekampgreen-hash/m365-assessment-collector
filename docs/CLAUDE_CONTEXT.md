@@ -57,10 +57,10 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-REBUILD-CLEAN
-Active task: UI-V2-REBUILD-CLEAN - Full rebuild with correct layout, toggle, tooltips, pagination
+Last commit: 9dbcbb3
+Active task: UI-V2-TABLER-STARTER - Replace v2 with proven Tabler starter template
 Backlog: UI-V2 panels remaining
-Verification: Rebuilt operations-ui with docker compose; /v2/ and /v2/styles.css return HTTP 200; operations-ui container healthy.
+Verification: Pending rebuild and runtime verification.
 
 ### Commit
     git add -A
