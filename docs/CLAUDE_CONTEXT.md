@@ -58,12 +58,12 @@ Synthetic residue: NONE
 
 ## ACTIVE TASK
 Last commit: UI-V2-SIDEBAR-TOGGLE-FIX4
-Active task: UI-V2-SIDEBAR-TOGGLE-FIX4 - Clean up toggle button styling
+Active task: UI-V2-SIDEBAR-TOGGLE-FIX5 - Final toggle button fix
 Backlog: UI-V2 panels remaining
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-SIDEBAR-TOGGLE-FIX4: Clean up toggle button styling"
+    git commit -m "UI-V2-SIDEBAR-TOGGLE-FIX5: Final toggle button fix"
     git push origin main
 
 ### Acceptance Criteria
@@ -73,12 +73,13 @@ Backlog: UI-V2 panels remaining
 - [x] Sidebar collapsible
 - [x] Topbar renders with search and user info
 - [ ] Existing UI at http://localhost:18080/ completely unchanged
+- [ ] Small blue square sidebar toggle remains visible
 - [ ] Do NOT introduce non-ASCII characters
 - [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
 
 ### HARD RULES
-- Only touch operations-ui/Dockerfile and operations-ui/nginx.conf if needed
-- Do NOT touch operations-ui/public/ or any existing UI files
+- Only touch operations-ui/public-v2/index.html and operations-ui/public-v2/styles.css
+- Do NOT touch operations-ui/public/ or any existing files
 - Do NOT modify any SEALED workloads
 - Do NOT introduce non-ASCII characters
 - Update docs/CLAUDE_CONTEXT.md before every commit - no exceptions
