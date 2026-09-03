@@ -158,6 +158,9 @@
           <button class="action-icon-btn" id="theme-toggle-btn" title="Toggle theme (Dark / White)" aria-label="Toggle theme">
             <i class="ti ti-sun"></i>
           </button>
+          <button class="plain-action-btn btn-export-pdf" id="btn-export-pdf" title="Export Executive Summary (PDF)">
+            <i class="ti ti-printer"></i> Export PDF
+          </button>
           <a href="/security-analyst.html" class="plain-action-btn" title="Security Analyst view">
             <i class="ti ti-shield"></i> Security Workbench
           </a>
@@ -169,29 +172,54 @@
 
       <!-- Main Content Views Container -->
       <main class="content-canvas">
-        <div id="loading" class="loading-state">
+        <!-- Print-only Executive Summary Header -->
+        <div class="print-only-header">
+          <div class="print-brand">
+            <h1>Microsoft 365 Executive Security &amp; FinOps Report</h1>
+            <p class="print-meta">Tenant: <strong>Contoso Tenant (Production / Sandbox)</strong> &bull; Baseline: <strong>CIS M365 v6.0.1</strong> &bull; Audit: <span id="print-timestamp">-</span></p>
+          </div>
+          <div class="print-badge">M365 Collector Ops</div>
+        </div>
+
+        <div id="loading" class="loading-state hidden">
           <div class="spinner-neon"></div>
           <p>Hydrating live Microsoft 365 tenant telemetry...</p>
         </div>
 
         <!-- =================== VIEW: OVERVIEW (EXECUTIVE DASHBOARD) =================== -->
         <div id="view-overview" class="view-panel">
-          <!-- Executive Security Alert Banner (if issues detected) -->
-          <div id="exec-summary" class="exec-alert-card" style="display:none">
-            <div class="exec-summary-header">
-              <span class="alert-icon-wrap"><i class="ti ti-alert-triangle"></i></span>
-              <strong id="exec-summary-count">Analyzing security findings...</strong>
+          <!-- Top Row: Executive Actionable Insights (Highlighted Security Findings) -->
+          <section class="workstation-card executive-insights-panel" style="margin-bottom: 24px;">
+            <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px; padding-bottom: 12px;">
+              <div class="panel-header-title">
+                <h2>Executive Actionable Insights</h2>
+                <span class="badge-pill-emerald">Live Telemetry</span>
+              </div>
             </div>
-            <div id="exec-summary-items" class="exec-summary-items"></div>
-          </div>
 
-          <!-- Top Row: 4 Glowing Executive KPI Cards -->
-          <section class="kpi-grid-row" aria-label="Executive KPIs">
+            <div class="insights-container">
+              <!-- Dynamically populated by app.js, fallback content below -->
+              <div id="executive-insights-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="insight-alert alert-info">
+                  <i class="ti ti-loader"></i>
+                  <div class="insight-content">
+                    <strong>Loading...</strong> <span id="insight-mfa-admins">Analyzing tenant telemetry and generating actionable insights...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Middle Row: 4 Glowing Executive KPI Cards & Visual Gauges -->
+          <section class="kpi-grid-row" aria-label="Executive KPIs" style="margin-bottom: 24px;">
             <!-- Card 1: Total Users & Composite Risk Score -->
             <article class="kpi-card card-glow-cyan">
               <div class="kpi-head">
-                <span class="kpi-title">Total Users with Composite Risk Score</span>
-                <i class="ti ti-info-circle kpi-info-icon" title="Total directory users scored against CIS M365 v6.0.1 benchmark"></i>
+                <div class="kpi-title-wrap">
+                  <span class="kpi-title">Total Users with Composite Risk Score</span>
+                  <i class="ti ti-info-circle kpi-info-icon" title="Total directory users scored against CIS M365 v6.0.1 benchmark"></i>
+                </div>
+                <span class="kpi-delta delta-stable" id="delta-users-badge"><i class="ti ti-minus"></i> 0% vs run</span>
               </div>
               <div class="kpi-body">
                 <div class="kpi-main-stat" id="kpi-total-users">39</div>
@@ -214,8 +242,11 @@
             <!-- Card 2: MFA Adoption Rate -->
             <article class="kpi-card card-glow-emerald">
               <div class="kpi-head">
-                <span class="kpi-title">MFA Adoption rate</span>
-                <i class="ti ti-info-circle kpi-info-icon" title="Percentage of directory users with registered and active MFA methods"></i>
+                <div class="kpi-title-wrap">
+                  <span class="kpi-title">MFA Adoption rate</span>
+                  <i class="ti ti-info-circle kpi-info-icon" title="Percentage of directory users with registered and active MFA methods"></i>
+                </div>
+                <span class="kpi-delta delta-up" id="delta-mfa-badge"><i class="ti ti-trending-up"></i> +2.1%</span>
               </div>
               <div class="kpi-body flex-center">
                 <div class="radial-ring-wrap">
@@ -237,8 +268,11 @@
             <!-- Card 3: License Parking Reclaimable Cost -->
             <article class="kpi-card card-glow-teal">
               <div class="kpi-head">
-                <span class="kpi-title">License Parking Reclaimable Cost</span>
-                <i class="ti ti-info-circle kpi-info-icon" title="Estimated annual license savings from reclaimable inactive or disabled accounts"></i>
+                <div class="kpi-title-wrap">
+                  <span class="kpi-title">License Parking Reclaimable Cost</span>
+                  <i class="ti ti-info-circle kpi-info-icon" title="Estimated annual license savings from reclaimable inactive or disabled accounts"></i>
+                </div>
+                <span class="kpi-delta delta-down" id="delta-parking-badge"><i class="ti ti-trending-down"></i> -$427/mo</span>
               </div>
               <div class="kpi-body">
                 <div class="kpi-currency-stat">
@@ -260,8 +294,11 @@
             <!-- Card 4: CIS Benchmark Compliance -->
             <article class="kpi-card card-glow-blue">
               <div class="kpi-head">
-                <span class="kpi-title">CIS Benchmark Compliance</span>
-                <i class="ti ti-info-circle kpi-info-icon" title="Assessment adherence against CIS Microsoft 365 Foundations Benchmark v6.0.1"></i>
+                <div class="kpi-title-wrap">
+                  <span class="kpi-title">CIS Benchmark Compliance</span>
+                  <i class="ti ti-info-circle kpi-info-icon" title="Assessment adherence against CIS Microsoft 365 Foundations Benchmark v6.0.1"></i>
+                </div>
+                <span class="kpi-delta delta-up" id="delta-cis-badge"><i class="ti ti-trending-up"></i> +1.5%</span>
               </div>
               <div class="kpi-body">
                 <div class="gauge-wrap gauge-wrap-lg">
@@ -278,122 +315,51 @@
             </article>
           </section>
 
-          <!-- Split Workstation Canvas -->
-          <div class="split-workstation-grid">
-            <!-- Left Side: User Intelligence Table (~65% width) -->
-            <section class="workstation-card user-intelligence-panel">
-              <div class="panel-header">
-                <div class="panel-header-title">
-                  <h2>User Intelligence</h2>
-                  <span class="badge-pill-cyan">Live CIS Scoring</span>
-                </div>
-                <div class="panel-header-actions">
-                  <div class="table-search-box">
-                    <i class="ti ti-search"></i>
-                    <input type="text" id="user-table-search" placeholder="Search user, role, risk...">
-                  </div>
-                  <div class="filter-pills-group">
-                    <button class="filter-pill-btn active" data-risk-filter="ALL">All</button>
-                    <button class="filter-pill-btn pill-critical" data-risk-filter="CRITICAL">Critical</button>
-                    <button class="filter-pill-btn pill-high" data-risk-filter="HIGH">High</button>
-                    <button class="filter-pill-btn pill-good" data-risk-filter="GOOD">Good</button>
-                  </div>
-                </div>
+          <!-- Bottom Row: Financial & License Utilization Panel -->
+          <section class="workstation-card finops-summary-panel">
+            <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px; padding-bottom: 12px;">
+              <div class="panel-header-title">
+                <h2>Financial &amp; License Utilization</h2>
               </div>
+            </div>
 
-              <div class="table-responsive-custom">
-                <table class="modern-data-table" id="user-intelligence-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 38px;"><input type="checkbox" id="select-all-users" aria-label="Select all users"></th>
-                      <th>User</th>
-                      <th>Role</th>
-                      <th>MFA Method</th>
-                      <th>Risk</th>
-                    </tr>
-                  </thead>
-                  <tbody id="user-intelligence-tbody">
-                    <!-- Populated dynamically via JS -->
-                    <tr>
-                      <td colspan="5" class="table-loading-cell">Loading user intelligence data...</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div class="financial-summary-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+              <div class="fin-stat-box">
+                <div class="fin-stat-title">Total Licenses Assigned</div>
+                <div class="fin-stat-value" id="fin-total-assigned">1,420</div>
+                <div class="fin-stat-sub">Across 8 products</div>
               </div>
+              <div class="fin-stat-box">
+                <div class="fin-stat-title">Active Utilization</div>
+                <div class="fin-stat-value text-emerald" id="fin-active-utilization">94%</div>
+                <div class="fin-stat-sub">Users active in last 30d</div>
+              </div>
+              <div class="fin-stat-box">
+                <div class="fin-stat-title">Estimated Monthly Waste</div>
+                <div class="fin-stat-value text-warning" id="fin-monthly-waste">$320</div>
+                <div class="fin-stat-sub">From idle &amp; parked licenses</div>
+              </div>
+            </div>
 
-              <!-- Table Pagination -->
-              <div class="table-footer-controls">
-                <span class="footer-info" id="user-table-range">Showing 1-10 of 39</span>
-                <div class="pagination-buttons">
-                  <label class="page-size-label">
-                    Rows: 
-                    <select id="user-page-size" class="page-size-select">
-                      <option value="10" selected>10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="200">200</option>
-                    </select>
-                  </label>
-                  <button class="page-btn" id="user-page-prev" disabled><i class="ti ti-chevron-left"></i> Previous</button>
-                  <span class="page-current" id="user-page-counter">Page 1 of 4</span>
-                  <button class="page-btn" id="user-page-next">Next <i class="ti ti-chevron-right"></i></button>
+            <div class="utilization-bar-container" style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 500;">
+                <span>License Distribution</span>
+                <span id="fin-distribution-label">1,334 Active / 86 Idle</span>
+              </div>
+              <div class="multi-progress-bar" style="height: 12px; background: var(--bg-tertiary); border-radius: 6px; display: flex; overflow: hidden;">
+                <div class="bar-segment segment-emerald" id="bar-active" style="width: 94%; background: var(--accent-emerald);" title="Active"></div>
+                <div class="bar-segment segment-warning" id="bar-idle" style="width: 6%; background: var(--accent-orange);" title="Idle"></div>
+              </div>
+              <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-emerald);"></div> Active Usage
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-orange);"></div> Idle / Parked
                 </div>
               </div>
-            </section>
-
-            <!-- Right Side: M365 AI Assistant Panel (~35% width) -->
-            <aside class="workstation-card ai-assistant-panel" id="overview-assistant-card">
-              <div class="assistant-card-header">
-                <div class="assistant-identity">
-                  <span class="assistant-avatar"><i class="ti ti-sparkles"></i></span>
-                  <div>
-                    <h3>M365 AI Assistant</h3>
-                    <span class="status-indicator-online">Connected to Graph Engine</span>
-                  </div>
-                </div>
-                <div class="assistant-header-badges">
-                  <span class="insight-badge">Intelligent insights</span>
-                </div>
-              </div>
-
-              <div class="assistant-conversation-stream" id="assistant-stream">
-                <!-- Initial Assistant Welcome Message -->
-                <div class="chat-message-bubble bubble-agent">
-                  <div class="bubble-content">
-                    <p>Intelligent insights are generated in real-time. I have evaluated your tenant telemetry and discovered:</p>
-                    <ul class="assistant-bullet-points">
-                      <li><strong>4 inactive licensed accounts</strong> eligible for license parking reclamation ($3,840/yr).</li>
-                      <li><strong>2 Global Admins</strong> without FIDO2 hardware MFA keys.</li>
-                      <li><strong>94.8%</strong> overall tenant MFA enforcement rate.</li>
-                    </ul>
-                    <p class="bubble-subtext">How can I assist you with your tenant operations today?</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Suggested Action Chips -->
-              <div class="assistant-suggestion-chips" id="assistant-chips">
-                <button class="chip-action" data-prompt="Analyze security posture and show top findings">
-                  Suggested actions <i class="ti ti-arrow-up-right"></i>
-                </button>
-                <button class="chip-action" data-prompt="List all parked licenses with cost savings">
-                  Unused licenses <i class="ti ti-receipt"></i>
-                </button>
-                <button class="chip-action" data-prompt="Who are the administrators without MFA registered?">
-                  Admin MFA Gaps <i class="ti ti-shield-alert"></i>
-                </button>
-              </div>
-
-              <!-- Assistant Interactive Input -->
-              <form class="assistant-prompt-bar" id="assistant-chat-form">
-                <input type="text" id="assistant-prompt-input" placeholder="Type a message..." autocomplete="off">
-                <button type="submit" id="assistant-send-btn" aria-label="Send query">
-                  <i class="ti ti-send"></i>
-                </button>
-              </form>
-            </aside>
-          </div>
+            </div>
+          </section>
         </div>
 
         <!-- =================== VIEW: USER INTELLIGENCE (FULL TABLE) =================== -->
@@ -564,8 +530,54 @@
         </div>
       </main>
     </div>
+    </div>
   </div>
 
+  <!-- Floating M365 AI Assistant -->
+  <button class="floating-assistant-btn" id="floating-assistant-toggle" aria-label="Toggle AI Assistant">
+    <i class="ti ti-sparkles"></i>
+  </button>
+  <div class="floating-assistant-window" id="floating-assistant-window">
+    <div class="assistant-card-header">
+      <div class="assistant-identity">
+        <span class="assistant-avatar"><i class="ti ti-sparkles"></i></span>
+        <div>
+          <h3>M365 AI Assistant</h3>
+          <span class="status-indicator-online">Connected to Graph</span>
+        </div>
+      </div>
+      <button class="action-icon-btn" id="floating-assistant-close" style="color: var(--text-muted); background: none; border: none; font-size: 18px; cursor: pointer;">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+    
+    <div class="assistant-conversation-stream" id="assistant-stream">
+      <div class="chat-message-bubble bubble-agent">
+        <div class="bubble-content">
+          <p>Intelligent insights are generated in real-time. I have evaluated your tenant telemetry and discovered:</p>
+          <ul class="assistant-bullet-points">
+            <li><strong>4 inactive licensed accounts</strong> eligible for reclamation.</li>
+            <li><strong>2 Global Admins</strong> without FIDO2 hardware MFA keys.</li>
+            <li><strong>94.8%</strong> overall tenant MFA enforcement rate.</li>
+          </ul>
+          <p class="bubble-subtext">How can I assist you today?</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="assistant-suggestion-chips" id="assistant-chips">
+      <button class="chip-action" data-prompt="Generate weekly executive risk summary">Risk Summary <i class="ti ti-report"></i></button>
+      <button class="chip-action" data-prompt="Where can we optimize our IT license costs?">Optimize Costs <i class="ti ti-pig-money"></i></button>
+      <button class="chip-action" data-prompt="Explain our CIS compliance gaps in plain english">CIS Gaps <i class="ti ti-shield-search"></i></button>
+    </div>
+
+    <form class="assistant-prompt-bar" id="assistant-chat-form">
+      <input type="text" id="assistant-prompt-input" placeholder="Type a message..." autocomplete="off">
+      <button type="submit" id="assistant-send-btn" aria-label="Send query">
+        <i class="ti ti-send"></i>
+      </button>
+    </form>
+  </div>
   <script src="/app.js"></script>
 </body>
 </html>

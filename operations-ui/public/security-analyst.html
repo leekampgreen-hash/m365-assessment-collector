@@ -955,11 +955,19 @@
     }
 
     // Sidebar Mobile Controls
-    $('mobile-menu-btn')?.addEventListener('click', () => {
-      $('sidebar')?.classList.add('open');
+    $('#mobile-menu-btn')?.addEventListener('click', () => {
+      if (window.innerWidth <= 900) {
+        $('#sidebar')?.classList.add('open');
+      } else {
+        $('#sidebar')?.classList.toggle('desktop-closed');
+      }
     });
-    $('sidebar-close')?.addEventListener('click', () => {
-      $('sidebar')?.classList.remove('open');
+    $('#sidebar-close')?.addEventListener('click', () => {
+      if (window.innerWidth <= 900) {
+        $('#sidebar')?.classList.remove('open');
+      } else {
+        $('#sidebar')?.classList.add('desktop-closed');
+      }
     });
 
     async function initAuth() {

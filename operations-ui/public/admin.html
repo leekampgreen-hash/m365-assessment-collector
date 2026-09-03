@@ -758,10 +758,18 @@
     });
 
     $('#mobile-menu-btn')?.addEventListener('click', () => {
-      $('#sidebar')?.classList.add('open');
+      if (window.innerWidth <= 900) {
+        $('#sidebar')?.classList.add('open');
+      } else {
+        $('#sidebar')?.classList.toggle('desktop-closed');
+      }
     });
     $('#sidebar-close')?.addEventListener('click', () => {
-      $('#sidebar')?.classList.remove('open');
+      if (window.innerWidth <= 900) {
+        $('#sidebar')?.classList.remove('open');
+      } else {
+        $('#sidebar')?.classList.add('desktop-closed');
+      }
     });
 
     $$('[data-add]').forEach(b => {

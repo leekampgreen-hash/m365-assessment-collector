@@ -85,9 +85,11 @@ It automates data collection across Microsoft Entra ID, Intune, Defender, Exchan
   - **Phase 3**: Intelligence aggregation, report dispatch, and maintenance tasks.
 - **Automated 90-Day Retention**: Scheduled purge of historical sign-in and audit logs to prevent database bloat.
 - **Executive Email Reports**: Automated HTML email delivery on daily or weekly schedules via SMTP.
+- **Executive PDF Export (A4 Landscape)**: Instant one-click PDF export styled in A4 landscape format with dedicated print-ready executive header, tenant audit metadata, and prioritized risk summaries.
 
 ### 6. Modern Dashboards & RBAC
-- **Operations Dashboard**: Dark-themed overview with Executive Summary, KPI cards, Security findings, and Assistant drawer.
+- **Actionable Findings-First Executive Dashboard**: Front-page view prioritizing critical security findings and active alerts at the very top, followed by 4 glowing KPI scorecards (Total Users Risk Score, MFA Adoption Ring, License Savings Meter, CIS Compliance Gauge) and FinOps utilization breakdowns.
+- **Smooth Live Telemetry Refresh**: Zero-layout-shift live telemetry hydration and smooth spinning indicator on manual refresh.
 - **Modern UI v2**: Tabler-based responsive interface with paginated User Intelligence, CIS benchmark badges, and filterable tables.
 - **Security Analyst Workbench**: Focused view for security teams to triage risky users, sign-in alerts, and CA policies.
 - **Admin Management**: Tenant administration, user account management with TOTP MFA support, and audit log inspection.
