@@ -65,7 +65,7 @@ and verifies agent response quality.
 - Results saved to `scripts/agent_test_results.json`
 
 ## INFRA-P02 — Scheduled Email Report
-**Status:** PLANNED
+**Status:** SEALED
 **Priority:** HIGH
 
 **Description:**
@@ -168,20 +168,20 @@ Status: SEALED
 Status: SEALED
 
 ## ENTRA-P05 - Named Locations
-Status: PLANNED. Priority: MEDIUM. New collector + UI panel for Entra named locations inventory.
+Status: SEALED. Priority: MEDIUM. New collector + UI panel for Entra named locations inventory.
 
 ## INT-P05 - Compliance Policy Inventory
-Status: PLANNED. Priority: MEDIUM. New collector + UI panel for Intune compliance policy inventory.
+Status: SEALED. Priority: MEDIUM. New collector + UI panel for Intune compliance policy inventory.
 
 ## INT-P06 - App Deployment Status
-Status: PLANNED. Priority: MEDIUM. New collector + UI panel for Intune app deployment status.
+Status: SEALED. Priority: MEDIUM. New collector + UI panel for Intune app deployment status.
 
 ## SEC-ANALYST-P05-FIX2 - Token Format [ANON:X]
-Status: PLANNED. Priority: HIGH. Fix token format display issue in Security Analyst agent output.
+Status: SEALED. Priority: HIGH. Fix token format display issue in Security Analyst agent output.
 
 ## UI-FONT-03 - Fix Section Heading Hierarchy
-Status: PLANNED. Priority: LOW. CSS only. Section headings too small - increase to 1.25rem font-weight 600. Labels stay 11px uppercase muted.
+Status: SEALED. Priority: LOW. CSS only. Section headings too small - increase to 1.25rem font-weight 600. Labels stay 11px uppercase muted.
 
 ## TAILWIND-CDN-FIX - Tailwind CDN Warning
-Status: PLANNED. Priority: LOW. Fix Tailwind CDN warning in UI. CSS/config only.
+Status: SEALED. Priority: LOW. Fix Tailwind CDN warning in UI. CSS/config only.
 

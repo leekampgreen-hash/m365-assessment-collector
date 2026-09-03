@@ -26,19 +26,21 @@
 - LIC-P01: License Parking Report — PASS
 - AUTH-METHODS-FIX: Methods breakdown grid layout + top method card overflow - SEALED
 - BATCH-2: DEF-P02 (Defender for Office 365), DEF-P03 (Cloud Apps Discovery), DLP-P01 (DLP policy violations), DLP-P02 (Sensitivity label adoption) - SEALED
+- BATCH-3: ENTRA-P05 (Named locations), INT-P05 (Compliance policy inventory), INT-P06 (App deployment status) - SEALED
+- UI-BATCH-01: Font hierarchy, token format badge, Tailwind CDN fix - SEALED
+- INFRA-P02: Scheduled email report - SEALED
 
 ## Active Task
-UI fixes sprint
+Planning next sprint
 
 ## Next Steps
 
-1. UI-FONT-03 — Fix section heading hierarchy
-2. SEC-ANALYST-P05-FIX2 — Token format [ANON:X] fix
-3. Tailwind CDN warning fix
-4. ENTRA-P05 — Named locations panel
-5. INT-P05 — Compliance policy inventory panel
-6. INT-P06 — App deployment status panel
-7. INFRA-P02 — Scheduled email report
+1. AGT-MULTI-P01 - Multi-tenant architecture design
+2. SAAS-P01 - Customer onboarding flow
+3. SAAS-P03 - Rate limiting
+4. UI-P01 - UI polish (mobile responsive, loading states)
+5. LIC-OPTIMIZER-P01 - License optimizer agent
+6. AGT-DEV01-UPDATE - Update agent test questions
 
 
 ## Available API Endpoints
