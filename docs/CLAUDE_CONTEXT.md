@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: f048be3
-Active task: UI-V2-TABLE-TOOLTIP - Add column header tooltips to User Intelligence table and commit
+Last commit: UI-V2-TOOLTIP-FIX
+Active task: UI-V2-TOOLTIP-FIX - Fix tooltip clipping at viewport edges
 Backlog: UI-V2 panels remaining
 
 ### Commit
