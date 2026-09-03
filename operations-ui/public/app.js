@@ -245,13 +245,33 @@ function getMfaLabel(user) {
 }
 
 function hydrateFinancialSummary() {
-  const totalAssigned = 1420; // Default placeholder for total licenses
+  const licenseObj = window.dashboardData?.license || {};
+  const skuEntries = Object.entries(licenseObj);
+  
+  // Filter paid/commercial SKUs (exclude trial/free pools with >= 100000 prepaid units)
+  const paidSkus = skuEntries.filter(([_, item]) => {
+    const purchased = Number(item.purchased_units || 0);
+    return purchased < 100000;
+  });
+
+  // Calculate total assigned SKU units across commercial products
+  let totalAssigned = 0;
+  if (paidSkus.length > 0) {
+    totalAssigned = paidSkus.reduce((sum, [_, item]) => sum + Number(item.consumed_units ?? item.assigned_user_count ?? 0), 0);
+  } else if (allUsers.length > 0) {
+    totalAssigned = allUsers.filter(u => Array.isArray(u.license_names) && u.license_names.length > 0).length;
+  } else {
+    totalAssigned = 26;
+  }
+
+  const productCount = paidSkus.length || (skuEntries.length > 0 ? skuEntries.length : 2);
   const idleLicenses = optimizerReport?.summary?.flagged_users || 0;
-  const activeCount = totalAssigned - idleLicenses;
+  const activeCount = Math.max(0, totalAssigned - idleLicenses);
   const activePercent = totalAssigned > 0 ? Math.round((activeCount / totalAssigned) * 100) : 0;
   const monthlyWaste = optimizerReport?.savings?.total_monthly_saving || 0;
 
   if ($("#fin-total-assigned")) $("#fin-total-assigned").textContent = totalAssigned.toLocaleString();
+  if ($("#fin-total-products")) $("#fin-total-products").textContent = `Across ${productCount} product${productCount !== 1 ? "s" : ""}`;
   if ($("#fin-active-utilization")) $("#fin-active-utilization").textContent = `${activePercent}%`;
   if ($("#fin-monthly-waste")) $("#fin-monthly-waste").textContent = `$${Math.round(monthlyWaste).toLocaleString()}`;
   
