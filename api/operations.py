@@ -233,6 +233,64 @@ def _batch2_summary(connection: Any, tenant_id: int, table: str) -> dict[str, An
     return data
 
 
+def _intelligence_users(connection: Any, tenant_id: int) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("""
+        WITH license_data AS (
+            SELECT ula.user_id, ula.tenant_id, array_agg(s.sku_part_number ORDER BY s.sku_part_number) AS license_names,
+                   count(s.sku_part_number) AS license_count
+            FROM core.user_license_assignment ula
+            LEFT JOIN core.subscribed_sku s ON s.sku_id = ula.sku_id AND s.tenant_id = ula.tenant_id
+            WHERE ula.tenant_id = %s
+            GROUP BY ula.user_id, ula.tenant_id
+        ), exchange_data AS (
+            SELECT DISTINCT ON (identity_value) identity_value, last_activity_date, send_count, receive_count, storage_used
+            FROM core.usage_exchange_email_activity
+            WHERE tenant_id = %s
+            ORDER BY identity_value, report_refresh_date DESC
+        ), teams_data AS (
+            SELECT DISTINCT ON (identity_value) identity_value, last_activity_date, team_chat_message_count, call_count, meeting_count
+            FROM core.usage_teams_user_activity
+            WHERE tenant_id = %s
+            ORDER BY identity_value, report_refresh_date DESC
+        ), signin_data AS (
+            SELECT DISTINCT ON (user_principal_name) user_principal_name, signin_datetime, location_city, location_country,
+                   app_display_name, risk_level_during_signin
+            FROM core.signin_log
+            WHERE tenant_id = %s
+            ORDER BY user_principal_name, signin_datetime DESC NULLS LAST
+        ), device_data AS (
+            SELECT DISTINCT ON (to_jsonb(d)->'extension'->>'userPrincipalName') to_jsonb(d)->'extension'->>'userPrincipalName' AS upn,
+                   count(*) OVER (PARTITION BY to_jsonb(d)->'extension'->>'userPrincipalName') AS device_count,
+                   d.compliance_state, d.operating_system
+            FROM core.intune_device d
+            WHERE d.tenant_id = %s
+            ORDER BY to_jsonb(d)->'extension'->>'userPrincipalName', d.observed_at DESC
+        )
+        SELECT u.user_id, u.source_object_id, u.display_name, u.user_principal_name, u.user_type, u.account_enabled,
+               u.created_date_time, u.extension->>'department', u.extension->>'jobTitle', u.extension->>'country',
+               am.is_mfa_registered, am.default_mfa_method, am.is_passwordless_capable,
+               ru.risk_level, ru.risk_state, ru.risk_last_updated_at, ld.license_names, ld.license_count,
+               ex.last_activity_date, ex.send_count, ex.receive_count, ex.storage_used,
+               tm.last_activity_date, tm.team_chat_message_count, tm.call_count, tm.meeting_count,
+               si.signin_datetime, si.location_city, si.location_country, si.app_display_name, si.risk_level_during_signin,
+               dd.device_count, dd.compliance_state, dd.operating_system
+        FROM core."user" u
+        LEFT JOIN core.entra_auth_method am ON am.display_name = u.display_name AND am.tenant_id = u.tenant_id
+        LEFT JOIN core.risky_user ru ON ru.source_object_id = u.source_object_id AND ru.tenant_id = u.tenant_id
+        LEFT JOIN license_data ld ON ld.user_id = u.user_id AND ld.tenant_id = u.tenant_id
+        LEFT JOIN exchange_data ex ON ex.identity_value = u.user_principal_name
+        LEFT JOIN teams_data tm ON tm.identity_value = u.user_principal_name
+        LEFT JOIN signin_data si ON si.user_principal_name = u.user_principal_name
+        LEFT JOIN device_data dd ON dd.upn = u.user_principal_name
+        WHERE u.tenant_id = %s
+        ORDER BY u.display_name, u.user_id
+    """, (tenant_id, tenant_id, tenant_id, tenant_id, tenant_id, tenant_id))
+    columns = ("user_id", "source_object_id", "display_name", "upn", "user_type", "account_enabled", "created_date_time", "department", "job_title", "country", "mfa_registered", "mfa_method", "passwordless_capable", "risk_level", "risk_state", "risk_last_updated_at", "license_names", "license_count", "exchange_last_activity", "emails_sent", "emails_received", "mailbox_size_mb", "teams_last_activity", "teams_chat_count", "teams_call_count", "teams_meeting_count", "last_signin", "last_signin_city", "last_signin_country", "last_signin_app", "last_signin_risk", "device_count", "device_compliant", "device_os")
+    users = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return {"status": "READY", "as_of": date.today().isoformat(), "total": len(users), "users": users}
+
+
 def _intune_noncompliant(connection: Any, tenant_id: int) -> dict[str, Any]:
     cur = connection.cursor()
     cur.execute("SELECT device_name, compliance_state, operating_system, os_version, user_display_name, last_sync_datetime, owner_type FROM core.intune_device WHERE tenant_id=%s AND compliance_state='noncompliant' ORDER BY device_name", (tenant_id,))
@@ -595,13 +653,13 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 if close is not None:
                     close()
             return
-        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path.startswith("/api/entra") or path.startswith("/api/scheduler") or path == "/api/capabilities") and not verify_api_key(self):
+        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path.startswith("/api/entra") or path.startswith("/api/scheduler") or path.startswith("/api/intelligence") or path == "/api/capabilities") and not verify_api_key(self):
             self.send_response(401)
             self.send_header("WWW-Authenticate", "X-API-Key")
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and not path.startswith("/api/entra") and not path.startswith("/api/scheduler") and path != "/api/capabilities":
+        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and not path.startswith("/api/entra") and not path.startswith("/api/scheduler") and not path.startswith("/api/intelligence") and path != "/api/capabilities":
             self._write(404, _response("NOT_FOUND"))
             return
         try:
@@ -705,6 +763,15 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 connection = self.connection_factory()
                 try:
                     self._write(200, _response("READY", _defender_summary(connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
+            if path == "/api/intelligence/users":
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _intelligence_users(connection, self.tenant_id))
+                except Exception as exc:
+                    self._write(500, {"status": "ERROR", "error": str(exc)})
                 finally:
                     connection.close()
                 return
