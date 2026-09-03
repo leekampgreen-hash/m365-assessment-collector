@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-TABLE-PAGINATION
-Active task: UI-V2-TABLE-PAGINATION - Reusable paginated table component applied to User Intelligence
+Last commit: UI-V2-PAGINATION-FIX
+Active task: UI-V2-PAGINATION-FIX - Fix User Intelligence table loading after pagination refactor
 Backlog: UI-V2 panels remaining
 
 ### Commit
