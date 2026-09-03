@@ -9,33 +9,22 @@ const sections = [
   ['COMPLIANCE', [['Intune Devices', 'device-laptop'], ['Compliance Policies', 'clipboard-list'], ['Mobile Apps', 'device-mobile-rotated']]],
   ['SETTINGS', [['API Keys', 'terminal'], ['Email Reports', 'send'], ['Tenants', 'building']]]
 ];
-
-const navigation = document.querySelector('#navigation');
-const content = document.querySelector('#content');
-const headerTitle = document.querySelector('#header-title');
-
-sections.forEach(([section, items]) => {
-  const heading = document.createElement('li');
-  heading.className = 'nav-item navbar-heading';
-  heading.textContent = section;
-  navigation.appendChild(heading);
-  items.forEach(([title, icon]) => {
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const item = document.createElement('li');
-    item.className = 'nav-item';
-    item.innerHTML = `<a class="nav-link" href="#/${slug}" data-page="${slug}"><span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-${icon}"></i></span><span class="nav-link-title">${title}</span></a>`;
-    navigation.appendChild(item);
-  });
-});
-
-function render() {
-  const slug = window.location.hash.replace(/^#\/?/, '') || 'overview';
-  const link = navigation.querySelector(`[data-page="${slug}"]`) || navigation.querySelector('[data-page="overview"]');
-  const title = link ? link.querySelector('.nav-link-title').textContent : 'Overview';
-  navigation.querySelectorAll('.nav-link').forEach((navLink) => navLink.classList.toggle('active', navLink === link));
-  headerTitle.textContent = title;
-  content.innerHTML = `<div class="page-header mb-4"><div><h2 class="page-title">${title}</h2><div class="text-secondary">This section is under construction</div></div></div><div class="card placeholder-card"><div class="card-body"><div class="placeholder-icon mb-3"><i class="ti ti-tool"></i></div><h3 class="card-title">${title}</h3><p class="text-secondary mb-0">Placeholder content for this assessment area.</p></div></div>`;
-}
-
-window.addEventListener('hashchange', render);
-render();
+const columns = {
+  IDENTITY: ['display_name', 'upn', 'user_type', 'account_enabled', 'created_date_time', 'department', 'job_title', 'country'],
+  SECURITY: ['mfa_registered', 'mfa_method', 'passwordless_capable', 'risk_level', 'risk_state', 'last_signin', 'last_signin_city', 'last_signin_country', 'last_signin_app', 'last_signin_risk'],
+  LICENSE: ['license_names', 'license_count'], EXCHANGE: ['exchange_last_activity', 'emails_sent', 'emails_received', 'mailbox_size_mb'],
+  TEAMS: ['teams_last_activity', 'teams_chat_count', 'teams_call_count', 'teams_meeting_count'], COMPLIANCE: ['device_count', 'device_compliant', 'device_os']
+};
+const defaults = ['display_name', 'upn', 'user_type', 'account_enabled', 'mfa_registered', 'risk_level', 'license_names', 'last_signin', 'exchange_last_activity', 'teams_last_activity'];
+const labels = (name) => name.replace(/_/g, ' ').replace(/(^| )\w/g, (x) => x.toUpperCase());
+const navigation = document.querySelector('#navigation'); const content = document.querySelector('#content'); const headerTitle = document.querySelector('#header-title');
+sections.forEach(([section, items]) => { const heading = document.createElement('li'); heading.className = 'nav-item navbar-heading'; heading.textContent = section; navigation.appendChild(heading); items.forEach(([title, icon]) => { const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); const item = document.createElement('li'); item.className = 'nav-item'; item.innerHTML = `<a class="nav-link" href="#/${slug}" data-page="${slug}"><span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-${icon}"></i></span><span class="nav-link-title">${title}</span></a>`; navigation.appendChild(item); }); });
+let users = [], selected = [], sortKey = '', sortAsc = true;
+const dateFields = new Set(['created_date_time', 'last_signin', 'exchange_last_activity', 'teams_last_activity']);
+function value(cell, key) { if (cell === null || cell === undefined || cell === '') return '-'; if (key === 'license_names' && Array.isArray(cell)) return cell.join(', '); if (dateFields.has(key)) return new Date(cell).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); if (key === 'account_enabled') return `<span class="badge bg-${cell ? 'green' : 'red'}-lt">${cell ? 'Active' : 'Disabled'}</span>`; if (key === 'mfa_registered') return `<span class="intelligence-bool ${cell ? 'text-green' : 'text-red'}">${cell ? 'Check' : 'X'}</span>`; if (key === 'risk_level') return `<span class="badge risk-${String(cell).toLowerCase()}">${cell}</span>`; return String(cell); }
+function save() { localStorage.setItem('v2_columns_user_intelligence', JSON.stringify(selected)); }
+function picker() { const panel = document.createElement('aside'); panel.className = 'column-picker'; panel.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h3 class="m-0">Columns</h3><button class="btn-close" aria-label="Close"></button></div>`; Object.entries(columns).forEach(([group, names]) => { const section = document.createElement('div'); section.innerHTML = `<h4 class="text-secondary">${group}</h4>`; names.forEach((name) => { const row = document.createElement('label'); row.className = 'column-option'; row.draggable = true; row.dataset.column = name; row.innerHTML = `<span class="drag-handle">::</span><input type="checkbox" ${selected.includes(name) ? 'checked' : ''}> ${labels(name)}`; row.querySelector('input').onchange = (event) => { selected = event.target.checked ? [...selected, name] : selected.filter((item) => item !== name); save(); renderTable(); }; row.ondragstart = (event) => event.dataTransfer.setData('text/plain', name); row.ondragover = (event) => event.preventDefault(); row.ondrop = (event) => { const from = selected.indexOf(event.dataTransfer.getData('text/plain')); const to = selected.indexOf(name); if (from >= 0 && to >= 0) { selected.splice(to, 0, selected.splice(from, 1)[0]); save(); renderTable(); picker(); } }; section.appendChild(row); }); panel.appendChild(section); }); panel.querySelector('.btn-close').onclick = () => panel.remove(); document.body.appendChild(panel); }
+function renderTable() { const body = content.querySelector('.intelligence-table-wrap'); if (!body) return; const sorted = [...users].sort((a, b) => String(a[sortKey] ?? '').localeCompare(String(b[sortKey] ?? '')) * (sortAsc ? 1 : -1)); body.innerHTML = `<div class="table-responsive"><table class="table table-vcenter intelligence-table"><thead><tr>${selected.map((key) => `<th data-sort="${key}">${labels(key)} <span class="sort-indicator">${sortKey === key ? (sortAsc ? 'up' : 'down') : ''}</span></th>`).join('')}</tr></thead><tbody>${sorted.map((user) => `<tr>${selected.map((key) => `<td>${value(user[key], key)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; body.querySelectorAll('th').forEach((th) => { th.onclick = () => { sortAsc = sortKey === th.dataset.sort ? !sortAsc : true; sortKey = th.dataset.sort; renderTable(); }; }); }
+async function renderUsers() { selected = JSON.parse(localStorage.getItem('v2_columns_user_intelligence') || 'null') || [...defaults]; content.innerHTML = `<div class="page-header mb-4"><div><h2 class="page-title">User Intelligence</h2><div class="text-secondary">Loading users...</div></div><button class="btn btn-primary" id="columns-button">Columns</button></div><div class="card"><div class="card-body intelligence-table-wrap"><div class="spinner-border" role="status"></div></div></div>`; content.querySelector('#columns-button').onclick = picker; try { const response = await fetch('/api/intelligence/users', { headers: { Accept: 'application/json', 'X-API-Key': window.API_KEY || 'jruPSFSNmL7BjKjD_fp8J8MTgSNgTV1NHm3QJ4msdlk' } }); users = await response.json(); content.querySelector('.text-secondary').textContent = `${users.length} users`; renderTable(); } catch (error) { content.querySelector('.intelligence-table-wrap').textContent = 'Unable to load users'; } }
+function render() { const slug = window.location.hash.replace(/^#\/?/, '') || 'overview'; const link = navigation.querySelector(`[data-page="${slug}"]`) || navigation.querySelector('[data-page="overview"]'); const title = link ? link.querySelector('.nav-link-title').textContent : 'Overview'; navigation.querySelectorAll('.nav-link').forEach((navLink) => navLink.classList.toggle('active', navLink === link)); headerTitle.textContent = title; if (slug === 'user-intelligence') renderUsers(); else content.innerHTML = `<div class="page-header mb-4"><div><h2 class="page-title">${title}</h2><div class="text-secondary">This section is under construction</div></div></div><div class="card placeholder-card"><div class="card-body"><div class="placeholder-icon mb-3"><i class="ti ti-tool"></i></div><h3 class="card-title">${title}</h3><p class="text-secondary mb-0">Placeholder content for this assessment area.</p></div></div>`; }
+window.addEventListener('hashchange', render); render();
