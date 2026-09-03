@@ -2,16 +2,35 @@
   --tblr-body-bg: #f6f8fb;
 }
 .page {
+  display: flex;
+  min-height: 100vh;
   transition: all 0.25s ease;
 }
+.navbar-vertical {
+  flex-shrink: 0;
+  width: 220px;
+  transition: width 0.25s ease;
+}
 .page-wrapper {
-  transition: margin-left 0.25s ease;
+  flex: 1;
+  min-width: 0;
+  transition: all 0.25s ease;
+  width: 100%;
 }
 .page > .page-wrapper {
   width: 100%;
 }
+.page-body {
+  padding: 0 1rem;
+  width: 100%;
+}
+.container-xl {
+  max-width: 100% !important;
+  padding: 0;
+}
 body.sidebar-collapsed .navbar-vertical {
-  display: none;
+  width: 0;
+  overflow: hidden;
 }
 body.sidebar-collapsed .page-wrapper {
   margin-left: 0 !important;
@@ -94,6 +113,12 @@ body.sidebar-collapsed .page-wrapper {
 }
 .intelligence-table-wrap {
   overflow-x: auto;
+}
+.table-responsive {
+  width: 100%;
+}
+table {
+  width: 100%;
 }
 .pagination-bar {
   display: flex;
