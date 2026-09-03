@@ -4,14 +4,21 @@
 .page {
   transition: all 0.25s ease;
 }
-.sidebar-hidden {
-  display: none !important;
-}
-.page > .page-wrapper {
-  transition: all 0.25s ease;
+.page-wrapper {
+  transition: margin-left 0.25s ease;
 }
 .page > .page-wrapper {
   width: 100%;
+}
+body.sidebar-collapsed .navbar-vertical {
+  display: none;
+}
+body.sidebar-collapsed .page-wrapper {
+  margin-left: 0 !important;
+}
+#columns-toggle-btn {
+  width: auto !important;
+  max-width: fit-content;
 }
 #sidebar-toggle-btn {
   position: fixed;
