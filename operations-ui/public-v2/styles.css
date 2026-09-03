@@ -1,6 +1,29 @@
 :root {
   --tblr-body-bg: #f6f8fb;
 }
+.page > .navbar-vertical,
+.page > .page-wrapper {
+  transition: width .25s ease, margin-left .25s ease;
+}
+.sidebar-toggle {
+  position: absolute;
+  top: .75rem;
+  left: .75rem;
+  z-index: 10;
+}
+.page-header .container-xl {
+  position: relative;
+  padding-left: 3rem;
+}
+.sidebar-collapsed > .navbar-vertical {
+  width: 0;
+  overflow: hidden;
+  padding: 0 !important;
+}
+.sidebar-collapsed > .page-wrapper {
+  margin-left: 0;
+  width: 100%;
+}
 .navbar-vertical {
   padding-left: 0.75rem !important;
 }

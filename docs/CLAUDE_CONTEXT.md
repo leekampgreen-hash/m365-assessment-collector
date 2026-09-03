@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-APIKEY-FIX
-Active task: UI-V2-APIKEY-FIX - Add API key definition to v2 index.html
+Last commit: UI-V2-SIDEBAR-TOGGLE
+Active task: UI-V2-SIDEBAR-TOGGLE - Add sidebar hide/show toggle button
 Backlog: UI-V2 panels remaining
 
 ### Commit
