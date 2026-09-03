@@ -57,27 +57,27 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-SHELL-FIX
-Active task: None - Fixed nginx static file serving for /v2/
+Last commit: UI-V2-SHELL-TABLER
+Active task: Replace shell with Tabler-based layout
 Backlog: AGT-MULTI-P01, SAAS-P01, SAAS-P03, UI-P01, LIC-OPTIMIZER-P01
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-SHELL: New UI shell with sidebar navigation and dummy pages"
+    git commit -m "UI-V2-SHELL-TABLER: Replace shell with Tabler-based layout"
     git push origin main
 
 ### Acceptance Criteria
-- [x] http://localhost:18080/v2/ loads new UI
-- [x] Sidebar renders all sections and menu items
+- [x] http://localhost:18080/v2/ loads with Tabler styling
+- [x] Left sidebar renders all sections and menu items with icons
 - [x] Clicking menu item loads dummy page in content area
-- [x] Active menu item highlighted
 - [x] Sidebar collapsible
+- [x] Topbar renders with search and user info
 - [ ] Existing UI at http://localhost:18080/ completely unchanged
 - [ ] Do NOT introduce non-ASCII characters
 - [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
 
 ### HARD RULES
-- New files in operations-ui/public-v2/ only
+- Only touch operations-ui/public-v2/
 - Do NOT touch operations-ui/public/ or any existing files
 - Do NOT modify any SEALED workloads
 - Do NOT introduce non-ASCII characters
