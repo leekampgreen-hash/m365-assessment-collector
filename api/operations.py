@@ -233,6 +233,46 @@ def _batch2_summary(connection: Any, tenant_id: int, table: str) -> dict[str, An
     return data
 
 
+def _user_security_fields(user: dict[str, Any]) -> dict[str, Any]:
+    now = datetime.now(timezone.utc).date()
+    activity_dates = [user.get("last_signin"), user.get("exchange_last_activity"), user.get("teams_last_activity"), user.get("onedrive_last_activity")]
+    valid_dates = [value.date() if isinstance(value, datetime) else value for value in activity_dates if value is not None]
+    days_since_activity = (now - max(valid_dates)).days if valid_dates else None
+    license_count = user.get("license_count") or 0
+    is_admin = bool(user.get("is_admin"))
+    flags = []
+
+    def add(flag: str, severity: str, detail: str) -> None:
+        flags.append({"flag": flag, "severity": severity, "detail": detail})
+
+    if user.get("mfa_registered") is False and is_admin:
+        add("admin_no_mfa", "CRITICAL", "Administrator account without MFA registered - critical risk")
+    elif user.get("mfa_registered") is False:
+        add("no_mfa", "HIGH", "User has not registered an MFA method")
+    if user.get("account_enabled") is False and license_count > 0:
+        add("disabled_with_license", "HIGH", "Disabled account still holding active license")
+    if user.get("user_type") == "Guest" and license_count > 0:
+        add("guest_with_license", "HIGH", "Guest account with paid license assigned")
+    if license_count > 0 and (days_since_activity is None or days_since_activity > 30):
+        add("inactive_30d", "MEDIUM", "No activity in {} days with active license".format(days_since_activity if days_since_activity is not None else "unknown"))
+    if (user.get("device_count") or 0) > 0 and user.get("device_compliant") is False:
+        add("device_noncompliant", "MEDIUM", "Enrolled device does not meet compliance policy")
+    premium = {"SPB", "SPE_E3", "SPE_E5", "ENTERPRISEPACK", "ENTERPRISEPREMIUM", "M365_BUSINESS_PREMIUM"}
+    workloads_active = sum(value is not None for value in (user.get("exchange_last_activity"), user.get("onedrive_last_activity"), user.get("teams_last_activity")))
+    if any(sku in premium for sku in (user.get("license_names") or [])) and workloads_active == 1:
+        add("over_licensed", "MEDIUM", "Premium license but only 1 workload active")
+    if not user.get("department") and not user.get("job_title") and not user.get("country"):
+        add("incomplete_profile", "LOW", "User profile missing department, job title, and country")
+    if days_since_activity is None or days_since_activity > 15:
+        add("inactive_15d", "LOW", "No activity in {} days".format(days_since_activity if days_since_activity is not None else "unknown"))
+    deductions = {"CRITICAL": 60, "HIGH": 40, "MEDIUM": 20, "LOW": 10}
+    score = max(0, 100 - sum(deductions[flag["severity"]] for flag in flags))
+    status = max((flag["severity"] for flag in flags), key=("GOOD", "LOW", "MEDIUM", "HIGH", "CRITICAL").index, default="GOOD")
+    if flags and status == "LOW":
+        score = 85
+    return {"security_status": status, "security_score": score, "security_flags": flags}
+
+
 def _intelligence_users(connection: Any, tenant_id: int) -> dict[str, Any]:
     cursor = connection.cursor()
     cursor.execute("""
@@ -253,6 +293,11 @@ def _intelligence_users(connection: Any, tenant_id: int) -> dict[str, Any]:
             FROM core.usage_teams_user_activity
             WHERE tenant_id = %s
             ORDER BY identity_value, report_refresh_date DESC
+        ), onedrive_data AS (
+            SELECT DISTINCT ON (identity_value) identity_value, last_activity_date
+            FROM core.usage_onedrive_activity
+            WHERE tenant_id = %s
+            ORDER BY identity_value, report_refresh_date DESC
         ), signin_data AS (
             SELECT DISTINCT ON (user_principal_name) user_principal_name, signin_datetime, location_city, location_country,
                    app_display_name, risk_level_during_signin
@@ -262,7 +307,8 @@ def _intelligence_users(connection: Any, tenant_id: int) -> dict[str, Any]:
         ), device_data AS (
             SELECT DISTINCT ON (to_jsonb(d)->'extension'->>'userPrincipalName') to_jsonb(d)->'extension'->>'userPrincipalName' AS upn,
                    count(*) OVER (PARTITION BY to_jsonb(d)->'extension'->>'userPrincipalName') AS device_count,
-                   d.compliance_state, d.operating_system
+                   CASE WHEN d.compliance_state = 'compliant' THEN TRUE WHEN d.compliance_state = 'noncompliant' THEN FALSE ELSE NULL END AS device_compliant,
+                   d.operating_system
             FROM core.intune_device d
             WHERE d.tenant_id = %s
             ORDER BY to_jsonb(d)->'extension'->>'userPrincipalName', d.observed_at DESC
@@ -272,22 +318,29 @@ def _intelligence_users(connection: Any, tenant_id: int) -> dict[str, Any]:
                am.is_mfa_registered, am.default_mfa_method, am.is_passwordless_capable,
                ru.risk_level, ru.risk_state, ru.risk_last_updated_at, ld.license_names, ld.license_count,
                ex.last_activity_date, ex.send_count, ex.receive_count, ex.storage_used,
-               tm.last_activity_date, tm.team_chat_message_count, tm.call_count, tm.meeting_count,
-               si.signin_datetime, si.location_city, si.location_country, si.app_display_name, si.risk_level_during_signin,
-               dd.device_count, dd.compliance_state, dd.operating_system
+                tm.last_activity_date, tm.team_chat_message_count, tm.call_count, tm.meeting_count,
+                od.last_activity_date,
+                si.signin_datetime, si.location_city, si.location_country, si.app_display_name, si.risk_level_during_signin,
+                dd.device_count, dd.device_compliant, dd.operating_system,
+                EXISTS(SELECT 1 FROM core.directory_role_assignment dra WHERE dra.principal_id = u.source_object_id AND dra.tenant_id = u.tenant_id) AS is_admin
+
         FROM core."user" u
         LEFT JOIN core.entra_auth_method am ON am.display_name = u.display_name AND am.tenant_id = u.tenant_id
         LEFT JOIN core.risky_user ru ON ru.source_object_id = u.source_object_id AND ru.tenant_id = u.tenant_id
         LEFT JOIN license_data ld ON ld.user_id = u.user_id AND ld.tenant_id = u.tenant_id
         LEFT JOIN exchange_data ex ON ex.identity_value = u.user_principal_name
         LEFT JOIN teams_data tm ON tm.identity_value = u.user_principal_name
-        LEFT JOIN signin_data si ON si.user_principal_name = u.user_principal_name
-        LEFT JOIN device_data dd ON dd.upn = u.user_principal_name
+         LEFT JOIN onedrive_data od ON od.identity_value = u.user_principal_name
+         LEFT JOIN signin_data si ON si.user_principal_name = u.user_principal_name
+         LEFT JOIN device_data dd ON dd.upn = u.user_principal_name
+
         WHERE u.tenant_id = %s
         ORDER BY u.display_name, u.user_id
-    """, (tenant_id, tenant_id, tenant_id, tenant_id, tenant_id, tenant_id))
-    columns = ("user_id", "source_object_id", "display_name", "upn", "user_type", "account_enabled", "created_date_time", "department", "job_title", "country", "mfa_registered", "mfa_method", "passwordless_capable", "risk_level", "risk_state", "risk_last_updated_at", "license_names", "license_count", "exchange_last_activity", "emails_sent", "emails_received", "mailbox_size_mb", "teams_last_activity", "teams_chat_count", "teams_call_count", "teams_meeting_count", "last_signin", "last_signin_city", "last_signin_country", "last_signin_app", "last_signin_risk", "device_count", "device_compliant", "device_os")
+    """, (tenant_id, tenant_id, tenant_id, tenant_id, tenant_id, tenant_id, tenant_id))
+    columns = ("user_id", "source_object_id", "display_name", "upn", "user_type", "account_enabled", "created_date_time", "department", "job_title", "country", "mfa_registered", "mfa_method", "passwordless_capable", "risk_level", "risk_state", "risk_last_updated_at", "license_names", "license_count", "exchange_last_activity", "emails_sent", "emails_received", "mailbox_size_mb", "teams_last_activity", "teams_chat_count", "teams_call_count", "teams_meeting_count", "onedrive_last_activity", "last_signin", "last_signin_city", "last_signin_country", "last_signin_app", "last_signin_risk", "device_count", "device_compliant", "device_os", "is_admin")
     users = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    for user in users:
+        user.update(_user_security_fields(user))
     return {"status": "READY", "as_of": date.today().isoformat(), "total": len(users), "users": users}
 
 

@@ -57,10 +57,10 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 9dbcbb3
-Active task: UI-V2-TABLER-STARTER - Replace v2 with proven Tabler starter template
-Backlog: UI-V2 panels remaining
-Verification: Pending rebuild and runtime verification.
+Last commit: current
+Active task: API-USER-SECURITY-STATUS - Add security_status, score, flags to user intelligence endpoint
+Backlog: None
+Verification: Pending pytest and operations-api rebuild.
 
 ### Commit
     git add -A
