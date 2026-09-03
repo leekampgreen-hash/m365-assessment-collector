@@ -2,11 +2,11 @@ const sections = [
   ['WORKSPACE', [['Overview', 'home']]],
   ['USERS', [['User Intelligence', 'users']]],
   ['SECURITY', [['MFA Coverage', 'shield-check'], ['Conditional Access', 'lock'], ['Admin Roles', 'crown'], ['Risky Users', 'alert-triangle'], ['Sign-in Activity', 'activity']]],
-  ['PRODUCTIVITY', [['Exchange', 'mail'], ['OneDrive', 'cloud'], ['SharePoint', 'layout'], ['Teams', 'message-circle']]],
-  ['LICENSE', [['Utilization', 'chart-bar'], ['Optimizer', 'sparkles'], ['Parking Report', 'car']]],
+  ['PRODUCTIVITY', [['Exchange', 'mail'], ['OneDrive', 'cloud'], ['SharePoint', 'layout-sidebar'], ['Teams', 'messages']]],
+  ['LICENSE', [['Utilization', 'chart-bar'], ['Optimizer', 'stars'], ['Parking Report', 'parking']]],
   ['PROTECTION', [['Defender for Office 365', 'shield'], ['Cloud App Discovery', 'search'], ['DLP Violations', 'alert-circle'], ['Sensitivity Labels', 'tag']]],
   ['IDENTITY', [['Guest Users', 'user-plus'], ['Auth Methods', 'key'], ['Named Locations', 'map-pin']]],
-  ['COMPLIANCE', [['Intune Devices', 'device-laptop'], ['Compliance Policies', 'clipboard-check'], ['Mobile Apps', 'device-mobile']]],
+  ['COMPLIANCE', [['Intune Devices', 'device-laptop'], ['Compliance Policies', 'clipboard-list'], ['Mobile Apps', 'device-mobile-rotated']]],
   ['SETTINGS', [['API Keys', 'terminal'], ['Email Reports', 'send'], ['Tenants', 'building']]]
 ];
 

@@ -1,6 +1,12 @@
 :root {
   --tblr-body-bg: #f6f8fb;
 }
+.navbar-vertical {
+  padding-left: 0.75rem !important;
+}
+.navbar-vertical .navbar-brand {
+  padding-left: 0.5rem;
+}
 .navbar-brand {
   gap: .65rem;
   white-space: normal;
