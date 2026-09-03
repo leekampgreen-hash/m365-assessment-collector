@@ -25,6 +25,13 @@ services:
       PGDATABASE: graph_agent
       PGUSER: graph_agent_runtime
       PGSSLMODE: disable
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      REPORT_EMAIL_TO: ${REPORT_EMAIL_TO:-}
+      REPORT_SCHEDULE: ${REPORT_SCHEDULE:-daily}
+      REPORT_ENABLED: ${REPORT_ENABLED:-false}
 
     volumes:
       - ./agent:/workspace/agent
@@ -162,6 +169,13 @@ services:
       PGDATABASE: graph_agent
       PGUSER: graph_agent_runtime
       PGSSLMODE: disable
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      REPORT_EMAIL_TO: ${REPORT_EMAIL_TO:-}
+      REPORT_SCHEDULE: ${REPORT_SCHEDULE:-daily}
+      REPORT_ENABLED: ${REPORT_ENABLED:-false}
     volumes:
       - ./agent:/workspace/agent
       - ./analytics:/workspace/analytics

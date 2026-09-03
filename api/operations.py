@@ -24,6 +24,7 @@ from agent.orchestrator import RejectedInputError
 from agent import config
 from collectors.persistence import open_database_connection
 from collectors import auth_service
+from collectors.email_report import report_status
 from collectors.feature_flags import is_feature_enabled
 from collectors.sku_pricing import load_pricing, get_sku_name, calculate_user_monthly_cost, calculate_savings
 from capabilities.persistence import CapabilityQueryService
@@ -594,13 +595,13 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 if close is not None:
                     close()
             return
-        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path.startswith("/api/entra") or path == "/api/capabilities") and not verify_api_key(self):
+        if (path.startswith(BASE_PATH) or path.startswith("/api/security") or path.startswith("/api/license") or path.startswith("/api/intune") or path.startswith("/api/entra") or path.startswith("/api/scheduler") or path == "/api/capabilities") and not verify_api_key(self):
             self.send_response(401)
             self.send_header("WWW-Authenticate", "X-API-Key")
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and not path.startswith("/api/entra") and path != "/api/capabilities":
+        if not path.startswith(BASE_PATH) and not path.startswith("/api/security") and not path.startswith("/api/license") and not path.startswith("/api/intune") and not path.startswith("/api/entra") and not path.startswith("/api/scheduler") and path != "/api/capabilities":
             self._write(404, _response("NOT_FOUND"))
             return
         try:
@@ -817,6 +818,9 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                     close = getattr(connection, "close", None)
                     if close is not None:
                         close()
+            if path == "/api/scheduler/email-report/status":
+                self._write(200, _response("READY", report_status()))
+                return
             if path == BASE_PATH + "/correlation/users":
                 service = self._load_service()
                 self._write(200, _response("READY", {"users": service.cross_workload_user_status()}))

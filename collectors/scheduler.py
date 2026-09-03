@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
 import sys
 import time
@@ -11,6 +12,9 @@ from collectors.persistence import open_database_connection
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
+
+from collectors.email_report import report_status, send_report
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +107,8 @@ class CollectionScheduler:
         logger.info("Phase 2 complete - security findings updated")
         for schedule in sorted((s for s in schedules if s.get("phase") == 3), key=lambda s: s["name"]):
             self._run_endpoints(schedule)
+        if os.getenv("REPORT_ENABLED", "false").lower() == "true":
+            send_report()
 
     def register_jobs(self) -> None:
         for schedule in self.config.get("schedules", []):
@@ -118,6 +124,19 @@ class CollectionScheduler:
             )
             logger.info("Registered job: %s every %sh", schedule["name"], interval_hours)
 
+    def _send_email_report(self) -> None:
+        try:
+            send_report()
+        except Exception as exc:
+            logger.error("Email report failed: %s", exc)
+
+    def register_email_report_job(self) -> None:
+        if os.getenv("REPORT_ENABLED", "false").lower() != "true":
+            return
+        schedule = os.getenv("REPORT_SCHEDULE", "daily").lower()
+        day = "mon" if schedule == "weekly" else "*"
+        self.scheduler.add_job(self._send_email_report, CronTrigger(day_of_week=day, hour=8, minute=0, timezone=self.scheduler.timezone), id="email_report", name="Scheduled email report", max_instances=1, coalesce=True, misfire_grace_time=3600)
+
     def start(self) -> None:
         delay = self.config.get("settings", {}).get("startup_delay_seconds", 30)
         logger.info("Scheduler starting - waiting %ss before first run", delay)
@@ -127,6 +146,7 @@ class CollectionScheduler:
         except Exception as exc:
             logger.error("Initial phased collection failed: %s", exc)
         self.register_jobs()
+        self.register_email_report_job()
         logger.info("Scheduler started - running jobs on schedule")
         try:
             self.scheduler.start()
