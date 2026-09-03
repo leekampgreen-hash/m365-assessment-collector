@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-PAGINATION-FIX
-Active task: UI-V2-PAGINATION-FIX - Fix User Intelligence table loading after pagination refactor
+Last commit: UI-V2-APIKEY-FIX
+Active task: UI-V2-APIKEY-FIX - Add API key definition to v2 index.html
 Backlog: UI-V2 panels remaining
 
 ### Commit
