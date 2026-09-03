@@ -44,6 +44,24 @@
 .intelligence-table-wrap {
   overflow-x: auto;
 }
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+}
+.pagination-pages {
+  display: flex;
+  gap: .25rem;
+  align-items: center;
+}
+.pagination-pages .page-number.active {
+  color: #fff;
+  background-color: var(--tblr-primary);
+  border-color: var(--tblr-primary);
+}
 .intelligence-table {
   min-width: max-content;
 }
