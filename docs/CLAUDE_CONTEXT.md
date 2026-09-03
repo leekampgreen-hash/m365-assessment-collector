@@ -57,23 +57,27 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 2ecc3b2 - AGT-DEV01-FIX2
-Active task: AGT-DEV01-FIX3 - Fix operations-api bind address to 0.0.0.0
+Last commit: 3188a17 - AGT-DEV01-FIX3
+Active task: UI-V2-SHELL - New UI shell with sidebar navigation and dummy pages
 Backlog: AGT-MULTI-P01, SAAS-P01, SAAS-P03, UI-P01, LIC-OPTIMIZER-P01
 
 ### Commit
     git add -A
-    git commit -m "AGT-DEV01-FIX3: Fix operations-api bind address to 0.0.0.0"
+    git commit -m "UI-V2-SHELL: New UI shell with sidebar navigation and dummy pages"
     git push origin main
 
 ### Acceptance Criteria
-- [x] docker exec graph-agent-collector-dev python3 -c "..." reaches health endpoint successfully
-- [x] API_HOST set to 0.0.0.0 in docker-compose.yml operations-api environment
-- [x] operations-api rebuilt and restarted
+- [x] http://localhost:18080/v2/ loads new UI
+- [x] Sidebar renders all sections and menu items
+- [x] Clicking menu item loads dummy page in content area
+- [x] Active menu item highlighted
+- [x] Sidebar collapsible
+- [ ] Existing UI at http://localhost:18080/ completely unchanged
 - [ ] Do NOT introduce non-ASCII characters
 - [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
 
 ### HARD RULES
-- Only touch docker-compose.yml environment section for operations-api
+- New files in operations-ui/public-v2/ only
+- Do NOT touch operations-ui/public/ or any existing files
 - Do NOT modify any SEALED workloads
 - Do NOT introduce non-ASCII characters

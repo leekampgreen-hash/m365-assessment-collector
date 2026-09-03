@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M365 Assessment Collector - V2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+                    <span class="toggle-icon">&#9776;</span>
+                </button>
+                <div class="logo">M365 Dashboard</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <!-- Workspace Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="workspace">
+                        <span class="section-title">WORKSPACE</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="workspace-items">
+                        <li class="nav-item active" data-page="overview">
+                            <a href="#/overview">Overview</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Users Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="users">
+                        <span class="section-title">USERS</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="users-items">
+                        <li class="nav-item" data-page="user-intelligence">
+                            <a href="#/user-intelligence">User Intelligence</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Security Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="security">
+                        <span class="section-title">SECURITY</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="security-items">
+                        <li class="nav-item" data-page="mfa-coverage">
+                            <a href="#/mfa-coverage">MFA Coverage</a>
+                        </li>
+                        <li class="nav-item" data-page="conditional-access">
+                            <a href="#/conditional-access">Conditional Access</a>
+                        </li>
+                        <li class="nav-item" data-page="admin-roles">
+                            <a href="#/admin-roles">Admin Roles</a>
+                        </li>
+                        <li class="nav-item" data-page="risky-users">
+                            <a href="#/risky-users">Risky Users</a>
+                        </li>
+                        <li class="nav-item" data-page="sign-in-activity">
+                            <a href="#/sign-in-activity">Sign-in Activity</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Productivity Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="productivity">
+                        <span class="section-title">PRODUCTIVITY</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="productivity-items">
+                        <li class="nav-item" data-page="exchange">
+                            <a href="#/exchange">Exchange</a>
+                        </li>
+                        <li class="nav-item" data-page="onedrive">
+                            <a href="#/onedrive">OneDrive</a>
+                        </li>
+                        <li class="nav-item" data-page="sharepoint">
+                            <a href="#/sharepoint">SharePoint</a>
+                        </li>
+                        <li class="nav-item" data-page="teams">
+                            <a href="#/teams">Teams</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- License Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="license">
+                        <span class="section-title">LICENSE</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="license-items">
+                        <li class="nav-item" data-page="utilization">
+                            <a href="#/utilization">Utilization</a>
+                        </li>
+                        <li class="nav-item" data-page="optimizer">
+                            <a href="#/optimizer">Optimizer</a>
+                        </li>
+                        <li class="nav-item" data-page="parking-report">
+                            <a href="#/parking-report">Parking Report</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Protection Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="protection">
+                        <span class="section-title">PROTECTION</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="protection-items">
+                        <li class="nav-item" data-page="defender-office365">
+                            <a href="#/defender-office365">Defender for Office 365</a>
+                        </li>
+                        <li class="nav-item" data-page="cloud-app-discovery">
+                            <a href="#/cloud-app-discovery">Cloud App Discovery</a>
+                        </li>
+                        <li class="nav-item" data-page="dlp-violations">
+                            <a href="#/dlp-violations">DLP Violations</a>
+                        </li>
+                        <li class="nav-item" data-page="sensitivity-labels">
+                            <a href="#/sensitivity-labels">Sensitivity Labels</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Identity Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="identity">
+                        <span class="section-title">IDENTITY</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="identity-items">
+                        <li class="nav-item" data-page="guest-users">
+                            <a href="#/guest-users">Guest Users</a>
+                        </li>
+                        <li class="nav-item" data-page="auth-methods">
+                            <a href="#/auth-methods">Auth Methods</a>
+                        </li>
+                        <li class="nav-item" data-page="named-locations">
+                            <a href="#/named-locations">Named Locations</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Compliance Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="compliance">
+                        <span class="section-title">COMPLIANCE</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="compliance-items">
+                        <li class="nav-item" data-page="intune-devices">
+                            <a href="#/intune-devices">Intune Devices</a>
+                        </li>
+                        <li class="nav-item" data-page="compliance-policies">
+                            <a href="#/compliance-policies">Compliance Policies</a>
+                        </li>
+                        <li class="nav-item" data-page="mobile-apps">
+                            <a href="#/mobile-apps">Mobile Apps</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Settings Section -->
+                <div class="nav-section">
+                    <button class="section-header" data-section="settings">
+                        <span class="section-title">SETTINGS</span>
+                        <span class="section-arrow">&#9660;</span>
+                    </button>
+                    <ul class="nav-items" id="settings-items">
+                        <li class="nav-item" data-page="api-keys">
+                            <a href="#/api-keys">API Keys</a>
+                        </li>
+                        <li class="nav-item" data-page="email-reports">
+                            <a href="#/email-reports">Email Reports</a>
+                        </li>
+                        <li class="nav-item" data-page="tenants">
+                            <a href="#/tenants">Tenants</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-search">
+                    <input type="text" class="search-input" placeholder="Search...">
+                </div>
+                <div class="topbar-user">
+                    <div class="user-avatar">A</div>
+                    <span class="user-email">admin@localhost</span>
+                </div>
+            </header>
+            
+            <!-- Content Container -->
+            <main class="content-container" id="contentContainer">
+                <!-- Dynamic content will be loaded here -->
+            </main>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
