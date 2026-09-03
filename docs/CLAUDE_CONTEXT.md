@@ -57,7 +57,7 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 9d6748c — UI-BATCH-01
+Last commit: fed0127 — CLAUDE-CONTEXT-FIX
 Active task: Planning next sprint
 Backlog (in order):
 1. ENTRA-P05 — Named locations panel
