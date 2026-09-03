@@ -3,46 +3,925 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Super Admin | Operations Intelligence</title>
+  <title>Super Admin Portal | M365 Assessment Collector</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <script>window.API_KEY = "__API_KEY_PLACEHOLDER__";</script>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.documentElement.classList.toggle('dark', saved === 'dark');
+      document.documentElement.classList.toggle('light', saved === 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .admin-shell{display:grid;grid-template-columns:220px 1fr;gap:18px;max-width:1440px;margin:auto;padding:24px}.admin-sidebar{background:var(--bg-card);border:1px solid var(--border-c);border-radius:10px;padding:18px;height:max-content;position:sticky;top:24px}.admin-sidebar h2{font-size:16px;margin-bottom:20px}.admin-nav{display:grid;gap:6px}.admin-nav button{border:0;background:none;color:var(--text-sec);text-align:left;padding:10px;border-radius:7px;cursor:pointer;font:inherit}.admin-nav button:hover,.admin-nav button.active{background:var(--accent-dim);color:var(--accent-text)}.admin-main{min-width:0}.admin-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.admin-section{display:none}.admin-section.active{display:block}.admin-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.admin-form{display:flex;gap:8px;flex-wrap:wrap;padding:14px;background:rgba(255,255,255,.04);border:1px solid var(--border-c);border-radius:8px;margin-bottom:14px}.admin-form input,.admin-form select,.inline-editor{background:var(--bg-page);color:var(--text-pri);border:1px solid var(--border-strong);border-radius:6px;padding:8px;font:inherit}.admin-table{overflow-x:auto}.admin-table table{min-width:760px;width:100%;border-collapse:collapse}.admin-table th,.admin-table td{padding:10px;border-top:1px solid var(--border-c);text-align:left;white-space:nowrap}.admin-table th{color:var(--text-sec);font-size:11px;text-transform:uppercase}.admin-table td{font-size:13px}.admin-table button{margin-right:5px}.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:20px}.modal-card{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:10px;padding:24px;max-width:420px;width:100%}.modal-card code{display:block;padding:12px;margin:14px 0;background:var(--bg-page);word-break:break-all}.notice{color:var(--warning-text);margin-bottom:12px}@media(max-width:760px){.admin-shell{grid-template-columns:1fr;padding:14px}.admin-sidebar{position:static}.admin-nav{grid-template-columns:repeat(2,1fr)}}
+    .admin-form-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .admin-form-box input, .admin-form-box select, .inline-editor {
+      background: rgba(10, 14, 23, 0.7);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .admin-form-box input:focus, .admin-form-box select:focus, .inline-editor:focus {
+      border-color: var(--border-active);
+      box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+    }
+    .inline-editor {
+      min-width: 200px;
+    }
+    .btn-action-sm {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-action-sm:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .btn-enable {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+    }
+    .btn-disable {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--accent-red);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #161e2e;
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .modal-code {
+      display: block;
+      padding: 12px 14px;
+      margin: 14px 0;
+      background: #0a0e17;
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      color: var(--accent-cyan);
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) {
+      .admin-stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .admin-stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="admin-shell">
-    <aside class="admin-sidebar"><h2>Super Admin</h2><nav class="admin-nav"><a class="plain-button" href="/"><i class="ti ti-arrow-left"></i> Back to Dashboard</a><button data-page="dashboard">Dashboard</button><button data-page="tenants">Tenants</button><button data-page="users">Users</button><button data-page="flags">Feature Flags</button><button data-page="settings">System Settings</button><button data-page="collectors">Collector Status</button></nav></aside>
-    <main class="admin-main">
-      <header class="topbar admin-header"><div><p class="eyebrow">Administration</p><h1 id="page-title">Dashboard</h1></div><div><span id="user-email" class="subtitle"></span> <button id="logout" class="plain-button" type="button">Logout</button></div></header>
-      <div id="message" class="notice"></div>
-      <section class="admin-section active" data-section="dashboard"><div class="panel"><h2>Administration dashboard</h2><p class="subtitle">Manage tenants, users, feature flags, system settings, and collectors.</p></div></section>
-      <section class="admin-section" data-section="tenants"><div class="admin-actions"><h2>Tenants</h2><button class="plain-button" data-add="tenant">Add Tenant</button></div><form id="tenant-form" class="admin-form hidden"><input name="display_label" placeholder="Display label" required><input name="entra_tenant_id" placeholder="Entra tenant ID" required><button class="plain-button">Create</button></form><div id="tenant-table" class="panel admin-table"></div></section>
-      <section class="admin-section" data-section="users"><div class="admin-actions"><h2>Users</h2><button class="plain-button" data-add="user">Add User</button></div><form id="user-form" class="admin-form hidden"><input name="email" type="email" placeholder="Email" required><input name="password" type="password" placeholder="Password" required><select name="role"><option>SUPER_ADMIN</option><option>TENANT_ADMIN</option><option>TENANT_USER</option></select><input name="tenant_id" type="number" placeholder="Tenant ID"><button class="plain-button">Create</button></form><div id="user-table" class="panel admin-table"></div></section>
-      <section class="admin-section" data-section="flags"><h2>Feature Flags</h2><div id="flag-table" class="panel admin-table"></div></section>
-      <section class="admin-section" data-section="settings"><h2>System Settings</h2><div id="setting-table" class="panel admin-table"></div></section>
-      <section class="admin-section" data-section="collectors"><h2>Collector Status</h2><div id="collector-table" class="panel admin-table"></div></section>
-    </main>
-  </div>
-  <div id="modal" class="modal hidden"><div class="modal-card"><h2>New generated password</h2><code id="password-value"></code><button id="close-modal" class="plain-button" type="button">Close</button></div></div>
-<script>
-const sid=sessionStorage.getItem('session_id');if(!sid)location.href='/login.html';const $=s=>document.querySelector(s), esc=v=>String(v??'-').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const headers=(json=false)=>({'Accept':'application/json','X-API-Key':window.API_KEY||'','X-Session-ID':sid,...(json?{'Content-Type':'application/json'}:{})});
-async function api(path,opts={}){const r=await fetch(path,{...opts,headers:{...headers(Boolean(opts.body)),...(opts.headers||{})}});if(!r.ok)throw Error('Request failed');return r.json()}
-function table(cols,rows){return '<table><thead><tr>'+cols.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+(Array.isArray(rows)?rows.join(''):rows)+'</tbody></table>'}
-async function loadTenants(){const d=await api('/api/admin/tenants');console.log('tenants response:',d);const rows=d.tenants||[];$('#tenant-table').innerHTML=table(['ID','Label','Entra tenant ID','Enabled','Created','Actions'],rows.map(t=>`<tr><td>${esc(t.tenant_id)}</td><td>${esc(t.display_label)}</td><td>${esc(t.entra_tenant_id)}</td><td>${t.enabled?'Yes':'No'}</td><td>${esc(t.created_at)}</td><td><button class="plain-button" data-toggle-tenant="${t.tenant_id}" data-enabled="${t.enabled}">${t.enabled?'Disable':'Enable'}</button><button class="plain-button" data-features="${t.tenant_id}">Manage Features</button></td></tr>`).join('')||'<tr><td colspan="6">No tenants</td></tr>')}
-async function loadUsers(){const d=await api('/api/admin/users');const rows=d.users||[];$('#user-table').innerHTML=table(['ID','Email','Role','Tenant','Active','TOTP','Last login','Actions'],rows.map(u=>`<tr><td>${esc(u.user_id)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${esc(u.tenant_id)}</td><td>${u.is_active?'Yes':'No'}</td><td>${u.totp_enrolled?'Yes':'No'}</td><td>${esc(u.last_login_at)}</td><td><button class="plain-button" data-toggle-user="${u.user_id}" data-active="${u.is_active}">${u.is_active?'Disable':'Enable'}</button><button class="plain-button" data-reset="${u.user_id}">Reset Password</button></td></tr>`).join('')||'<tr><td colspan="8">No users</td></tr>')}
-async function loadFlags(){const d=await api('/api/admin/feature-flags');$('#flag-table').innerHTML=table(['Flag','Description','Global','Tenant overrides'],(d.feature_flags||[]).map(f=>`<tr><td>${esc(f.flag_name)}</td><td>${esc(f.description)}</td><td><button class="plain-button" data-flag="${esc(f.flag_name)}" data-enabled="${f.is_enabled}">${f.is_enabled?'Enabled':'Disabled'}</button></td><td>${(f.tenant_overrides||[]).map(x=>esc(x.tenant_id)+': '+(x.is_enabled?'on':'off')).join(', ')||'-'}</td></tr>`).join(''))}
-async function loadSettings(){const d=await api('/api/admin/settings');$('#setting-table').innerHTML=table(['Key','Value','Type','Description','Action'],(d.settings||[]).map(s=>`<tr><td>${esc(s.setting_key)}</td><td><input class="inline-editor" data-setting-value="${esc(s.setting_key)}" value="${esc(s.setting_value)}"></td><td>${esc(s.setting_type)}</td><td>${esc(s.description)}</td><td><button class="plain-button" data-save-setting="${esc(s.setting_key)}">Save</button></td></tr>`).join(''))}
-async function loadCollectors(){const d=await api('/api/admin/collector/status');$('#collector-table').innerHTML=table(['Collector','Tenant','Last run','Updated','Status'],(d.collector_status||[]).map(x=>`<tr><td>${esc(x.collector_id)}</td><td>${esc(x.tenant_id)}</td><td>${esc(x.checkpoint_at)}</td><td>${esc(x.updated_at)}</td><td>${x.checkpoint_at?'Ready':'Unknown'}</td></tr>`).join(''))}
-const loaders={tenants:loadTenants,users:loadUsers,flags:loadFlags,settings:loadSettings,collectors:loadCollectors};
-async function show(page){document.querySelectorAll('[data-section]').forEach(x=>x.classList.toggle('active',x.dataset.section===page));document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$('#page-title').textContent=page==='flags'?'Feature Flags':page==='collectors'?'Collector Status':page==='settings'?'System Settings':page[0].toUpperCase()+page.slice(1);if(loaders[page])try{await loaders[page]()}catch(e){$('#message').textContent='Unable to load '+page+'.'}}
+  <div class="app-layout">
+    <!-- Left Navigation Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" stroke="#00d2ff" fill="rgba(0, 210, 255, 0.15)"/>
+            <polyline points="2 17 12 22 22 17" stroke="#10b981"/>
+            <polyline points="2 12 12 17 22 12" stroke="#38bdf8"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h2>M365 Assessment</h2>
+          <span>Admin Console</span>
+        </div>
+        <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
 
-document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>show(b.dataset.page));document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>$('#'+b.dataset.add+'-form').classList.toggle('hidden'));
-$('#tenant-form').onsubmit=async e=>{e.preventDefault();await api('/api/admin/tenants',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});e.target.reset();e.target.classList.add('hidden');loadTenants()};$('#user-form').onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target));v.tenant_id=v.tenant_id?Number(v.tenant_id):null;await api('/api/admin/users',{method:'POST',body:JSON.stringify(v)});e.target.reset();e.target.classList.add('hidden');loadUsers()};
-document.addEventListener('click',async e=>{const b=e.target;if(b.dataset.toggleTenant)await api('/api/admin/tenants/'+b.dataset.toggleTenant,{method:'PATCH',body:JSON.stringify({enabled:b.dataset.enabled!=='true'})}),loadTenants();if(b.dataset.toggleUser)await api('/api/admin/users/'+b.dataset.toggleUser,{method:'PATCH',body:JSON.stringify({is_active:b.dataset.active!=='true'})}),loadUsers();if(b.dataset.reset){const d=await api('/api/admin/users/'+b.dataset.reset+'/reset-password',{method:'POST'});$('#password-value').textContent=d.new_password;$('#modal').classList.remove('hidden')}if(b.dataset.flag)await api('/api/admin/feature-flags/'+b.dataset.flag,{method:'PATCH',body:JSON.stringify({is_enabled:b.dataset.enabled!=='true'})}),loadFlags();if(b.dataset.saveSetting){const input=document.querySelector(`[data-setting-value="${CSS.escape(b.dataset.saveSetting)}"]`);await api('/api/admin/settings/'+b.dataset.saveSetting,{method:'PATCH',body:JSON.stringify({setting_value:input.value})}),loadSettings()}});$('#close-modal').onclick=()=>$('#modal').classList.add('hidden');$('#logout').onclick=async()=>{try{await api('/api/auth/logout',{method:'POST'})}catch(_){}sessionStorage.removeItem('session_id');location.href='/login.html';}
-(async()=>{try{const d=await api('/api/auth/me');if(d.user?.role!=='SUPER_ADMIN')throw Error();$('#user-email').textContent=d.user.email;show('dashboard')}catch(_){location.href='/login.html'}})();
-</script></body></html>
+      <!-- Super Admin Context Box -->
+      <div class="tenant-switcher-card">
+        <div class="tenant-label">Control Plane</div>
+        <div class="tenant-select-box">
+          <div class="tenant-current">
+            <span class="tenant-dot"></span>
+            <div class="tenant-details">
+              <strong>Super Administrator</strong>
+              <small>System Management</small>
+            </div>
+          </div>
+          <i class="ti ti-shield-lock text-muted"></i>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="sidebar-nav" aria-label="Admin Navigation">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="/" style="color: var(--accent-blue);">
+              <i class="ti ti-arrow-left nav-icon" style="color: var(--accent-blue);"></i>
+              <span class="nav-title">Return to Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="#dashboard" data-page="dashboard">
+              <i class="ti ti-layout-grid nav-icon"></i>
+              <span class="nav-title">Overview</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#tenants" data-page="tenants">
+              <i class="ti ti-building nav-icon"></i>
+              <span class="nav-title">Tenants</span>
+              <span class="nav-badge badge-cyan" id="tenants-count-badge">-</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#users" data-page="users">
+              <i class="ti ti-users nav-icon"></i>
+              <span class="nav-title">Admin Users</span>
+              <span class="nav-badge badge-emerald" id="users-count-badge">-</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#flags" data-page="flags">
+              <i class="ti ti-flag nav-icon"></i>
+              <span class="nav-title">Feature Flags</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#settings" data-page="settings">
+              <i class="ti ti-settings nav-icon"></i>
+              <span class="nav-title">System Settings</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#collectors" data-page="collectors">
+              <i class="ti ti-clock-play nav-icon"></i>
+              <span class="nav-title">Collector Status</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Sidebar Profile Footer -->
+      <div class="sidebar-footer">
+        <div class="user-avatar-mini" id="admin-avatar-text">SA</div>
+        <div class="user-info">
+          <strong id="user-email">admin@localhost</strong>
+          <small class="user-role-badge">Super Admin</small>
+        </div>
+        <button id="logout" class="logout-action-btn" title="Sign out" aria-label="Sign out">
+          <i class="ti ti-logout"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-toggle d-lg-none" id="mobile-menu-btn" aria-label="Open navigation">
+            <i class="ti ti-menu-2"></i>
+          </button>
+          <div class="header-titles">
+            <h1 id="page-title">Administration Dashboard</h1>
+            <span class="header-subtitle" id="page-subtitle">Configure system environments, manage tenant credentials, and review background collectors</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-pill">
+            <span class="sync-dot-pulse"></span>
+            <span>Super Admin Session Active</span>
+          </div>
+          <button class="action-icon-btn" id="theme-toggle-btn" title="Toggle theme (Dark / White)" aria-label="Toggle theme">
+            <i class="ti ti-sun"></i>
+          </button>
+          <a href="/" class="plain-action-btn">
+            <i class="ti ti-dashboard"></i> Live Dashboard
+          </a>
+        </div>
+      </header>
+
+      <!-- Message / Alert Banner -->
+      <div id="message" class="banner error hidden" role="alert" style="margin: 20px 28px 0;"></div>
+
+      <!-- Main Canvas Content -->
+      <main class="content-canvas">
+        <!-- ================= SECTION: DASHBOARD ================= -->
+        <section class="admin-section active" data-section="dashboard">
+          <div class="admin-stats-grid">
+            <article class="kpi-card card-glow-cyan">
+              <div class="kpi-head">
+                <span class="kpi-title">Configured Tenants</span>
+                <i class="ti ti-building kpi-info-icon"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="stat-tenants-count">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-good">Multi-Tenant Enabled</span>
+              </div>
+            </article>
+
+            <article class="kpi-card card-glow-emerald">
+              <div class="kpi-head">
+                <span class="kpi-title">Platform Users</span>
+                <i class="ti ti-users kpi-info-icon"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="stat-users-count">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-info">RBAC Controlled</span>
+              </div>
+            </article>
+
+            <article class="kpi-card card-glow-teal">
+              <div class="kpi-head">
+                <span class="kpi-title">Feature Flags</span>
+                <i class="ti ti-flag kpi-info-icon"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="stat-flags-count">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-warn">Runtime Overrides</span>
+              </div>
+            </article>
+
+            <article class="kpi-card card-glow-blue">
+              <div class="kpi-head">
+                <span class="kpi-title">Collector Health</span>
+                <i class="ti ti-activity kpi-info-icon"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" style="font-size: 24px; color: var(--accent-emerald);">Healthy</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-good">APScheduler Running</span>
+              </div>
+            </article>
+          </div>
+
+          <div class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>Administration Control Plane</h2>
+                <p class="section-desc">Manage tenant configurations, API credentials, user permissions, and scheduler jobs.</p>
+              </div>
+            </div>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px;">
+              Select a module from the left sidebar to add new customer tenants, assign platform administrative roles, manage feature toggles, or inspect collector background schedules.
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="plain-button" onclick="show('tenants')"><i class="ti ti-building"></i> Manage Tenants</button>
+              <button class="plain-button" onclick="show('users')"><i class="ti ti-users"></i> Manage Users</button>
+              <button class="plain-button" onclick="show('settings')"><i class="ti ti-settings"></i> System Settings</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION: TENANTS ================= -->
+        <section class="admin-section hidden" data-section="tenants">
+          <div class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>Managed Microsoft 365 Tenants</h2>
+                <p class="section-desc">Add, enable, or disable tenant data ingestion pipelines.</p>
+              </div>
+              <button class="plain-action-btn" data-add="tenant">
+                <i class="ti ti-plus"></i> Add Tenant
+              </button>
+            </div>
+
+            <!-- Form: Add Tenant -->
+            <form id="tenant-form" class="admin-form-box hidden">
+              <input name="display_label" placeholder="Display Label (e.g. Contoso Corp)" required style="flex: 1;">
+              <input name="entra_tenant_id" placeholder="Entra Directory ID (GUID)" required style="flex: 1.2;">
+              <button type="submit" class="plain-action-btn">Create Tenant</button>
+              <button type="button" class="plain-button" onclick="$('#tenant-form').classList.add('hidden')">Cancel</button>
+            </form>
+
+            <div id="tenant-table">
+              <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading tenants...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION: USERS ================= -->
+        <section class="admin-section hidden" data-section="users">
+          <div class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>Platform Administration Users</h2>
+                <p class="section-desc">Manage console users, roles (Super Admin, Tenant Admin), and security resets.</p>
+              </div>
+              <button class="plain-action-btn" data-add="user">
+                <i class="ti ti-user-plus"></i> Add User
+              </button>
+            </div>
+
+            <!-- Form: Add User -->
+            <form id="user-form" class="admin-form-box hidden">
+              <input name="email" type="email" placeholder="Email Address" required style="flex: 1;">
+              <input name="password" type="password" placeholder="Initial Password" required style="flex: 1;">
+              <select name="role">
+                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                <option value="TENANT_ADMIN">TENANT_ADMIN</option>
+                <option value="TENANT_USER">TENANT_USER</option>
+              </select>
+              <input name="tenant_id" type="number" placeholder="Tenant ID (optional)" style="width: 130px;">
+              <button type="submit" class="plain-action-btn">Create User</button>
+              <button type="button" class="plain-button" onclick="$('#user-form').classList.add('hidden')">Cancel</button>
+            </form>
+
+            <div id="user-table">
+              <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading users...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION: FEATURE FLAGS ================= -->
+        <section class="admin-section hidden" data-section="flags">
+          <div class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>Feature Flags &amp; Toggles</h2>
+                <p class="section-desc">Enable or disable capabilities globally or per customer tenant.</p>
+              </div>
+            </div>
+            <div id="flag-table">
+              <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading feature flags...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION: SYSTEM SETTINGS ================= -->
+        <section class="admin-section hidden" data-section="settings">
+          <div class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>Global System Configuration</h2>
+                <p class="section-desc">Modify runtime configuration parameters and persist changes dynamically.</p>
+              </div>
+            </div>
+            <div id="setting-table">
+              <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading settings...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION: COLLECTOR STATUS ================= -->
+        <section class="admin-section hidden" data-section="collectors">
+          <div class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>Collector &amp; Schedule Checkpoints</h2>
+                <p class="section-desc">Verify data ingestion timestamps and operational health per tenant.</p>
+              </div>
+            </div>
+            <div id="collector-table">
+              <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading collector status...</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Password Reset Modal -->
+  <div id="modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 16px; font-weight: 700;">Password Generated</h3>
+        <button id="close-modal-x" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="ti ti-x"></i></button>
+      </div>
+      <p style="color: var(--text-secondary); font-size: 13px;">A new temporary password has been set for this user:</p>
+      <code id="password-value" class="modal-code"></code>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button id="close-modal" class="plain-action-btn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sid = sessionStorage.getItem('session_id');
+    if (!sid) location.href = '/login.html';
+
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const esc = v => String(v ?? '-').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+
+    const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200];
+    const tableStateStore = {};
+
+    function createPaginatedTable(containerSelector, {
+      columns,
+      data = [],
+      renderRow,
+      defaultSize = 10,
+      key = containerSelector,
+      emptyMessage = "No records found"
+    }) {
+      const container = typeof containerSelector === "string" ? $(containerSelector) : containerSelector;
+      if (!container) return;
+
+      const state = tableStateStore[key] || (tableStateStore[key] = {
+        page: 1,
+        size: defaultSize
+      });
+
+      const render = () => {
+        const total = data.length;
+        const size = state.size;
+        const totalPages = Math.max(1, Math.ceil(total / size));
+        state.page = Math.min(Math.max(1, state.page), totalPages);
+
+        const startIdx = (state.page - 1) * size;
+        const pageItems = data.slice(startIdx, startIdx + size);
+        const endIdx = Math.min(startIdx + size, total);
+
+        const rowsHtml = pageItems.length
+          ? pageItems.map((item, idx) => renderRow ? renderRow(item, startIdx + idx) : item).join("")
+          : `<tr><td colspan="${columns.length}" style="text-align: center; color: var(--text-muted); padding: 24px;">${esc(emptyMessage)}</td></tr>`;
+
+        const sizeOptionsHtml = PAGE_SIZE_OPTIONS.map((opt) => 
+          `<option value="${opt}" ${opt === size ? "selected" : ""}>${opt}</option>`
+        ).join("");
+
+        container.innerHTML = `
+          <div class="table-responsive-custom">
+            <table class="modern-data-table">
+              <thead>
+                <tr>${columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer-controls">
+            <span class="footer-info">${total > 0 ? `Showing ${startIdx + 1}-${endIdx} of ${total} entries` : "Showing 0 of 0"}</span>
+            <div class="pagination-buttons">
+              <label class="page-size-label">
+                Rows:
+                <select class="page-size-select table-size-select">
+                  ${sizeOptionsHtml}
+                </select>
+              </label>
+              <button class="page-btn table-prev-btn" ${state.page <= 1 ? "disabled" : ""}><i class="ti ti-chevron-left"></i> Previous</button>
+              <span class="page-current">Page ${state.page} of ${totalPages}</span>
+              <button class="page-btn table-next-btn" ${state.page >= totalPages ? "disabled" : ""}>Next <i class="ti ti-chevron-right"></i></button>
+            </div>
+          </div>
+        `;
+
+        container.querySelector(".table-size-select")?.addEventListener("change", (e) => {
+          state.size = Number(e.target.value);
+          state.page = 1;
+          render();
+        });
+
+        container.querySelector(".table-prev-btn")?.addEventListener("click", () => {
+          if (state.page > 1) {
+            state.page -= 1;
+            render();
+          }
+        });
+
+        container.querySelector(".table-next-btn")?.addEventListener("click", () => {
+          if (state.page < totalPages) {
+            state.page += 1;
+            render();
+          }
+        });
+      };
+
+      render();
+    }
+
+    const headers = (json = false) => ({
+      'Accept': 'application/json',
+      'X-API-Key': window.API_KEY || '',
+      'X-Session-ID': sid,
+      ...(json ? { 'Content-Type': 'application/json' } : {})
+    });
+
+    async function api(path, opts = {}) {
+      const r = await fetch(path, {
+        ...opts,
+        headers: { ...headers(Boolean(opts.body)), ...(opts.headers || {}) }
+      });
+      if (!r.ok) {
+        const errorData = await r.json().catch(() => ({}));
+        throw Error(errorData.error || errorData.detail || 'Request failed');
+      }
+      return r.json();
+    }
+
+    function showNotice(msg, isError = true) {
+      const el = $('#message');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = isError ? 'banner error' : 'banner';
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 6000);
+    }
+
+    async function loadTenants() {
+      const d = await api('/api/admin/tenants');
+      const rows = d.tenants || [];
+      if ($('#stat-tenants-count')) $('#stat-tenants-count').textContent = rows.length;
+      if ($('#tenants-count-badge')) $('#tenants-count-badge').textContent = rows.length;
+
+      createPaginatedTable('#tenant-table', {
+        columns: ['ID', 'Display Label', 'Entra Tenant ID', 'Status', 'Created', 'Actions'],
+        data: rows,
+        defaultSize: 10,
+        key: 'admin-tenants',
+        renderRow: (t) => `
+          <tr>
+            <td><strong>#${esc(t.tenant_id)}</strong></td>
+            <td><strong>${esc(t.display_label)}</strong></td>
+            <td><code style="color:var(--text-muted);">${esc(t.entra_tenant_id)}</code></td>
+            <td>${t.enabled ? '<span class="badge-risk badge-risk-good">Active</span>' : '<span class="badge-risk badge-risk-critical">Disabled</span>'}</td>
+            <td>${esc(t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB') : '-')}</td>
+            <td>
+              <button class="btn-action-sm ${t.enabled ? 'btn-disable' : 'btn-enable'}" data-toggle-tenant="${t.tenant_id}" data-enabled="${t.enabled}">
+                ${t.enabled ? 'Disable' : 'Enable'}
+              </button>
+            </td>
+          </tr>
+        `
+      });
+    }
+
+    async function loadUsers() {
+      const d = await api('/api/admin/users');
+      const rows = d.users || [];
+      if ($('#stat-users-count')) $('#stat-users-count').textContent = rows.length;
+      if ($('#users-count-badge')) $('#users-count-badge').textContent = rows.length;
+
+      createPaginatedTable('#user-table', {
+        columns: ['ID', 'Email', 'Role', 'Tenant', 'Status', 'MFA TOTP', 'Last Login', 'Actions'],
+        data: rows,
+        defaultSize: 10,
+        key: 'admin-users',
+        renderRow: (u) => `
+          <tr>
+            <td>#${esc(u.user_id)}</td>
+            <td><strong>${esc(u.email)}</strong></td>
+            <td><span class="role-pill ${u.role === 'SUPER_ADMIN' ? 'role-admin' : 'role-member'}">${esc(u.role)}</span></td>
+            <td>${u.tenant_id ? '#' + esc(u.tenant_id) : '<span class="text-muted">Global</span>'}</td>
+            <td>${u.is_active ? '<span class="badge-risk badge-risk-good">Active</span>' : '<span class="badge-risk badge-risk-critical">Disabled</span>'}</td>
+            <td>${u.totp_enrolled ? '<span class="badge-risk badge-risk-good">Enrolled</span>' : '<span class="text-muted">Off</span>'}</td>
+            <td>${esc(u.last_login_at ? new Date(u.last_login_at).toLocaleString('en-GB') : '-')}</td>
+            <td>
+              <button class="btn-action-sm ${u.is_active ? 'btn-disable' : 'btn-enable'}" data-toggle-user="${u.user_id}" data-active="${u.is_active}">
+                ${u.is_active ? 'Disable' : 'Enable'}
+              </button>
+              <button class="btn-action-sm" data-reset="${u.user_id}">Reset Password</button>
+            </td>
+          </tr>
+        `
+      });
+    }
+
+    async function loadFlags() {
+      const d = await api('/api/admin/feature-flags');
+      const flags = d.feature_flags || [];
+      if ($('#stat-flags-count')) $('#stat-flags-count').textContent = flags.length;
+
+      createPaginatedTable('#flag-table', {
+        columns: ['Flag Key', 'Description', 'Global State', 'Tenant Overrides'],
+        data: flags,
+        defaultSize: 10,
+        key: 'admin-flags',
+        renderRow: (f) => `
+          <tr>
+            <td><code>${esc(f.flag_name)}</code></td>
+            <td>${esc(f.description)}</td>
+            <td>
+              <button class="btn-action-sm ${f.is_enabled ? 'btn-enable' : 'btn-disable'}" data-flag="${esc(f.flag_name)}" data-enabled="${f.is_enabled}">
+                ${f.is_enabled ? 'Enabled' : 'Disabled'}
+              </button>
+            </td>
+            <td>${(f.tenant_overrides || []).map(x => `Tenant #${esc(x.tenant_id)}: ${x.is_enabled ? 'on' : 'off'}`).join(', ') || '<span class="text-muted">None</span>'}</td>
+          </tr>
+        `
+      });
+    }
+
+    async function loadSettings() {
+      const d = await api('/api/admin/settings');
+      const settings = d.settings || [];
+
+      createPaginatedTable('#setting-table', {
+        columns: ['Setting Key', 'Value', 'Data Type', 'Description', 'Action'],
+        data: settings,
+        defaultSize: 10,
+        key: 'admin-settings',
+        renderRow: (s) => `
+          <tr>
+            <td><strong>${esc(s.setting_key)}</strong></td>
+            <td><input class="inline-editor" data-setting-value="${esc(s.setting_key)}" value="${esc(s.setting_value)}"></td>
+            <td><span class="role-pill role-member">${esc(s.setting_type)}</span></td>
+            <td><small class="text-muted">${esc(s.description)}</small></td>
+            <td><button class="plain-action-btn" style="padding:4px 10px; font-size:11px;" data-save-setting="${esc(s.setting_key)}">Save</button></td>
+          </tr>
+        `
+      });
+    }
+
+    async function loadCollectors() {
+      const d = await api('/api/admin/collector/status');
+      const list = d.collector_status || [];
+
+      createPaginatedTable('#collector-table', {
+        columns: ['Collector ID', 'Tenant ID', 'Checkpoint', 'Last Updated', 'Status'],
+        data: list,
+        defaultSize: 10,
+        key: 'admin-collectors',
+        renderRow: (x) => `
+          <tr>
+            <td><strong>${esc(x.collector_id)}</strong></td>
+            <td>#${esc(x.tenant_id)}</td>
+            <td>${esc(x.checkpoint_at || '-')}</td>
+            <td>${esc(x.updated_at || '-')}</td>
+            <td><span class="badge-risk ${x.checkpoint_at ? 'badge-risk-good' : 'badge-risk-medium'}">${x.checkpoint_at ? 'Ready' : 'Pending'}</span></td>
+          </tr>
+        `
+      });
+    }
+
+    const loaders = {
+      tenants: loadTenants,
+      users: loadUsers,
+      flags: loadFlags,
+      settings: loadSettings,
+      collectors: loadCollectors
+    };
+
+    const sectionSubtitles = {
+      dashboard: "Configure system environments, manage tenant credentials, and review background collectors",
+      tenants: "Add, enable, or disable tenant data ingestion pipelines",
+      users: "Manage console users, roles (Super Admin, Tenant Admin), and security resets",
+      flags: "Enable or disable capabilities globally or per customer tenant",
+      settings: "Modify runtime configuration parameters and persist changes dynamically",
+      collectors: "Verify data ingestion timestamps and operational health per tenant"
+    };
+
+    async function show(page) {
+      const activeSlug = page || 'dashboard';
+      $$('[data-section]').forEach(x => {
+        x.classList.toggle('active', x.dataset.section === activeSlug);
+        x.classList.toggle('hidden', x.dataset.section !== activeSlug);
+      });
+      $$('[data-page]').forEach(x => x.classList.toggle('active', x.dataset.page === activeSlug));
+
+      const titleMap = {
+        dashboard: 'Administration Dashboard',
+        flags: 'Feature Flags Management',
+        collectors: 'Collector Checkpoints',
+        settings: 'System Configuration',
+        tenants: 'Tenant Administration',
+        users: 'User Administration'
+      };
+
+      $('#page-title').textContent = titleMap[activeSlug] || (activeSlug[0].toUpperCase() + activeSlug.slice(1));
+      if ($('#page-subtitle')) $('#page-subtitle').textContent = sectionSubtitles[activeSlug] || "";
+
+      // Close mobile sidebar if open
+      $('#sidebar')?.classList.remove('open');
+
+      if (loaders[activeSlug]) {
+        try {
+          await loaders[activeSlug]();
+        } catch (e) {
+          showNotice('Unable to load ' + activeSlug + ': ' + e.message);
+        }
+      }
+    }
+
+    // Sidebar navigation & mobile toggle
+    $$('[data-page]').forEach(b => {
+      b.onclick = (e) => {
+        e.preventDefault();
+        location.hash = b.dataset.page;
+        show(b.dataset.page);
+      };
+    });
+
+    $('#mobile-menu-btn')?.addEventListener('click', () => {
+      $('#sidebar')?.classList.add('open');
+    });
+    $('#sidebar-close')?.addEventListener('click', () => {
+      $('#sidebar')?.classList.remove('open');
+    });
+
+    $$('[data-add]').forEach(b => {
+      b.onclick = () => $('#' + b.dataset.add + '-form').classList.toggle('hidden');
+    });
+
+    // Form Submissions
+    $('#tenant-form').onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        await api('/api/admin/tenants', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
+        });
+        e.target.reset();
+        e.target.classList.add('hidden');
+        showNotice('Tenant created successfully', false);
+        loadTenants();
+      } catch (err) {
+        showNotice('Failed to create tenant: ' + err.message);
+      }
+    };
+
+    $('#user-form').onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const v = Object.fromEntries(new FormData(e.target));
+        v.tenant_id = v.tenant_id ? Number(v.tenant_id) : null;
+        await api('/api/admin/users', {
+          method: 'POST',
+          body: JSON.stringify(v)
+        });
+        e.target.reset();
+        e.target.classList.add('hidden');
+        showNotice('User created successfully', false);
+        loadUsers();
+      } catch (err) {
+        showNotice('Failed to create user: ' + err.message);
+      }
+    };
+
+    // Click Handlers
+    document.addEventListener('click', async (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+
+      if (b.dataset.toggleTenant) {
+        try {
+          await api('/api/admin/tenants/' + b.dataset.toggleTenant, {
+            method: 'PATCH',
+            body: JSON.stringify({ enabled: b.dataset.enabled !== 'true' })
+          });
+          loadTenants();
+        } catch (err) {
+          showNotice('Failed to toggle tenant: ' + err.message);
+        }
+      }
+
+      if (b.dataset.toggleUser) {
+        try {
+          await api('/api/admin/users/' + b.dataset.toggleUser, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: b.dataset.active !== 'true' })
+          });
+          loadUsers();
+        } catch (err) {
+          showNotice('Failed to toggle user: ' + err.message);
+        }
+      }
+
+      if (b.dataset.reset) {
+        try {
+          const d = await api('/api/admin/users/' + b.dataset.reset + '/reset-password', { method: 'POST' });
+          $('#password-value').textContent = d.new_password;
+          $('#modal').classList.remove('hidden');
+        } catch (err) {
+          showNotice('Failed to reset password: ' + err.message);
+        }
+      }
+
+      if (b.dataset.flag) {
+        try {
+          await api('/api/admin/feature-flags/' + b.dataset.flag, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_enabled: b.dataset.enabled !== 'true' })
+          });
+          loadFlags();
+        } catch (err) {
+          showNotice('Failed to toggle feature flag: ' + err.message);
+        }
+      }
+
+      if (b.dataset.saveSetting) {
+        try {
+          const input = document.querySelector(`[data-setting-value="${CSS.escape(b.dataset.saveSetting)}"]`);
+          await api('/api/admin/settings/' + b.dataset.saveSetting, {
+            method: 'PATCH',
+            body: JSON.stringify({ setting_value: input.value })
+          });
+          showNotice('Setting saved successfully', false);
+          loadSettings();
+        } catch (err) {
+          showNotice('Failed to save setting: ' + err.message);
+        }
+      }
+    });
+
+    $('#close-modal').onclick = () => $('#modal').classList.add('hidden');
+    $('#close-modal-x').onclick = () => $('#modal').classList.add('hidden');
+
+    $('#logout').onclick = async () => {
+      try {
+        await api('/api/auth/logout', { method: 'POST' });
+      } catch (_) {}
+      sessionStorage.removeItem('session_id');
+      location.href = '/login.html';
+    };
+
+    // Theme Toggle Handler
+    const themeBtn = $('#theme-toggle-btn');
+    const updateThemeIcon = (theme) => {
+      if (themeBtn) {
+        themeBtn.innerHTML = theme === 'light' ? '<i class="ti ti-moon"></i>' : '<i class="ti ti-sun"></i>';
+        themeBtn.title = theme === 'light' ? 'Switch to Dark Theme' : 'Switch to White Theme';
+      }
+    };
+    updateThemeIcon(document.documentElement.getAttribute('data-theme') || 'dark');
+    themeBtn?.addEventListener('click', () => {
+      const active = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', active);
+      document.documentElement.classList.toggle('dark', active === 'dark');
+      document.documentElement.classList.toggle('light', active === 'light');
+      localStorage.setItem('theme', active);
+      updateThemeIcon(active);
+    });
+
+    // Initial auth check and boot
+    (async () => {
+      try {
+        const d = await api('/api/auth/me');
+        if (d.user?.role !== 'SUPER_ADMIN') throw Error('Super admin access required');
+        $('#user-email').textContent = d.user.email;
+        const initialSlug = location.hash.replace(/^#\/?/, '') || 'dashboard';
+        show(initialSlug);
+        // Preload stats
+        api('/api/admin/tenants').then(res => {
+          $('#stat-tenants-count').textContent = res.tenants?.length ?? 0;
+          $('#tenants-count-badge').textContent = res.tenants?.length ?? 0;
+        }).catch(() => {});
+        api('/api/admin/users').then(res => {
+          $('#stat-users-count').textContent = res.users?.length ?? 0;
+          $('#users-count-badge').textContent = res.users?.length ?? 0;
+        }).catch(() => {});
+        api('/api/admin/feature-flags').then(res => {
+          $('#stat-flags-count').textContent = res.feature_flags?.length ?? 0;
+        }).catch(() => {});
+      } catch (_) {
+        location.href = '/login.html';
+      }
+    })();
+  </script>
+</body>
+</html>

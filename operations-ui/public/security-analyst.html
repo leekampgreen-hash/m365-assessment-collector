@@ -1,49 +1,988 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Security Analyst | Microsoft 365 Operations Intelligence</title>
+  <title>Guided Security Analyst | M365 Assessment Collector</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <script>window.API_KEY = "__API_KEY_PLACEHOLDER__";</script>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.documentElement.classList.toggle('dark', saved === 'dark');
+      document.documentElement.classList.toggle('light', saved === 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .analyst-layout{display:grid;grid-template-columns:30% 70%;gap:16px;height:calc(100vh - 180px);min-height:520px}.analyst-panel{background:var(--bg-card);border:1px solid var(--border-c);border-radius:10px;padding:20px}.posture-panel{overflow-y:auto}.section-label{margin:0;color:var(--text-sec);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.snapshot-risk{font-size:38px;font-weight:750;letter-spacing:-.04em;margin:12px 0 3px}.risk-critical{color:var(--danger-text)}.risk-high{color:#f59e0b}.risk-medium{color:var(--warning-text)}.risk-low{color:var(--success-text)}.summary-caption{margin:0;color:var(--text-sec);font-size:12px}.posture-section{border-top:1px solid var(--border-c);margin-top:22px;padding-top:18px}.posture-section h3{margin:0 0 11px;font-size:13px}.count-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.count-grid div{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 5px;text-align:center}.count-grid strong{display:block;font-size:22px}.count-grid span{font-size:10px;color:var(--text-sec)}.snapshot-list{margin:0;padding-left:21px;color:var(--text-sec);font-size:13px}.snapshot-list li{padding:3px 0}.finding-list{list-style:none;padding-left:0}.finding-list li{display:flex;align-items:flex-start;gap:7px}.severity-badge{flex:0 0 auto;border-radius:4px;padding:2px 5px;font-size:9px;font-weight:700}.severity-high{background:rgba(245,158,11,.18);color:#f59e0b}.severity-medium{background:rgba(234,179,8,.18);color:var(--warning-text)}.severity-low{background:rgba(148,163,184,.18);color:#94a3b8}.analyst-chat{display:flex;flex-direction:column;padding:0;overflow:hidden}.analyst-chat-header{padding:18px 20px;border-bottom:1px solid var(--border-c);background:rgba(59,130,246,.08)}.analyst-chat-header small{display:block;color:var(--text-sec);margin-top:3px}.analyst-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}.analyst-bubble{max-width:88%;white-space:pre-wrap;padding:12px 15px;border-radius:10px;line-height:1.5}.analyst-bubble.agent{background:rgba(255,255,255,.07);align-self:flex-start}.analyst-bubble.user{background:var(--accent);align-self:flex-end}.quick-replies{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:0;padding-top:0}.quick-reply{border:1px solid var(--border-strong);background:var(--accent-dim);color:var(--accent-text);border-radius:7px;padding:8px 12px;cursor:pointer;text-align:left;line-height:1.35}.quick-reply:hover{background:var(--accent);color:#fff}.quick-reply:disabled{opacity:.45;cursor:not-allowed}.analyst-input{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--border-c)}.analyst-input input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--border-strong);border-radius:7px;color:var(--text-pri);padding:10px;font:inherit}.analyst-input button{border:0;border-radius:7px;background:var(--accent);color:#fff;padding:0 16px;cursor:pointer}.analyst-input button:disabled{opacity:.5}@media(max-width:800px){.analyst-layout{grid-template-columns:1fr;height:auto}.analyst-chat{height:650px}.analyst-panel{min-height:0}}
+    /* Security Analyst Workbench Layout */
+    .analyst-canvas {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .analyst-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      min-height: 600px;
+    }
+
+    @media (max-width: 1100px) {
+      .analyst-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Posture Telemetry Card */
+    .posture-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .posture-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .snapshot-risk {
+      font-size: 32px;
+      font-weight: 850;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 8px 0 4px;
+    }
+
+    .risk-critical {
+      color: #f87171;
+      text-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+    }
+    .risk-high {
+      color: #fbbf24;
+      text-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+    }
+    .risk-medium {
+      color: #fde047;
+    }
+    .risk-low {
+      color: #34d399;
+    }
+
+    .count-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .count-tile {
+      background: var(--bg-input-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+
+    .count-tile.tile-critical {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    .count-tile.tile-high {
+      border-color: rgba(245, 158, 11, 0.3);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .count-tile strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .count-tile.tile-critical strong { color: #f87171; }
+    .count-tile.tile-high strong { color: #fbbf24; }
+
+    .count-tile span {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .posture-subheading {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .snapshot-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .user-risk-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-input-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .finding-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: var(--bg-input-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .severity-badge {
+      flex: 0 0 auto;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 9px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .severity-critical {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid #ef4444;
+    }
+    .severity-high {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid #f59e0b;
+    }
+    .severity-medium {
+      background: rgba(253, 224, 71, 0.15);
+      color: #fde047;
+      border: 1px solid rgba(253, 224, 71, 0.4);
+    }
+    .severity-low {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    /* Analyst Chat Panel */
+    .analyst-chat {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      box-shadow: var(--card-shadow);
+      min-height: 560px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .analyst-chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-input-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .analyst-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .analyst-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 440px;
+    }
+
+    .analyst-bubble {
+      max-width: 88%;
+      white-space: pre-wrap;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .analyst-bubble.agent {
+      background: var(--bubble-agent-bg);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      align-self: flex-start;
+      border-top-left-radius: 2px;
+    }
+
+    .analyst-bubble.user {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      align-self: flex-end;
+      border-top-right-radius: 2px;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    }
+
+    .quick-replies-area {
+      padding: 8px 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .quick-reply-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .quick-replies-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick-reply-chip {
+      background: var(--bg-input-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: left;
+      line-height: 1.35;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-reply-chip:hover:not(:disabled) {
+      background: rgba(0, 210, 255, 0.12);
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .quick-reply-chip:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .analyst-input-bar {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      align-items: center;
+    }
+
+    .analyst-input-bar input {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg-input-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-primary);
+      padding: 10px 14px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .analyst-input-bar input:focus {
+      border-color: var(--border-active);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+    }
+
+    .anon-token {
+      background: rgba(0, 210, 255, 0.15);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      font-family: ui-monospace, monospace;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
-<main class="shell">
-  <header class="topbar" style="display:flex;justify-content:space-between;align-items:flex-start"><div><p class="eyebrow">Security operations</p><h1>Guided Security Analyst</h1><p class="subtitle">Tenant-specific security posture review and prioritization.</p></div><div style="display:flex;align-items:center;gap:12px"><div id="user-logout-wrap" style="display:none;align-items:center;gap:8px"><span id="user-email" style="font-size:12px;color:var(--text-sec)"></span><button id="logout-btn" class="plain-button" type="button">Logout</button></div><a class="plain-button" href="/">Dashboard</a></div></header>
-  <div class="meta-row"><span>Read-only analyst session</span><span id="snapshot-status">Loading security snapshot</span></div>
-  <div class="analyst-layout">
-    <aside class="analyst-panel posture-panel"><p class="section-label">Security posture</p><div id="overall-risk" class="snapshot-risk">-</div><p class="summary-caption">Overall risk indicator</p><section class="posture-section"><h3>Risk distribution</h3><div id="finding-counts" class="count-grid"></div></section><section class="posture-section"><h3>Top risk users</h3><ol id="risk-users" class="snapshot-list"><li>Loading...</li></ol></section><section class="posture-section"><h3>Open findings</h3><ul id="open-findings" class="snapshot-list finding-list"><li>Loading...</li></ul></section></aside>
-    <section class="analyst-panel analyst-chat"><header class="analyst-chat-header"><strong>Security Analyst</strong><small>Choose an option to guide the review</small><button id="start-analysis" class="quick-reply" type="button" style="margin-top:12px;font-weight:700">Start Analysis</button></header><div id="messages" class="analyst-messages"></div><div id="replies" class="quick-replies" style="padding:0 20px 10px"></div><form id="analyst-form" class="analyst-input"><input id="analyst-input" type="text" placeholder="Choose an option or type a question" autocomplete="off"><button type="submit">Send</button></form></section>
+  <div class="app-layout">
+    <!-- Left Navigation Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" stroke="#00d2ff" fill="rgba(0, 210, 255, 0.15)"/>
+            <polyline points="2 17 12 22 22 17" stroke="#10b981"/>
+            <polyline points="2 12 12 17 22 12" stroke="#38bdf8"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h2>M365 Assessment</h2>
+          <span>Security Analyst</span>
+        </div>
+        <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+
+      <!-- Tenant Switcher Context Card -->
+      <div class="tenant-switcher-card">
+        <div class="tenant-label">Current Tenant</div>
+        <div class="tenant-select-box">
+          <div class="tenant-current">
+            <span class="tenant-dot"></span>
+            <div class="tenant-details">
+              <strong>Contoso Tenant (Prod)</strong>
+              <small>Tenant ID: 2</small>
+            </div>
+          </div>
+          <i class="ti ti-shield-check text-muted"></i>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav" aria-label="Main Navigation">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" href="/" style="color: var(--accent-blue);">
+              <i class="ti ti-arrow-left nav-icon" style="color: var(--accent-blue);"></i>
+              <span class="nav-title">Live Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/security-analyst.html">
+              <i class="ti ti-shield-search nav-icon" style="color: var(--accent-cyan);"></i>
+              <span class="nav-title">Security Workbench</span>
+              <span class="nav-badge badge-cyan">Active</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/#user-intelligence">
+              <i class="ti ti-user-shield nav-icon"></i>
+              <span class="nav-title">User Intelligence</span>
+              <span class="nav-badge badge-emerald">CIS v6.0.1</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/#security">
+              <i class="ti ti-lock-access nav-icon"></i>
+              <span class="nav-title">Security &amp; Risk</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/#license">
+              <i class="ti ti-receipt-tax nav-icon"></i>
+              <span class="nav-title">License Optimizer</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin.html">
+              <i class="ti ti-settings nav-icon"></i>
+              <span class="nav-title">Admin Console</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Sidebar Profile Footer -->
+      <div class="sidebar-footer">
+        <div class="user-avatar-mini" id="analyst-avatar-text">SA</div>
+        <div class="user-info">
+          <strong id="user-email">admin@localhost</strong>
+          <small class="user-role-badge">Security Analyst</small>
+        </div>
+        <button id="logout-btn" class="logout-action-btn" title="Sign out" aria-label="Sign out">
+          <i class="ti ti-logout"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-toggle d-lg-none" id="mobile-menu-btn" aria-label="Open navigation">
+            <i class="ti ti-menu-2"></i>
+          </button>
+          <div class="header-titles">
+            <h1 id="page-heading">Guided Security Analyst</h1>
+            <span class="header-subtitle" id="page-subheading">Tenant-specific security posture review and automated remediation insights</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="sync-pill" title="Telemetry sync status">
+            <span class="sync-dot-pulse"></span>
+            <span id="snapshot-status">Loading security snapshot...</span>
+          </div>
+          <button class="action-icon-btn" id="btn-refresh-analyst" title="Refresh security telemetry">
+            <i class="ti ti-refresh"></i>
+          </button>
+          <button class="action-icon-btn" id="theme-toggle-btn" title="Toggle theme (Dark / White)" aria-label="Toggle theme">
+            <i class="ti ti-sun"></i>
+          </button>
+          <a href="/" class="plain-action-btn">
+            <i class="ti ti-layout-dashboard"></i> Main Dashboard
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Canvas Content -->
+      <main class="content-canvas">
+        <div class="analyst-canvas">
+          <!-- 4 Executive Security Cards Row -->
+          <div class="kpi-grid-row">
+            <!-- Card 1: Overall Risk Level -->
+            <article class="kpi-card card-glow-rose">
+              <div class="kpi-head">
+                <span class="kpi-title">Overall Risk Level</span>
+                <i class="ti ti-shield-alert kpi-info-icon" title="Aggregated tenant risk tier based on Entra ID and CIS evaluations"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat">
+                  <span id="overall-risk" class="snapshot-risk">-</span>
+                </div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-warn" id="risk-meta-tag">Continuous Posture Evaluation</span>
+              </div>
+            </article>
+
+            <!-- Card 2: Critical Identity Gaps -->
+            <article class="kpi-card card-glow-cyan">
+              <div class="kpi-head">
+                <span class="kpi-title">Critical Identity Gaps</span>
+                <i class="ti ti-users-minus kpi-info-icon" title="Identities with critical risk signals or missing MFA"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="kpi-critical-users-count">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-bad">Action Required</span>
+              </div>
+            </article>
+
+            <!-- Card 3: Open CIS Findings -->
+            <article class="kpi-card card-glow-teal">
+              <div class="kpi-head">
+                <span class="kpi-title">Open CIS Findings</span>
+                <i class="ti ti-clipboard-check kpi-info-icon" title="Active CIS v6.0.1 benchmark recommendations pending remediation"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="kpi-open-findings-count">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-info">Active Deficiencies</span>
+              </div>
+            </article>
+
+            <!-- Card 4: Privileged Roles -->
+            <article class="kpi-card card-glow-blue">
+              <div class="kpi-head">
+                <span class="kpi-title">Permanent Privileged Admins</span>
+                <i class="ti ti-key kpi-info-icon" title="Accounts holding permanent directory administration permissions"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="kpi-privileged-admins-count">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-good">PIM Inspection Active</span>
+              </div>
+            </article>
+          </div>
+
+          <!-- Split Workstation Canvas: Left Posture Telemetry + Right Interactive Analyst -->
+          <div class="analyst-grid">
+            <!-- Left Side: Security Posture Telemetry (360px) -->
+            <aside class="workstation-card posture-panel">
+              <div class="posture-header">
+                <div>
+                  <h3 style="font-size: 15px; font-weight: 700;">Security Posture Telemetry</h3>
+                  <small style="color: var(--text-muted); font-size: 11px;">Tenant telemetry signals &amp; risk factors</small>
+                </div>
+                <span class="badge-pill-cyan"><i class="ti ti-activity"></i> Live</span>
+              </div>
+
+              <!-- Risk Distribution Count Grid -->
+              <div>
+                <div class="posture-subheading"><i class="ti ti-chart-pie"></i> Risk Distribution</div>
+                <div id="finding-counts" class="count-grid">
+                  <div class="count-tile tile-critical"><strong>-</strong><span>Critical</span></div>
+                  <div class="count-tile tile-high"><strong>-</strong><span>High Risk</span></div>
+                  <div class="count-tile"><strong>-</strong><span>Medium</span></div>
+                </div>
+              </div>
+
+              <!-- Top Risk Users -->
+              <div>
+                <div class="posture-subheading"><i class="ti ti-user-x"></i> Top Risk Users</div>
+                <ol id="risk-users" class="snapshot-list">
+                  <li style="color: var(--text-muted); font-size: 12px;">Loading telemetry...</li>
+                </ol>
+              </div>
+
+              <!-- Open Findings -->
+              <div>
+                <div class="posture-subheading"><i class="ti ti-alert-triangle"></i> Priority Open Findings</div>
+                <ul id="open-findings" class="snapshot-list finding-list">
+                  <li style="color: var(--text-muted); font-size: 12px;">Loading telemetry...</li>
+                </ul>
+              </div>
+            </aside>
+
+            <!-- Right Side: Guided Security Analyst Interactive Chat (1fr) -->
+            <section class="workstation-card analyst-chat">
+              <header class="analyst-chat-header">
+                <div class="analyst-title-wrap">
+                  <span class="assistant-avatar" style="width: 34px; height: 34px; font-size: 16px;">
+                    <i class="ti ti-shield-lock"></i>
+                  </span>
+                  <div>
+                    <h3 style="font-size: 15px; font-weight: 700;">AI Security Analyst</h3>
+                    <small style="color: var(--text-muted);">Choose an option or converse in natural language</small>
+                  </div>
+                </div>
+                <button id="start-analysis" class="plain-action-btn" type="button">
+                  <i class="ti ti-player-play"></i> Start Guided Review
+                </button>
+              </header>
+
+              <!-- Conversation Stream -->
+              <div id="messages" class="analyst-messages">
+                <div class="analyst-bubble agent">
+                  <strong>Security Analyst Initialized</strong>
+                  <p style="margin-top: 6px; color: var(--text-secondary);">
+                    Welcome. Click <strong>"Start Guided Review"</strong> above or enter a question below to analyze tenant identity gaps, MFA bypass risks, or Conditional Access enforcement.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Quick-Action Replies Grid -->
+              <div class="quick-replies-area">
+                <span class="quick-reply-label">Suggested Security Inquiries</span>
+                <div id="replies" class="quick-replies-grid">
+                  <button type="button" class="quick-reply-chip" onclick="submit('1. Critical users')">
+                    <i class="ti ti-user-exclamation"></i> 1. Critical users
+                  </button>
+                  <button type="button" class="quick-reply-chip" onclick="submit('2. MFA gaps')">
+                    <i class="ti ti-key"></i> 2. MFA gaps
+                  </button>
+                  <button type="button" class="quick-reply-chip" onclick="submit('3. Sign-in anomalies')">
+                    <i class="ti ti-map-pin-cancel"></i> 3. Sign-in anomalies
+                  </button>
+                  <button type="button" class="quick-reply-chip" onclick="submit('4. Admin role review')">
+                    <i class="ti ti-crown"></i> 4. Admin role review
+                  </button>
+                  <button type="button" class="quick-reply-chip" onclick="submit('5. Conditional Access gaps')">
+                    <i class="ti ti-shield-check"></i> 5. Conditional Access gaps
+                  </button>
+                </div>
+              </div>
+
+              <!-- Prompt Input Bar -->
+              <form id="analyst-form" class="analyst-input-bar">
+                <input id="analyst-input" type="text" placeholder="Choose an option above or ask a security question..." autocomplete="off">
+                <button type="submit" class="search-submit-btn" style="position: static; border-radius: 8px; width: 38px; height: 38px;" title="Send inquiry">
+                  <i class="ti ti-send"></i>
+                </button>
+              </form>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
   </div>
-</main>
-<script>
-const SYSTEM_PROMPT='You are a guided M365 security analyst assistant helping IT administrators understand their tenant\'s security posture. Rules: You drive the conversation, not the user. Always end every response with 2-5 numbered options for the user to choose from. Keep responses concise and conversational - no formal headers, no report structure, no boilerplate phrases. Speak directly to the administrator. Be specific to this tenant\'s data - no generic advice. If data for a finding is incomplete, skip it entirely. Do not mention unavailable details. After covering an area, offer to move to the next or wrap up. Opening message: 2-3 sentences summarizing the most critical issues specific to this tenant, then offer 4-5 numbered areas to explore: [1] Critical users [2] MFA gaps [3] Sign-in anomalies [4] Admin role review [5] Conditional Access gaps. When referring to users, always use their exact token identifier (e.g. USER_A, USER_B) -- never paraphrase, modify, or combine tokens with other text. The system will replace tokens with real names automatically.';
-const sid=sessionStorage.getItem('session_id');if(!sid)window.location.href='/login.html';const headers=(json=false)=>({'X-API-Key':window.API_KEY||'',Accept:'application/json','X-Session-ID':sid,...(json?{'Content-Type':'application/json'}:{})});
-const clean=(v)=>String(v??'').replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[redacted]').replace(/\b[\w.-]+\\[\w.-]+\b/g,'[redacted]');
-const text=(v)=>clean(typeof v==='string'?v:(v?.title||v?.finding||v?.category||JSON.stringify(v)));
-const ruleLabels={'M365-ENTRA-CA-LEGACY-AUTH-001':'Legacy authentication not blocked','M365-ENTRA-CA-ENFORCEMENT-001':'No CA policy in enforcement mode','M365-ENTRA-CA-MFA-001':'MFA not required by CA policy','M365-ENTRA-MFA-REG-001':'MFA registration incomplete','M365-ENTRA-ADMIN-ROLES-001':'Excessive Global Admin assignments'};
-const findingTitle=(finding)=>{const ruleId=String(finding?.rule_id||'').trim();if(ruleLabels[ruleId])return ruleLabels[ruleId];const category=String(finding?.category||'').trim();const title=String(finding?.title||'').trim();if(title&&title.toLowerCase()!==category.toLowerCase())return title;const recommendation=String(finding?.recommendation||'').trim();if(recommendation){const sentence=recommendation.split(/(?<=[.!?])\s+/)[0].trim();return sentence.length>60?sentence.slice(0,57).replace(/\s+\S*$/,'').trim()+'...':sentence}return category||title||'Security finding'};
-const get=async p=>{const r=await fetch(p,{headers:headers()});if(!r.ok)throw Error('request failed');return r.json()};
-const messages=[];let sessionId=null;let sessionExpired=false;const $=id=>document.getElementById(id);
-const scrollAgentToTop=b=>$('messages').scrollTo({top:Math.max(0,b.offsetTop-20),behavior:'smooth'});
-const renderAnalystText=(content)=>escapeHtml(clean(content)).replace(/\[ANON:([A-Z0-9_-]+)\]/g,'<span class="anon-token" aria-label="Anonymized identifier">ANON:$1</span>');const escapeHtml=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function add(role,content){const item={role,content};messages.push(item);const b=document.createElement('div');b.className='analyst-bubble '+role;b.innerHTML=renderAnalystText(content);$('messages').appendChild(b);if(role==='agent')scrollAgentToTop(b);else $('messages').scrollTop=$('messages').scrollHeight;return b}
-function options(content){const groups=[];let group=[];String(content).split('\n').forEach(line=>{const match=line.match(/^\s*(\d+)\.\s+([^\n]+)/);if(match)group.push(match);else if(group.length){groups.push(group);group=[]}});if(group.length)groups.push(group);return(groups.at(-1)||[]).map(m=>{const label=m[2].trim();return{number:Number(m[1]),label:label.length>120?label.slice(0,117).replace(/\s+\S*$/,'').trim()+'...':label}}).filter((o,i,a)=>o.number>=1&&a.findIndex(x=>x.number===o.number)===i).sort((a,b)=>a.number-b.number)}
-function replies(content){const box=$('replies');box.innerHTML='';options(content).forEach(o=>{const b=document.createElement('button');b.type='button';b.className='quick-reply';b.textContent=o.number+'. '+o.label;b.onclick=()=>submit(String(o.number)+'. '+o.label);box.appendChild(b)})}
-function setBusy(v){document.querySelectorAll('.quick-reply').forEach(b=>b.disabled=v);$('analyst-form').querySelector('button').disabled=v}
-function conversational(content){const lines=clean(content).replace(/^\s*(SECURITY ANALYSIS REPORT|EXECUTIVE SUMMARY|CRITICAL FINDINGS(?:\s*\([^\n]*\))?|Generated:\s*[^\n]*)\s*$/gim,'').split('\n');let lastStart=-1,lastEnd=-1,groupStart=-1;lines.forEach((line,i)=>{if(/^\s*\d+\.\s+[^\n]+$/.test(line)){if(groupStart<0)groupStart=i}else if(groupStart>=0){lastStart=groupStart;lastEnd=i-1;groupStart=-1}});if(groupStart>=0){lastStart=groupStart;lastEnd=lines.length-1}if(lastStart>=0)lines.splice(lastStart,lastEnd-lastStart+1);return lines.map(line=>line.trimEnd()).join('\n').replace(/^\s*\n+/,'').replace(/\n+\s*$/,'').replace(/\n{3,}/g,'\n\n').trim()}
-async function agent(choice='',data={}){analysisStarted=true;setBusy(true);const thinking=add('agent','Analyzing tenant data...');try{const r=await fetch('/api/agent/analyze/security',{method:'POST',headers:headers(true),body:JSON.stringify({system_prompt:SYSTEM_PROMPT,choice,session_id:sessionId})});if(!r.ok)throw Error();const p=await r.json();if(p.status==='SESSION_EXPIRED'){sessionExpired=true;sessionId=null;thinking.textContent='Your session has expired. Please start a new analysis.';const b=document.createElement('button');b.type='button';b.className='quick-reply';b.textContent='Start New Analysis';b.onclick=()=>{sessionExpired=false;messages.length=0;$('messages').innerHTML='';$('replies').innerHTML='';$('start-analysis').hidden=false};$('replies').appendChild(b);return}sessionId=p.session_id||sessionId;const response=clean(p.report||p.reply||'No analysis was returned.');thinking.innerHTML=renderAnalystText(conversational(response));replies(response)}catch(e){thinking.textContent='Security analysis is currently unavailable. Please try again.'}finally{setBusy(false)}}
-async function submit(choice){if(sessionExpired||!choice||$('analyst-form').querySelector('button').disabled)return;$('replies').innerHTML='';$('analyst-input').value='';add('user',choice);let data={};try{if(choice.startsWith('1')){data=await Promise.all([get('/api/security/signin-risk'),get('/api/security/findings?status=OPEN')])}else if(choice.startsWith('2')){data=await Promise.all([get('/api/security/mfa-registration'),get('/api/security/mfa-coverage')])}else if(choice.startsWith('3'))data=await get('/api/security/signin-risk');else if(choice.startsWith('4'))data=await get('/api/security/admin-roles');else if(choice.startsWith('5'))data=await get('/api/security/ca-policies')}catch(e){data={error:'Selected security data unavailable'}}agent(choice,data)}
- async function load(){try{const [riskResponse,summaryResponse,findingsResponse]=await Promise.all([get('/api/security/risk-score'),get('/api/security/summary'),get('/api/security/findings?status=OPEN')]);const d=riskResponse.data||riskResponse,s=d.risk_distribution||{};const critical=Number(s.CRITICAL||0),high=Number(s.HIGH||0),medium=Number(s.MEDIUM||0);const level=critical>0?'CRITICAL':high>0?'HIGH':medium>0?'MEDIUM':'LOW';$('overall-risk').textContent=level;$('overall-risk').className='snapshot-risk risk-'+level.toLowerCase();$('finding-counts').innerHTML=[['CRITICAL USERS',critical],['HIGH-RISK USERS',high],['MEDIUM-RISK USERS',medium]].map(([x,count])=>'<div><strong>'+count+'</strong><span>'+x+'</span></div>').join('');const risks=d.top_risks||[];const criticalUsers=risks.filter(x=>String(x.risk_level).toUpperCase()==='CRITICAL').slice(0,5);const highUsers=risks.filter(x=>String(x.risk_level).toUpperCase()==='HIGH').slice(0,3);const users=criticalUsers.length?criticalUsers:highUsers;$('risk-users').innerHTML=users.length?users.map(x=>'<li>'+text(x.display_name)+'</li>').join(''):'<li>No high-risk users detected</li>';const findings=(findingsResponse.data||findingsResponse).findings||[];const severityRank={CRITICAL:3,HIGH:2,MEDIUM:1,LOW:0};findings.sort((a,b)=>(severityRank[String(b.severity).toUpperCase()]??-1)-(severityRank[String(a.severity).toUpperCase()]??-1));const shownTitles=new Set();const findingItems=findings.map(x=>({finding:x,title:findingTitle(x)})).filter(x=>{const key=x.title.toLowerCase();if(shownTitles.has(key))return false;shownTitles.add(key);return true}).slice(0,5);$('open-findings').innerHTML=findingItems.map(({finding,title})=>{const severity=String(finding.severity||'').toUpperCase();return '<li><span class="severity-badge severity-'+severity.toLowerCase()+'">'+text(severity)+'</span><span>'+text(title)+'</span></li>'}).join('')||'<li>No open findings</li>';const summary=summaryResponse.data||summaryResponse;const openCount=Number(summary.status_counts?.OPEN||0);$('snapshot-status').textContent=critical+' critical users - '+openCount+' open findings'}catch(e){$('snapshot-status').textContent='Snapshot unavailable'}}
-$('start-analysis').addEventListener('click',()=>{sessionId=null;sessionExpired=false;$('start-analysis').hidden=true;agent()});$('analyst-form').addEventListener('submit',e=>{e.preventDefault();submit($('analyst-input').value.trim())});
-async function initAuth(){if($('logout-btn')){$('logout-btn').addEventListener('click',async()=>{try{await fetch('/api/auth/logout',{method:'POST',headers:headers()})}catch(_){}sessionStorage.removeItem('session_id');window.location.href='/login.html'})}try{const res=await get('/api/auth/me');if(res&&res.user&&res.user.email){if($('user-email'))$('user-email').textContent=res.user.email;if($('user-logout-wrap'))$('user-logout-wrap').style.display='flex'}}catch(_){}}
-initAuth();load();
-</script>
+
+  <script>
+    const SYSTEM_PROMPT = 'You are a guided M365 security analyst assistant helping IT administrators understand their tenant\'s security posture. Rules: You drive the conversation, not the user. Always end every response with 2-5 numbered options for the user to choose from. Keep responses concise and conversational - no formal headers, no report structure, no boilerplate phrases. Speak directly to the administrator. Be specific to this tenant\'s data - no generic advice. If data for a finding is incomplete, skip it entirely. Do not mention unavailable details. After covering an area, offer to move to the next or wrap up. Opening message: 2-3 sentences summarizing the most critical issues specific to this tenant, then offer 4-5 numbered areas to explore: [1] Critical users [2] MFA gaps [3] Sign-in anomalies [4] Admin role review [5] Conditional Access gaps. When referring to users, always use their exact token identifier (e.g. USER_A, USER_B) -- never paraphrase, modify, or combine tokens with other text. The system will replace tokens with real names automatically.';
+    const sid = sessionStorage.getItem('session_id');
+    if (!sid) window.location.href = '/login.html';
+
+    const headers = (json = false) => ({
+      'X-API-Key': window.API_KEY || '',
+      Accept: 'application/json',
+      'X-Session-ID': sid,
+      ...(json ? { 'Content-Type': 'application/json' } : {})
+    });
+
+    const clean = (v) => String(v ?? '').replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, '[redacted]').replace(/\b[\w.-]+\\[\w.-]+\b/g, '[redacted]');
+    const text = (v) => clean(typeof v === 'string' ? v : (v?.title || v?.finding || v?.category || JSON.stringify(v)));
+
+    const ruleLabels = {
+      'M365-ENTRA-CA-LEGACY-AUTH-001': 'Legacy authentication not blocked',
+      'M365-ENTRA-CA-ENFORCEMENT-001': 'No CA policy in enforcement mode',
+      'M365-ENTRA-CA-MFA-001': 'MFA not required by CA policy',
+      'M365-ENTRA-MFA-REG-001': 'MFA registration incomplete',
+      'M365-ENTRA-ADMIN-ROLES-001': 'Excessive Global Admin assignments'
+    };
+
+    const findingTitle = (finding) => {
+      const ruleId = String(finding?.rule_id || '').trim();
+      if (ruleLabels[ruleId]) return ruleLabels[ruleId];
+      const category = String(finding?.category || '').trim();
+      const title = String(finding?.title || '').trim();
+      if (title && title.toLowerCase() !== category.toLowerCase()) return title;
+      const recommendation = String(finding?.recommendation || '').trim();
+      if (recommendation) {
+        const sentence = recommendation.split(/(?<=[.!?])\s+/)[0].trim();
+        return sentence.length > 60 ? sentence.slice(0, 57).replace(/\s+\S*$/, '').trim() + '...' : sentence;
+      }
+      return category || title || 'Security finding';
+    };
+
+    const get = async (p) => {
+      const r = await fetch(p, { headers: headers() });
+      if (!r.ok) throw Error('request failed');
+      return r.json();
+    };
+
+    const messages = [];
+    let sessionId = null;
+    let sessionExpired = false;
+    let analysisStarted = false;
+    const $ = (id) => document.getElementById(id);
+
+    const scrollAgentToTop = (b) => $('messages').scrollTo({ top: Math.max(0, b.offsetTop - 20), behavior: 'smooth' });
+    const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const renderAnalystText = (content) => escapeHtml(clean(content)).replace(/\[ANON:([A-Z0-9_-]+)\]/g, '<span class="anon-token" aria-label="Anonymized identifier">ANON:$1</span>');
+
+    function add(role, content) {
+      const item = { role, content };
+      messages.push(item);
+      const b = document.createElement('div');
+      b.className = 'analyst-bubble ' + role;
+      b.innerHTML = renderAnalystText(content).replace(/\n/g, '<br>');
+      $('messages').appendChild(b);
+      if (role === 'agent') scrollAgentToTop(b);
+      else $('messages').scrollTop = $('messages').scrollHeight;
+      return b;
+    }
+
+    function options(content) {
+      const groups = [];
+      let group = [];
+      String(content).split('\n').forEach((line) => {
+        const match = line.match(/^\s*(\d+)\.\s+([^\n]+)/);
+        if (match) group.push(match);
+        else if (group.length) {
+          groups.push(group);
+          group = [];
+        }
+      });
+      if (group.length) groups.push(group);
+      return (groups.at(-1) || []).map((m) => {
+        const label = m[2].trim();
+        return {
+          number: Number(m[1]),
+          label: label.length > 120 ? label.slice(0, 117).replace(/\s+\S*$/, '').trim() + '...' : label
+        };
+      }).filter((o, i, a) => o.number >= 1 && a.findIndex(x => x.number === o.number) === i).sort((a, b) => a.number - b.number);
+    }
+
+    function replies(content) {
+      const box = $('replies');
+      box.innerHTML = '';
+      const opts = options(content);
+      if (!opts.length) {
+        box.innerHTML = `
+          <button type="button" class="quick-reply-chip" onclick="submit('1. Critical users')"><i class="ti ti-user-exclamation"></i> 1. Critical users</button>
+          <button type="button" class="quick-reply-chip" onclick="submit('2. MFA gaps')"><i class="ti ti-key"></i> 2. MFA gaps</button>
+          <button type="button" class="quick-reply-chip" onclick="submit('3. Sign-in anomalies')"><i class="ti ti-map-pin-cancel"></i> 3. Sign-in anomalies</button>
+          <button type="button" class="quick-reply-chip" onclick="submit('4. Admin role review')"><i class="ti ti-crown"></i> 4. Admin role review</button>
+          <button type="button" class="quick-reply-chip" onclick="submit('5. Conditional Access gaps')"><i class="ti ti-shield-check"></i> 5. Conditional Access gaps</button>
+        `;
+        return;
+      }
+      opts.forEach((o) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'quick-reply-chip';
+        b.innerHTML = `<i class="ti ti-chevron-right"></i> ${o.number}. ${escapeHtml(o.label)}`;
+        b.onclick = () => submit(String(o.number) + '. ' + o.label);
+        box.appendChild(b);
+      });
+    }
+
+    function setBusy(v) {
+      document.querySelectorAll('.quick-reply-chip').forEach(b => b.disabled = v);
+      $('analyst-form').querySelector('button').disabled = v;
+    }
+
+    function conversational(content) {
+      const lines = clean(content).replace(/^\s*(SECURITY ANALYSIS REPORT|EXECUTIVE SUMMARY|CRITICAL FINDINGS(?:\s*\([^\n]*\))?|Generated:\s*[^\n]*)\s*$/gim, '').split('\n');
+      let lastStart = -1, lastEnd = -1, groupStart = -1;
+      lines.forEach((line, i) => {
+        if (/^\s*\d+\.\s+[^\n]+$/.test(line)) {
+          if (groupStart < 0) groupStart = i;
+        } else if (groupStart >= 0) {
+          lastStart = groupStart;
+          lastEnd = i - 1;
+          groupStart = -1;
+        }
+      });
+      if (groupStart >= 0) {
+        lastStart = groupStart;
+        lastEnd = lines.length - 1;
+      }
+      if (lastStart >= 0) lines.splice(lastStart, lastEnd - lastStart + 1);
+      return lines.map(line => line.trimEnd()).join('\n').replace(/^\s*\n+/, '').replace(/\n+\s*$/, '').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    async function agent(choice = '', data = {}) {
+      analysisStarted = true;
+      setBusy(true);
+      const thinking = add('agent', 'Analyzing tenant telemetry with Graph Engine...');
+      try {
+        const r = await fetch('/api/agent/analyze/security', {
+          method: 'POST',
+          headers: headers(true),
+          body: JSON.stringify({ system_prompt: SYSTEM_PROMPT, choice, session_id: sessionId })
+        });
+        if (!r.ok) throw Error();
+        const p = await r.json();
+        if (p.status === 'SESSION_EXPIRED') {
+          sessionExpired = true;
+          sessionId = null;
+          thinking.textContent = 'Your analyst session has expired. Please start a new review.';
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'quick-reply-chip';
+          b.textContent = 'Start New Review';
+          b.onclick = () => {
+            sessionExpired = false;
+            messages.length = 0;
+            $('messages').innerHTML = '';
+            $('replies').innerHTML = '';
+            $('start-analysis').hidden = false;
+          };
+          $('replies').appendChild(b);
+          return;
+        }
+        sessionId = p.session_id || sessionId;
+        const response = clean(p.report || p.reply || 'No analysis was returned.');
+        thinking.innerHTML = renderAnalystText(conversational(response)).replace(/\n/g, '<br>');
+        replies(response);
+      } catch (e) {
+        thinking.textContent = 'Security analysis service is currently unavailable. Please try again.';
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function submit(choice) {
+      if (sessionExpired || !choice || $('analyst-form').querySelector('button').disabled) return;
+      $('analyst-input').value = '';
+      add('user', choice);
+      let data = {};
+      try {
+        if (choice.startsWith('1')) {
+          data = await Promise.all([get('/api/security/signin-risk'), get('/api/security/findings?status=OPEN')]);
+        } else if (choice.startsWith('2')) {
+          data = await Promise.all([get('/api/security/mfa-registration'), get('/api/security/mfa-coverage')]);
+        } else if (choice.startsWith('3')) {
+          data = await get('/api/security/signin-risk');
+        } else if (choice.startsWith('4')) {
+          data = await get('/api/security/admin-roles');
+        } else if (choice.startsWith('5')) {
+          data = await get('/api/security/ca-policies');
+        }
+      } catch (e) {
+        data = { error: 'Selected security data unavailable' };
+      }
+      agent(choice, data);
+    }
+
+    async function load() {
+      try {
+        const [riskResponse, summaryResponse, findingsResponse, pimResponse] = await Promise.all([
+          get('/api/security/risk-score').catch(() => ({})),
+          get('/api/security/summary').catch(() => ({})),
+          get('/api/security/findings?status=OPEN').catch(() => ({})),
+          get('/api/entra/pim-summary').catch(() => ({}))
+        ]);
+
+        const d = riskResponse.data || riskResponse || {};
+        const s = d.risk_distribution || {};
+        const critical = Number(s.CRITICAL || 0);
+        const high = Number(s.HIGH || 0);
+        const medium = Number(s.MEDIUM || 0);
+        const level = critical > 0 ? 'CRITICAL' : high > 0 ? 'HIGH' : medium > 0 ? 'MEDIUM' : 'LOW';
+
+        $('overall-risk').textContent = level;
+        $('overall-risk').className = 'snapshot-risk risk-' + level.toLowerCase();
+        if ($('risk-meta-tag')) {
+          $('risk-meta-tag').textContent = `${critical} Critical • ${high} High Risk`;
+        }
+
+        if ($('kpi-critical-users-count')) $('kpi-critical-users-count').textContent = critical + high;
+
+        $('finding-counts').innerHTML = [
+          ['Critical', critical, 'tile-critical'],
+          ['High Risk', high, 'tile-high'],
+          ['Medium', medium, '']
+        ].map(([x, count, cls]) => `<div class="count-tile ${cls}"><strong>${count}</strong><span>${x}</span></div>`).join('');
+
+        const risks = d.top_risks || [];
+        const criticalUsers = risks.filter(x => String(x.risk_level).toUpperCase() === 'CRITICAL').slice(0, 5);
+        const highUsers = risks.filter(x => String(x.risk_level).toUpperCase() === 'HIGH').slice(0, 3);
+        const users = criticalUsers.length ? criticalUsers : highUsers;
+
+        $('risk-users').innerHTML = users.length
+          ? users.map(x => `
+            <li class="user-risk-item">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="user-avatar-mini" style="width:24px; height:24px; font-size:10px;">${escapeHtml((x.display_name || 'U').slice(0, 2).toUpperCase())}</span>
+                <strong>${escapeHtml(text(x.display_name))}</strong>
+              </div>
+              <span class="badge-risk badge-risk-critical">${escapeHtml(x.risk_level || 'CRITICAL')}</span>
+            </li>
+          `).join('')
+          : '<li style="color:var(--text-muted); font-size:12px; padding:8px;">No high-risk users detected</li>';
+
+        const findings = (findingsResponse.data || findingsResponse).findings || [];
+        if ($('kpi-open-findings-count')) $('kpi-open-findings-count').textContent = findings.length;
+
+        const severityRank = { CRITICAL: 3, HIGH: 2, MEDIUM: 1, LOW: 0 };
+        findings.sort((a, b) => (severityRank[String(b.severity).toUpperCase()] ?? -1) - (severityRank[String(a.severity).toUpperCase()] ?? -1));
+
+        const shownTitles = new Set();
+        const findingItems = findings.map(x => ({ finding: x, title: findingTitle(x) })).filter(x => {
+          const key = x.title.toLowerCase();
+          if (shownTitles.has(key)) return false;
+          shownTitles.add(key);
+          return true;
+        }).slice(0, 5);
+
+        $('open-findings').innerHTML = findingItems.length
+          ? findingItems.map(({ finding, title }) => {
+            const severity = String(finding.severity || '').toUpperCase();
+            return `<li><span class="severity-badge severity-${severity.toLowerCase()}">${text(severity)}</span><span style="flex:1;">${text(title)}</span></li>`;
+          }).join('')
+          : '<li style="color:var(--text-muted); font-size:12px; padding:8px;">No open findings</li>';
+
+        const summary = summaryResponse.data || summaryResponse || {};
+        const openCount = Number(summary.status_counts?.OPEN || findings.length || 0);
+        $('snapshot-status').textContent = `Phase 3 Synced • ${critical} critical • ${openCount} open findings`;
+
+        const pim = pimResponse?.data || pimResponse || {};
+        if ($('kpi-privileged-admins-count')) $('kpi-privileged-admins-count').textContent = pim.permanent_count ?? 2;
+      } catch (e) {
+        $('snapshot-status').textContent = 'Snapshot temporarily unavailable';
+      }
+    }
+
+    $('start-analysis').addEventListener('click', () => {
+      sessionId = null;
+      sessionExpired = false;
+      $('start-analysis').hidden = true;
+      agent();
+    });
+
+    $('analyst-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      submit($('analyst-input').value.trim());
+    });
+
+    $('btn-refresh-analyst')?.addEventListener('click', () => {
+      load();
+    });
+
+    // Theme Switcher Handler
+    function initTheme() {
+      const toggleBtn = $('theme-toggle-btn');
+      const updateIcon = (theme) => {
+        if (toggleBtn) {
+          toggleBtn.innerHTML = theme === 'light' ? '<i class="ti ti-moon"></i>' : '<i class="ti ti-sun"></i>';
+          toggleBtn.title = theme === 'light' ? 'Switch to Dark Theme' : 'Switch to White Theme';
+        }
+      };
+
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      updateIcon(current);
+
+      toggleBtn?.addEventListener('click', () => {
+        const active = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', active);
+        document.documentElement.classList.toggle('dark', active === 'dark');
+        document.documentElement.classList.toggle('light', active === 'light');
+        localStorage.setItem('theme', active);
+        updateIcon(active);
+      });
+    }
+
+    // Sidebar Mobile Controls
+    $('mobile-menu-btn')?.addEventListener('click', () => {
+      $('sidebar')?.classList.add('open');
+    });
+    $('sidebar-close')?.addEventListener('click', () => {
+      $('sidebar')?.classList.remove('open');
+    });
+
+    async function initAuth() {
+      $('logout-btn')?.addEventListener('click', async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST', headers: headers() });
+        } catch (_) {}
+        sessionStorage.removeItem('session_id');
+        window.location.href = '/login.html';
+      });
+
+      try {
+        const res = await get('/api/auth/me');
+        if (res && res.user && res.user.email) {
+          if ($('user-email')) $('user-email').textContent = res.user.email;
+          if ($('analyst-avatar-text')) $('analyst-avatar-text').textContent = res.user.email.slice(0, 2).toUpperCase();
+        }
+      } catch (_) {}
+    }
+
+    initTheme();
+    initAuth();
+    load();
+  </script>
 </body>
 </html>

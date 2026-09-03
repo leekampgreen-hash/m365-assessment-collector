@@ -3,131 +3,569 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Microsoft 365 Operations Intelligence</title>
+  <title>M365 Assessment Collector | Operations & Security Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <script>window.API_KEY = "__API_KEY_PLACEHOLDER__";</script>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.documentElement.classList.toggle('dark', saved === 'dark');
+      document.documentElement.classList.toggle('light', saved === 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="shell p-4 md:p-8">
-    <header class="topbar flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-      <div>
-        <p class="eyebrow">Operations control plane</p>
-        <h1>Microsoft 365 Operations Intelligence</h1>
-        <p class="subtitle">Tenant-level view of adoption, activity, and license utilization.</p><p style="margin-top:12px"><a class="plain-button" href="/security-analyst.html">Security Analyst</a> <a id="admin-link" class="plain-button hidden" href="/admin.html">Admin Portal</a></p>
+  <div class="app-layout">
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" stroke="#00d2ff" fill="rgba(0, 210, 255, 0.15)"/>
+            <polyline points="2 17 12 22 22 17" stroke="#10b981"/>
+            <polyline points="2 12 12 17 22 12" stroke="#38bdf8"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h2>M365 Assessment</h2>
+          <span>Collector Ops</span>
+        </div>
+        <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
+          <i class="ti ti-x"></i>
+        </button>
       </div>
-      <div class="flex items-center gap-4">
-        <div class="health-wrap"><span id="health-dot" class="dot pending"></span><span id="health-label">Checking analytics service</span></div>
-        <div id="user-logout-wrap" class="flex items-center gap-2 hidden">
-          <span id="user-email" class="text-xs text-secondary"></span>
-          <button id="logout-btn" class="plain-button" type="button">Logout</button>
+
+      <!-- Tenant Switcher Dropdown -->
+      <div class="tenant-switcher-card">
+        <div class="tenant-label">Tenant switcher</div>
+        <div class="tenant-select-box" id="tenant-box">
+          <div class="tenant-current">
+            <span class="tenant-dot"></span>
+            <div class="tenant-details">
+              <strong id="tenant-name">Contoso Tenant (Prod)</strong>
+              <small id="tenant-id-label">Tenant ID: 2</small>
+            </div>
+          </div>
+          <i class="ti ti-chevron-down text-muted"></i>
         </div>
       </div>
-    </header>
 
-    <div id="error-banner" class="banner error hidden" role="alert"></div>
-    <section class="meta-row" aria-label="Dashboard metadata">
-      <span>Read-only operational snapshot</span><span>As of <strong id="as-of">--</strong></span>
-    </section>
+      <!-- Navigation Menu -->
+      <nav class="sidebar-nav" aria-label="Main Navigation">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link active" href="#overview" data-view="overview">
+              <i class="ti ti-layout-grid nav-icon"></i>
+              <span class="nav-title">Overview</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#user-intelligence" data-view="user-intelligence">
+              <i class="ti ti-users nav-icon"></i>
+              <span class="nav-title">User Intelligence</span>
+              <span class="nav-badge badge-cyan">CIS v6.0.1</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#security" data-view="security">
+              <i class="ti ti-shield-check nav-icon"></i>
+              <span class="nav-title">Security &amp; Risk</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#license" data-view="license">
+              <i class="ti ti-credit-card nav-icon"></i>
+              <span class="nav-title">License Optimizer</span>
+              <span class="nav-badge badge-emerald" id="sidebar-savings-badge">$4.2k savings</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#workloads" data-view="workloads">
+              <i class="ti ti-cloud-computing nav-icon"></i>
+              <span class="nav-title">Workload Adoption</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#endpoints" data-view="endpoints">
+              <i class="ti ti-device-laptop nav-icon"></i>
+              <span class="nav-title">Intune &amp; Defender</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-sparkle" href="#assistant" data-view="assistant">
+              <i class="ti ti-sparkles nav-icon"></i>
+              <span class="nav-title">M365 AI Assistant</span>
+              <span class="sparkle-chip"><i class="ti ti-sparkles"></i></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin.html" id="admin-link">
+              <i class="ti ti-settings nav-icon"></i>
+              <span class="nav-title">Admin Settings</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
 
-    <div id="loading" class="loading">Loading operational data<span class="pulse">...</span></div>
-    <div id="dashboard" class="hidden">
-      <div id="exec-summary" class="exec-summary" style="display:none">
-        <div class="exec-summary-header">
-          <span id="exec-summary-icon">Warning</span>
-          <span id="exec-summary-count"></span>
+      <!-- Sidebar User Profile Footer -->
+      <div class="sidebar-footer">
+        <div class="user-avatar-mini" id="user-avatar-text">AD</div>
+        <div class="user-info">
+          <strong id="user-email">admin@localhost</strong>
+          <small class="user-role-badge">Super Admin</small>
         </div>
-        <div id="exec-summary-items" class="exec-summary-items"></div>
+        <button id="logout-btn" class="logout-action-btn" title="Sign out" aria-label="Sign out">
+          <i class="ti ti-logout"></i>
+        </button>
       </div>
-      <section id="overview-section">
-        <div class="section-heading"><div><p class="eyebrow">At a glance</p><h2>Overview</h2></div></div>
-        <div id="summary-cards" class="card-grid three !grid-cols-1 md:!grid-cols-3 gap-4"></div>
-      </section>
-      <section id="usage-overview-section">
-        <div class="section-heading"><div><p class="eyebrow">Usage overview</p><h2>Usage</h2></div></div>
-        <div class="panel-body"><div id="usage-summaries" class="card-grid three !grid-cols-1 md:!grid-cols-3 gap-4"></div></div>
-      </section>
-      <section id="usage-drilldown-section"><div id="usage-detail" class="panel hidden"><div class="section-heading"><div><p class="eyebrow">Usage drilldown</p><h2 id="detail-title">Workload usage</h2></div><button id="back-overview" class="plain-button" type="button">Back to overview</button></div><div id="detail-summary" class="usage-filter-grid"></div><div id="detail-metrics" class="metric-list"></div><div id="detail-users" class="table-wrap"></div></div></section>
-       <nav class="panel-nav" aria-label="Inventory navigation"><a class="plain-button" href="#entra-named-locations-section">Named locations</a> <a class="plain-button" href="#intune-policies-section">Compliance policies</a> <a class="plain-button" href="#intune-apps-section">Mobile apps</a></nav>
-       <section id="entitlements-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Entitlements</p><h2>License</h2></div></div><div class="panel-body"><div id="licenses" class="table-wrap"></div></div></section>
-        <section id="license-optimizer-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Optimization</p><h2>License optimizer</h2></div></div><div class="panel-body"><div id="license-optimizer-summary" class="optimizer-summary"></div><div id="license-optimizer-savings"></div><div id="license-optimizer-controls" class="detail-controls"></div><div id="license-optimizer-table" class="table-wrap"></div></div></section>
-         <section id="sharepoint-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Site usage</p><h2>SharePoint sites</h2></div></div><div class="panel-body"><div id="sharepoint-summary-cards" class="card-grid four grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div><div id="sharepoint-sites-table" class="table-wrap"></div></div></section>
-          <section id="intune-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Endpoint security</p><h2>Intune compliance</h2></div></div><div class="panel-body"><div id="intune-summary-cards" class="card-grid four grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div><div id="intune-devices-table" class="table-wrap"></div></div></section>
-                       <section id="entra-named-locations-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Identity security</p><h2>Named locations</h2></div></div><div class="panel-body"><div id="entra-named-locations-cards" class="card-grid three"></div><div id="entra-named-locations-table" class="table-wrap"></div></div></section>
-            <section id="intune-policies-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Compliance</p><h2>Compliance policies</h2></div></div><div class="panel-body"><div id="intune-policies-cards" class="card-grid three"></div><div id="intune-policies-table" class="table-wrap"></div></div></section>
-            <section id="intune-apps-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Applications</p><h2>Mobile apps</h2></div></div><div class="panel-body"><div id="intune-apps-cards" class="card-grid three"></div><div id="intune-apps-table" class="table-wrap"></div></div></section>
-            <section id="entra-guests-section" class="panel"><div class="section-heading"><div><p class="eyebrow">External identities</p><h2>Guest Users</h2></div></div><div class="panel-body"><div id="entra-guests-summary-cards" class="card-grid four grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div><div id="entra-guests-table" class="table-wrap"></div></div></section>
-            <section id="entra-auth-methods-section" class="panel"><div class="section-heading"><div><p class="eyebrow">Identity security</p><h2>Authentication Methods</h2></div></div><div class="panel-body"><div id="entra-auth-methods-summary-cards" class="card-grid four grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div><div id="entra-auth-methods-breakdown" class="metric-list"></div><div id="entra-auth-methods-table" class="table-wrap"></div></div></section>
-             <nav aria-label="Protection navigation"><a class="plain-button" href="#def-p02-section">DEF-P02</a> <a class="plain-button" href="#def-p03-section">DEF-P03</a> <a class="plain-button" href="#dlp-p01-section">DLP-P01</a> <a class="plain-button" href="#dlp-p02-section">DLP-P02</a></nav>
-             <section id="def-p02-section" class="panel"><div class="section-heading"><div><p class="eyebrow">DEF-P02</p><h2>Defender for Office 365 alerts</h2></div></div><div class="panel-body"><div id="def-p02-cards" class="card-grid four"></div><div id="def-p02-table" class="table-wrap"></div></div></section>
-             <section id="def-p03-section" class="panel"><div class="section-heading"><div><p class="eyebrow">DEF-P03</p><h2>Defender Cloud App alerts</h2></div></div><div class="panel-body"><div id="def-p03-cards" class="card-grid three"></div><div id="def-p03-table" class="table-wrap"></div></div></section>
-             <section id="dlp-p01-section" class="panel"><div class="section-heading"><div><p class="eyebrow">DLP-P01</p><h2>DLP alerts</h2></div></div><div class="panel-body"><div id="dlp-p01-cards" class="card-grid four"></div><div id="dlp-p01-table" class="table-wrap"></div></div></section>
-             <section id="dlp-p02-section" class="panel"><div class="section-heading"><div><p class="eyebrow">DLP-P02</p><h2>DLP sensitivity labels</h2></div></div><div class="panel-body"><div id="dlp-p02-cards" class="card-grid four"></div><div id="dlp-p02-table" class="table-wrap"></div></div></section>
+    </aside>
 
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-toggle d-lg-none" id="mobile-menu-btn" aria-label="Open navigation">
+            <i class="ti ti-menu-2"></i>
+          </button>
+          <div class="header-titles">
+            <h1 id="page-heading">Executive</h1>
+            <span class="header-subtitle" id="page-subheading">Tenant-level view of adoption, security posture, and license optimization</span>
+          </div>
+        </div>
 
+        <div class="topbar-search-wrap">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" id="global-search-input" placeholder="Ask M365 Assistant or search tenant metrics..." autocomplete="off">
+          <button class="search-submit-btn" id="global-search-submit" title="Send to M365 Assistant">
+            <i class="ti ti-arrow-right"></i>
+          </button>
+        </div>
 
+        <div class="topbar-right">
+          <div class="sync-pill" title="Scheduler pipeline execution status">
+            <span class="sync-dot-pulse"></span>
+            <span id="sync-status-text">Phase 3 Synced 10m ago</span>
+          </div>
+          <button class="action-icon-btn" id="btn-refresh-data" title="Refresh live telemetry">
+            <i class="ti ti-refresh"></i>
+          </button>
+          <button class="action-icon-btn" id="theme-toggle-btn" title="Toggle theme (Dark / White)" aria-label="Toggle theme">
+            <i class="ti ti-sun"></i>
+          </button>
+          <a href="/security-analyst.html" class="plain-action-btn" title="Security Analyst view">
+            <i class="ti ti-shield"></i> Security Workbench
+          </a>
+        </div>
+      </header>
 
+      <!-- Global Error / Notice Banner -->
+      <div id="error-banner" class="banner error hidden" role="alert"></div>
 
+      <!-- Main Content Views Container -->
+      <main class="content-canvas">
+        <div id="loading" class="loading-state">
+          <div class="spinner-neon"></div>
+          <p>Hydrating live Microsoft 365 tenant telemetry...</p>
+        </div>
 
+        <!-- =================== VIEW: OVERVIEW (EXECUTIVE DASHBOARD) =================== -->
+        <div id="view-overview" class="view-panel">
+          <!-- Executive Security Alert Banner (if issues detected) -->
+          <div id="exec-summary" class="exec-alert-card" style="display:none">
+            <div class="exec-summary-header">
+              <span class="alert-icon-wrap"><i class="ti ti-alert-triangle"></i></span>
+              <strong id="exec-summary-count">Analyzing security findings...</strong>
+            </div>
+            <div id="exec-summary-items" class="exec-summary-items"></div>
+          </div>
+
+          <!-- Top Row: 4 Glowing Executive KPI Cards -->
+          <section class="kpi-grid-row" aria-label="Executive KPIs">
+            <!-- Card 1: Total Users & Composite Risk Score -->
+            <article class="kpi-card card-glow-cyan">
+              <div class="kpi-head">
+                <span class="kpi-title">Total Users with Composite Risk Score</span>
+                <i class="ti ti-info-circle kpi-info-icon" title="Total directory users scored against CIS M365 v6.0.1 benchmark"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="kpi-total-users">39</div>
+                <div class="gauge-wrap">
+                  <svg class="semi-gauge" viewBox="0 0 100 50">
+                    <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"/>
+                    <path class="gauge-fill gauge-cyan" id="gauge-user-risk" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="126" stroke-dashoffset="35"/>
+                  </svg>
+                  <div class="gauge-needle" id="gauge-user-needle"></div>
+                </div>
+              </div>
+              <div class="kpi-footer-chips" id="kpi-risk-distribution">
+                <span class="chip-mini chip-critical">2 Critical</span>
+                <span class="chip-mini chip-high">5 High</span>
+                <span class="chip-mini chip-medium">8 Med</span>
+                <span class="chip-mini chip-good">24 Good</span>
+              </div>
+            </article>
+
+            <!-- Card 2: MFA Adoption Rate -->
+            <article class="kpi-card card-glow-emerald">
+              <div class="kpi-head">
+                <span class="kpi-title">MFA Adoption rate</span>
+                <i class="ti ti-info-circle kpi-info-icon" title="Percentage of directory users with registered and active MFA methods"></i>
+              </div>
+              <div class="kpi-body flex-center">
+                <div class="radial-ring-wrap">
+                  <svg class="radial-ring" viewBox="0 0 100 100">
+                    <circle class="ring-bg" cx="50" cy="50" r="40" fill="none" stroke-width="8"/>
+                    <circle class="ring-fill ring-emerald" id="mfa-radial-fill" cx="50" cy="50" r="40" fill="none" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="13"/>
+                  </svg>
+                  <div class="ring-center-stat">
+                    <span class="stat-number" id="kpi-mfa-rate">94.8%</span>
+                    <span class="stat-caption">Covered</span>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-good" id="kpi-mfa-registered-label">37 of 39 Registered</span>
+              </div>
+            </article>
+
+            <!-- Card 3: License Parking Reclaimable Cost -->
+            <article class="kpi-card card-glow-teal">
+              <div class="kpi-head">
+                <span class="kpi-title">License Parking Reclaimable Cost</span>
+                <i class="ti ti-info-circle kpi-info-icon" title="Estimated annual license savings from reclaimable inactive or disabled accounts"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-currency-stat">
+                  <span class="currency-symbol">$</span>
+                  <span class="currency-value" id="kpi-parking-savings">3,840</span>
+                  <span class="currency-frequency">/yr saved</span>
+                </div>
+                <div class="kpi-parking-meter">
+                  <div class="meter-bar">
+                    <div class="meter-bar-fill" id="kpi-parking-bar" style="width: 32%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-warn" id="kpi-parking-seats-label">14 Parked Licenses Detected</span>
+              </div>
+            </article>
+
+            <!-- Card 4: CIS Benchmark Compliance -->
+            <article class="kpi-card card-glow-blue">
+              <div class="kpi-head">
+                <span class="kpi-title">CIS Benchmark Compliance</span>
+                <i class="ti ti-info-circle kpi-info-icon" title="Assessment adherence against CIS Microsoft 365 Foundations Benchmark v6.0.1"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="gauge-wrap gauge-wrap-lg">
+                  <svg class="semi-gauge" viewBox="0 0 100 50">
+                    <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"/>
+                    <path class="gauge-fill gauge-blue" id="gauge-cis-fill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="126" stroke-dashoffset="28"/>
+                  </svg>
+                  <div class="gauge-center-val" id="kpi-cis-score">78%</div>
+                </div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-info">Level 1 &amp; Level 2 Controls</span>
+              </div>
+            </article>
+          </section>
+
+          <!-- Split Workstation Canvas -->
+          <div class="split-workstation-grid">
+            <!-- Left Side: User Intelligence Table (~65% width) -->
+            <section class="workstation-card user-intelligence-panel">
+              <div class="panel-header">
+                <div class="panel-header-title">
+                  <h2>User Intelligence</h2>
+                  <span class="badge-pill-cyan">Live CIS Scoring</span>
+                </div>
+                <div class="panel-header-actions">
+                  <div class="table-search-box">
+                    <i class="ti ti-search"></i>
+                    <input type="text" id="user-table-search" placeholder="Search user, role, risk...">
+                  </div>
+                  <div class="filter-pills-group">
+                    <button class="filter-pill-btn active" data-risk-filter="ALL">All</button>
+                    <button class="filter-pill-btn pill-critical" data-risk-filter="CRITICAL">Critical</button>
+                    <button class="filter-pill-btn pill-high" data-risk-filter="HIGH">High</button>
+                    <button class="filter-pill-btn pill-good" data-risk-filter="GOOD">Good</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-responsive-custom">
+                <table class="modern-data-table" id="user-intelligence-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 38px;"><input type="checkbox" id="select-all-users" aria-label="Select all users"></th>
+                      <th>User</th>
+                      <th>Role</th>
+                      <th>MFA Method</th>
+                      <th>Risk</th>
+                    </tr>
+                  </thead>
+                  <tbody id="user-intelligence-tbody">
+                    <!-- Populated dynamically via JS -->
+                    <tr>
+                      <td colspan="5" class="table-loading-cell">Loading user intelligence data...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Table Pagination -->
+              <div class="table-footer-controls">
+                <span class="footer-info" id="user-table-range">Showing 1-10 of 39</span>
+                <div class="pagination-buttons">
+                  <label class="page-size-label">
+                    Rows: 
+                    <select id="user-page-size" class="page-size-select">
+                      <option value="10" selected>10</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                    </select>
+                  </label>
+                  <button class="page-btn" id="user-page-prev" disabled><i class="ti ti-chevron-left"></i> Previous</button>
+                  <span class="page-current" id="user-page-counter">Page 1 of 4</span>
+                  <button class="page-btn" id="user-page-next">Next <i class="ti ti-chevron-right"></i></button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Right Side: M365 AI Assistant Panel (~35% width) -->
+            <aside class="workstation-card ai-assistant-panel" id="overview-assistant-card">
+              <div class="assistant-card-header">
+                <div class="assistant-identity">
+                  <span class="assistant-avatar"><i class="ti ti-sparkles"></i></span>
+                  <div>
+                    <h3>M365 AI Assistant</h3>
+                    <span class="status-indicator-online">Connected to Graph Engine</span>
+                  </div>
+                </div>
+                <div class="assistant-header-badges">
+                  <span class="insight-badge">Intelligent insights</span>
+                </div>
+              </div>
+
+              <div class="assistant-conversation-stream" id="assistant-stream">
+                <!-- Initial Assistant Welcome Message -->
+                <div class="chat-message-bubble bubble-agent">
+                  <div class="bubble-content">
+                    <p>Intelligent insights are generated in real-time. I have evaluated your tenant telemetry and discovered:</p>
+                    <ul class="assistant-bullet-points">
+                      <li><strong>4 inactive licensed accounts</strong> eligible for license parking reclamation ($3,840/yr).</li>
+                      <li><strong>2 Global Admins</strong> without FIDO2 hardware MFA keys.</li>
+                      <li><strong>94.8%</strong> overall tenant MFA enforcement rate.</li>
+                    </ul>
+                    <p class="bubble-subtext">How can I assist you with your tenant operations today?</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Suggested Action Chips -->
+              <div class="assistant-suggestion-chips" id="assistant-chips">
+                <button class="chip-action" data-prompt="Analyze security posture and show top findings">
+                  Suggested actions <i class="ti ti-arrow-up-right"></i>
+                </button>
+                <button class="chip-action" data-prompt="List all parked licenses with cost savings">
+                  Unused licenses <i class="ti ti-receipt"></i>
+                </button>
+                <button class="chip-action" data-prompt="Who are the administrators without MFA registered?">
+                  Admin MFA Gaps <i class="ti ti-shield-alert"></i>
+                </button>
+              </div>
+
+              <!-- Assistant Interactive Input -->
+              <form class="assistant-prompt-bar" id="assistant-chat-form">
+                <input type="text" id="assistant-prompt-input" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" id="assistant-send-btn" aria-label="Send query">
+                  <i class="ti ti-send"></i>
+                </button>
+              </form>
+            </aside>
+          </div>
+        </div>
+
+        <!-- =================== VIEW: USER INTELLIGENCE (FULL TABLE) =================== -->
+        <div id="view-user-intelligence" class="view-panel hidden">
+          <section class="workstation-card">
+            <div class="panel-header">
+              <div>
+                <h2>User Intelligence &amp; CIS Posture Matrix</h2>
+                <p class="section-desc">Comprehensive identity assessment, authentication methods, last sign-in telemetry, and assigned licenses.</p>
+              </div>
+            </div>
+            <div class="detail-controls" style="margin-bottom: 16px;">
+              <input type="search" id="full-user-search" placeholder="Search by name, UPN, department, or job title...">
+              <select id="full-user-role-filter">
+                <option value="ALL">All Roles</option>
+                <option value="ADMIN">Privileged Administrators</option>
+                <option value="MEMBER">Standard Members</option>
+              </select>
+            </div>
+            <div class="table-responsive-custom" id="full-user-table-container">
+              <!-- Rendered via JS -->
+            </div>
+          </section>
+        </div>
+
+        <!-- =================== VIEW: SECURITY & RISK =================== -->
+        <div id="view-security" class="view-panel hidden">
+          <section class="workstation-card mb-4">
+            <div class="panel-header">
+              <div>
+                <h2>Security Posture &amp; CIS Controls</h2>
+                <p class="section-desc">MFA coverage, Conditional Access policy evaluations, and privileged role distribution.</p>
+              </div>
+            </div>
+            <div class="security-cards-row">
+              <div id="entra-auth-methods-summary-cards" class="card-grid four"></div>
+            </div>
+            <div class="mt-4">
+              <div id="entra-auth-methods-breakdown" class="metric-list"></div>
+            </div>
+          </section>
+
+          <section class="workstation-card mb-4">
+            <div class="panel-header">
+              <h2>Privileged Roles &amp; PIM Assignments</h2>
+            </div>
+            <div id="pim-cards" class="card-grid four mb-4"></div>
+            <div id="pim-table" class="table-wrap"></div>
+          </section>
+
+          <section class="workstation-card">
+            <div class="panel-header">
+              <h2>Conditional Access &amp; Named Locations</h2>
+            </div>
+            <div id="entra-named-locations-cards" class="card-grid three mb-4"></div>
+            <div id="entra-named-locations-table" class="table-wrap"></div>
+          </section>
+        </div>
+
+        <!-- =================== VIEW: LICENSE OPTIMIZER =================== -->
+        <div id="view-license" class="view-panel hidden">
+          <section class="workstation-card mb-4">
+            <div class="panel-header">
+              <div>
+                <h2>License Parking &amp; Cost Reclamation</h2>
+                <p class="section-desc">Identify inactive users, disabled accounts, and over-licensed seats to recover recurring licensing costs.</p>
+              </div>
+            </div>
+            <div id="license-optimizer-summary" class="optimizer-summary"></div>
+            <div id="license-optimizer-savings"></div>
+            <div id="license-optimizer-controls" class="detail-controls"></div>
+            <div id="license-optimizer-table" class="table-wrap"></div>
+          </section>
+
+          <section class="workstation-card">
+            <div class="panel-header">
+              <h2>Subscribed SKUs &amp; Utilization</h2>
+            </div>
+            <div id="licenses" class="table-wrap"></div>
+          </section>
+        </div>
+
+        <!-- =================== VIEW: WORKLOAD ADOPTION =================== -->
+        <div id="view-workloads" class="view-panel hidden">
+          <section class="workstation-card mb-4">
+            <div class="panel-header">
+              <div>
+                <h2>Workload Adoption (Exchange &amp; OneDrive)</h2>
+                <p class="section-desc">Click any card below to open detailed user-level usage metrics.</p>
+              </div>
+            </div>
+            <div id="usage-summaries" class="card-grid two"></div>
+          </section>
+
+          <section id="usage-drilldown-section">
+            <div id="usage-detail" class="workstation-card hidden">
+              <div class="panel-header">
+                <h2 id="detail-title">Workload usage</h2>
+                <button id="back-overview" class="plain-button" type="button">Close Drilldown</button>
+              </div>
+              <div id="detail-summary" class="usage-filter-grid"></div>
+              <div id="detail-metrics" class="metric-list"></div>
+              <div id="detail-users" class="table-wrap"></div>
+            </div>
+          </section>
+
+          <section class="workstation-card mt-4">
+            <div class="panel-header">
+              <h2>SharePoint Online Sites</h2>
+            </div>
+            <div id="sharepoint-summary-cards" class="card-grid four mb-4"></div>
+            <div id="sharepoint-sites-table" class="table-wrap"></div>
+          </section>
+        </div>
+
+        <!-- =================== VIEW: INTUNE & DEFENDER =================== -->
+        <div id="view-endpoints" class="view-panel hidden">
+          <section class="workstation-card mb-4">
+            <div class="panel-header">
+              <div>
+                <h2>Intune Endpoint Compliance</h2>
+                <p class="section-desc">Device compliance states, managed operating systems, and non-compliant devices.</p>
+              </div>
+            </div>
+            <div id="intune-summary-cards" class="card-grid four mb-4"></div>
+            <div id="intune-devices-table" class="table-wrap"></div>
+          </section>
+
+          <section class="workstation-card mb-4">
+            <div class="panel-header">
+              <h2>Defender Endpoint Health &amp; Threat State</h2>
+            </div>
+            <div id="defender-cards" class="card-grid four mb-4"></div>
+            <div id="defender-table" class="table-wrap"></div>
+          </section>
+
+          <section class="workstation-card">
+            <div class="panel-header">
+              <h2>Guest Users Governance</h2>
+            </div>
+            <div id="entra-guests-summary-cards" class="card-grid four mb-4"></div>
+            <div id="entra-guests-table" class="table-wrap"></div>
+          </section>
+        </div>
+
+        <!-- =================== VIEW: M365 AI ASSISTANT (FULL VIEW) =================== -->
+        <div id="view-assistant" class="view-panel hidden">
+          <section class="workstation-card full-assistant-container">
+            <div class="panel-header">
+              <div class="assistant-identity">
+                <span class="assistant-avatar"><i class="ti ti-sparkles"></i></span>
+                <div>
+                  <h2>M365 Operations Assistant</h2>
+                  <p class="section-desc">Ask questions about tenant security, inactive users, licensing, or compliance.</p>
+                </div>
+              </div>
+            </div>
+            <div class="full-chat-stream" id="full-assistant-stream">
+              <!-- Reuses messages -->
+            </div>
+            <form class="assistant-prompt-bar" id="full-assistant-chat-form">
+              <input type="text" id="full-assistant-prompt-input" placeholder="Ask anything about this Microsoft 365 tenant..." autocomplete="off">
+              <button type="submit" aria-label="Send message">
+                <i class="ti ti-send"></i>
+              </button>
+            </form>
+          </section>
+        </div>
+      </main>
     </div>
-  </main>
-  <button id="chat-toggle" class="chat-toggle" type="button" aria-label="Open M365 assistant">Chat</button>
-  <section id="chat-panel" class="chat-panel" aria-label="M365 Assistant">
-    <header class="chat-header"><span class="chat-avatar">AI</span><div><strong>M365 Assistant</strong><small>Ask about your tenant</small></div><button id="chat-expand" class="chat-expand" type="button" aria-label="Expand assistant"><i class="ti ti-arrows-maximize"></i></button><button id="chat-close" class="chat-close" type="button" aria-label="Close assistant">Close</button></header>
-    <div id="chat-messages" class="chat-messages"></div>
-    <div class="chat-input-area"><input id="chat-input" type="text" placeholder="Ask about your tenant..." autocomplete="off"><button id="chat-send" type="button" aria-label="Send message">Send</button></div>
-  </section>
+  </div>
+
   <script src="/app.js"></script>
-  <script>
-    (() => {
-      const button = document.getElementById("chat-toggle");
-       const panel = document.getElementById("chat-panel");
-       const expand = document.getElementById("chat-expand");
-       const close = document.getElementById("chat-close");
-      const input = document.getElementById("chat-input");
-      const send = document.getElementById("chat-send");
-      const messages = document.getElementById("chat-messages");
-      const history = [];
-      const addMessage = (role, content) => {
-        const bubble = document.createElement("div");
-        bubble.className = `chat-bubble ${role}`;
-        bubble.textContent = content;
-        messages.appendChild(bubble);
-        messages.scrollTop = messages.scrollHeight;
-        return bubble;
-      };
-      const submit = async () => {
-        const message = input.value.trim();
-        if (!message || send.disabled) return;
-        input.value = "";
-        addMessage("user", message);
-        history.push({ role: "user", content: message });
-        send.disabled = true;
-        const thinking = addMessage("agent", "Thinking...");
-        try {
-          const response = await fetch("/api/agent/chat", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", "X-API-Key": window.API_KEY || "", "X-Session-ID": sessionStorage.getItem("session_id") || "" }, body: JSON.stringify({ message, history }) });
-          if (!response.ok) throw new Error("request failed");
-          const data = await response.json();
-          thinking.textContent = data.reply || "Sorry, I couldn't reach the assistant. Please try again.";
-          history.push({ role: "assistant", content: thinking.textContent });
-        } catch (_) {
-          thinking.textContent = "Sorry, I couldn't reach the assistant. Please try again.";
-          history.push({ role: "assistant", content: thinking.textContent });
-        } finally { send.disabled = false; input.focus(); }
-      };
-      button.addEventListener("click", () => { panel.classList.toggle("open"); if (panel.classList.contains("open")) input.focus(); });
-       expand.addEventListener("click", () => {
-         const expanded = panel.classList.toggle("expanded");
-         expand.setAttribute("aria-label", expanded ? "Collapse assistant" : "Expand assistant");
-         expand.firstElementChild.className = `ti ti-arrows-${expanded ? "minimize" : "maximize"}`;
-       });
-       close.addEventListener("click", () => panel.classList.remove("open"));
-      send.addEventListener("click", submit);
-      input.addEventListener("keydown", (event) => { if (event.key === "Enter") submit(); });
-      addMessage("agent", "Hi! Ask me anything about your M365 tenant - adoption, licenses, inactivity, or health.");
-    })();
-  </script>
 </body>
 </html>
