@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 3188a17 - AGT-DEV01-FIX3
-Active task: UI-V2-SHELL - New UI shell with sidebar navigation and dummy pages
+Last commit: UI-V2-SHELL-FIX
+Active task: None - Fixed nginx static file serving for /v2/
 Backlog: AGT-MULTI-P01, SAAS-P01, SAAS-P03, UI-P01, LIC-OPTIMIZER-P01
 
 ### Commit
