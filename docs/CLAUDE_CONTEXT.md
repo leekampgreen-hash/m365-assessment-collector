@@ -57,24 +57,23 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 8fea6a1 - AGT-DEV01-FIX
-Active task: AGT-DEV01-FIX2 - Fix test_agent.py container networking
+Last commit: 2ecc3b2 - AGT-DEV01-FIX2
+Active task: AGT-DEV01-FIX3 - Fix operations-api bind address to 0.0.0.0
 Backlog: AGT-MULTI-P01, SAAS-P01, SAAS-P03, UI-P01, LIC-OPTIMIZER-P01
 
 ### Commit
     git add -A
-    git commit -m "AGT-DEV01-FIX2: Fix test_agent.py container networking"
+    git commit -m "AGT-DEV01-FIX3: Fix operations-api bind address to 0.0.0.0"
     git push origin main
 
 ### Acceptance Criteria
-- [ ] docs/CLAUDE_CONTEXT.md contains all sections above verbatim
-- [ ] Last commit shows 9d6748c — UI-BATCH-01
-- [ ] Workflow section present
-- [ ] Worker prompt format section present
-- [ ] No code files touched
+- [x] docker exec graph-agent-collector-dev python3 -c "..." reaches health endpoint successfully
+- [x] API_HOST set to 0.0.0.0 in docker-compose.yml operations-api environment
+- [x] operations-api rebuilt and restarted
 - [ ] Do NOT introduce non-ASCII characters
+- [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
 
 ### HARD RULES
-- Docs only — do NOT touch any code files
+- Only touch docker-compose.yml environment section for operations-api
 - Do NOT modify any SEALED workloads
 - Do NOT introduce non-ASCII characters
