@@ -31,6 +31,18 @@
     {"id":"Q027","category":"out_of_scope","question":"How do I cook a vegetable curry?","expected_tools":[],"should_reject":true,"description":"Cooking request"},
     {"id":"Q028","category":"out_of_scope","question":"What are today's top news headlines?","expected_tools":[],"should_reject":true,"description":"News request"},
     {"id":"Q029","category":"out_of_scope","question":"How do I repair the brakes on my car?","expected_tools":[],"should_reject":true,"description":"Non-M365 technical request"},
-    {"id":"Q030","category":"out_of_scope","question":"Can you tell me a personal joke about my family?","expected_tools":[],"should_reject":true,"description":"Personal request"}
+    {"id":"Q030","category":"out_of_scope","question":"Can you tell me a personal joke about my family?","expected_tools":[],"should_reject":true,"description":"Personal request"},
+    {"id":"Q031","category":"license","question":"Show me our license parking report to identify wasted licenses and inactive users.","expected_tools":["get_license_parking"],"should_reject":false,"description":"License parking and waste analysis"},
+    {"id":"Q032","category":"license","question":"Which disabled or inactive accounts are holding unused licenses?","expected_tools":["get_license_parking"],"should_reject":false,"description":"License parking for inactive and disabled accounts"},
+    {"id":"Q033","category":"security","question":"Can you generate a full security analysis report of our tenant?","expected_tools":["run_security_analysis"],"should_reject":false,"description":"Comprehensive security analysis report"},
+    {"id":"Q034","category":"security","question":"Run a comprehensive security assessment of our M365 security posture.","expected_tools":["run_security_analysis"],"should_reject":false,"description":"Security posture assessment"},
+    {"id":"Q035","category":"security","question":"What are the detailed signin breakdown and login locations per user?","expected_tools":["get_signin_detail"],"should_reject":false,"description":"User sign-in detail and locations"},
+    {"id":"Q036","category":"security","question":"Who is signing in with legacy authentication or from unusual countries?","expected_tools":["get_signin_detail"],"should_reject":false,"description":"Sign-in detail breakdown"},
+    {"id":"Q037","category":"security","question":"Show the risk ranking and overall user risk scores across the tenant.","expected_tools":["get_risk_score"],"should_reject":false,"description":"User risk ranking"},
+    {"id":"Q038","category":"security","question":"Who is risky and has the highest combined risk score?","expected_tools":["get_risk_score"],"should_reject":false,"description":"Combined user risk analysis"},
+    {"id":"Q039","category":"security","question":"Who has administrator roles assigned and what is the admin count?","expected_tools":["get_admin_roles"],"should_reject":false,"description":"Admin role assignments"},
+    {"id":"Q040","category":"security","question":"List privileged administrator roles and who has global admin access.","expected_tools":["get_admin_roles"],"should_reject":false,"description":"Privileged admin role inventory"},
+    {"id":"Q041","category":"security","question":"What is the MFA registration status for all users?","expected_tools":["get_mfa_registration"],"should_reject":false,"description":"User MFA registration status"},
+    {"id":"Q042","category":"security","question":"Who is unregistered or without MFA configured in the organization?","expected_tools":["get_mfa_registration"],"should_reject":false,"description":"Unregistered MFA user list"}
   ]
 }

@@ -40,7 +40,7 @@ def call_agent(message: str) -> dict:
         except (json.JSONDecodeError, UnicodeDecodeError):
             payload = body
         return {"error": payload, "status_code": error.code}
-    except (OSError, ValueError) as error:
+    except (TimeoutError, OSError, ValueError) as error:
         return {"error": str(error)}
 
 
