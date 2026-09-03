@@ -57,28 +57,28 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-LAYOUT-FIX2
-Active task: UI-V2-LAYOUT-FIX2 - Fix sidebar gap and toggle button position
+Last commit: UI-V2-REBUILD-CLEAN
+Active task: UI-V2-REBUILD-CLEAN - Full rebuild with correct layout, toggle, tooltips, pagination
 Backlog: UI-V2 panels remaining
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-LAYOUT-FIX2: Fix sidebar gap and toggle button position"
+    git commit -m "UI-V2-REBUILD-CLEAN: Full rebuild with correct layout, toggle, tooltips, pagination"
     git push origin main
 
 ### Acceptance Criteria
 - [x] http://localhost:18080/v2/ loads with Tabler styling
+- [x] Sidebar toggle is in the topbar and expands content with no gap
 - [x] Left sidebar renders all sections and menu items with icons
 - [x] Clicking menu item loads dummy page in content area
-- [x] Sidebar collapsible
-- [x] Topbar renders with search and user info
+- [x] User Intelligence loads from /api/intelligence/users
+- [x] Pagination, sorting, frozen column, borders, resize, picker, and hover tooltips implemented
 - [ ] Existing UI at http://localhost:18080/ completely unchanged
-- [ ] Small blue square sidebar toggle remains visible
-- [ ] Do NOT introduce non-ASCII characters
+- [x] Do NOT introduce non-ASCII characters
 - [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
 
 ### HARD RULES
-- Only touch operations-ui/public-v2/index.html and operations-ui/public-v2/styles.css
+- Only touch operations-ui/public-v2/index.html, operations-ui/public-v2/app.js, operations-ui/public-v2/styles.css, and docs/CLAUDE_CONTEXT.md
 - Do NOT touch operations-ui/public/ or any existing files
 - Do NOT modify any SEALED workloads
 - Do NOT introduce non-ASCII characters

@@ -7,35 +7,19 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="styles.css">
+  <script>window.API_KEY = "jruPSFSNmL7BjKjD_fp8J8MTgSNgTV1NHm3QJ4msdlk";</script>
 </head>
 <body>
   <div class="page">
-    <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
-      <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-        <h1 class="navbar-brand navbar-brand-autodark"><span class="navbar-brand-image">M365</span><span>Assessment Collector</span></h1>
-        <div class="collapse navbar-collapse" id="sidebar-menu">
-          <ul class="navbar-nav pt-lg-3" id="navigation"></ul>
-        </div>
-      </div>
-    </aside>
+    <nav id="sidebar" class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+      <div class="container-fluid"><h1 class="navbar-brand"><span class="brand-mark">M365</span><span>Assessment Collector</span></h1><div class="navbar-collapse show"><ul id="navigation" class="navbar-nav pt-lg-3"></ul></div></div>
+    </nav>
     <div class="page-wrapper">
-      <header class="page-header d-print-none">
-        <div class="container-xl">
-          <div class="row g-2 align-items-center">
-            <button id="sidebar-toggle-btn" type="button" title="Toggle sidebar">&#9776;</button>
-            <div class="col"><div class="page-pretitle">Microsoft 365</div><h2 class="page-title" id="header-title">Overview</h2></div>
-            <div class="col-auto"><span class="avatar">A</span></div>
-          </div>
-        </div>
-      </header>
-      <div class="page-body">
-        <div class="container-xl" id="content"></div>
-      </div>
+      <header class="page-header"><button id="sidebar-toggle" type="button" aria-label="Toggle sidebar">&#9776;</button><div class="breadcrumb">MICROSOFT 365 / <strong id="header-title">Overview</strong></div><div class="topbar-right"><span class="avatar">A</span></div></header>
+      <div class="page-body" id="page-content"></div>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
-  <script>window.API_KEY = "jruPSFSNmL7BjKjD_fp8J8MTgSNgTV1NHm3QJ4msdlk";</script>
   <script src="app.js"></script>
 </body>
 </html>
