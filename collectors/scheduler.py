@@ -28,7 +28,17 @@ class CollectionScheduler:
 
     def _load_config(self, path: str) -> dict:
         with Path(path).open() as config_file:
-            return json.load(config_file)
+            config = json.load(config_file)
+        additions = {
+            "identity_daily": ["G01-009", "G01-011", "G01-012", "G01-015", "G01-016", "G01-017"],
+            "security_daily": ["G01-013", "G01-014"],
+            "usage_reports_daily": ["TM-001"],
+        }
+        for schedule in config.get("schedules", []):
+            schedule_name = schedule.get("name")
+            endpoint_ids = additions.get(schedule_name, [])
+            schedule["endpoints"] = list(dict.fromkeys(schedule.get("endpoints", []) + endpoint_ids))
+        return config
 
     def _run_command(self, label: str, args: list[str], permissions: list[str]) -> None:
         try:

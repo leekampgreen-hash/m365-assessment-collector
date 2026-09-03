@@ -57,13 +57,13 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 4c7bef1
-Active task: UI-V2-TABLE-RESIZE-UX - Improve resize handle and column border visibility
+Last commit: 3582333
+Active task: SCHEDULER-FIX-COMMIT - Add missing collectors to scheduler and commit
 Backlog: UI-V2 panels remaining
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-SHELL-TABLER: Replace shell with Tabler-based layout"
+    git commit -m "SCHEDULER-FIX: Add missing collectors to scheduler"
     git push origin main
 
 ### Acceptance Criteria
