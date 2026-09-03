@@ -1,9 +1,17 @@
 :root {
   --tblr-body-bg: #f6f8fb;
 }
-.page > .navbar-vertical,
+.page {
+  transition: all 0.25s ease;
+}
+.sidebar-hidden {
+  display: none !important;
+}
 .page > .page-wrapper {
-  transition: width .25s ease, margin-left .25s ease;
+  transition: all 0.25s ease;
+}
+.page > .page-wrapper {
+  width: 100%;
 }
 .sidebar-toggle {
   position: absolute;

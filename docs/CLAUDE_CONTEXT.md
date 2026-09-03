@@ -57,13 +57,13 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-SIDEBAR-TOGGLE
-Active task: UI-V2-SIDEBAR-TOGGLE - Add sidebar hide/show toggle button
+Last commit: UI-V2-SIDEBAR-TOGGLE-FIX
+Active task: UI-V2-SIDEBAR-TOGGLE-FIX - Fix sidebar toggle button visibility
 Backlog: UI-V2 panels remaining
 
 ### Commit
     git add -A
-    git commit -m "SCHEDULER-FIX: Add missing collectors to scheduler"
+    git commit -m "UI-V2-SIDEBAR-TOGGLE-FIX: Fix sidebar toggle button visibility"
     git push origin main
 
 ### Acceptance Criteria
