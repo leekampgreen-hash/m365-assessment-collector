@@ -197,6 +197,20 @@ async function loadOptimizerPanel() {
   renderOptimizer();
 }
 
+async function loadPolicyPanels() {
+  const [locations, policies, apps] = await Promise.all([get("/api/entra/named-locations").catch(() => null), get("/api/intune/compliance-policies").catch(() => null), get("/api/intune/mobile-apps").catch(() => null)]);
+  const list = (response, key) => response?.status === "READY" && Array.isArray(response.data?.[key]) ? response.data[key] : null;
+  const locationRows = list(locations, "locations");
+  const policyRows = list(policies, "policies");
+  const appRows = list(apps, "apps");
+  const totalCard = (target, label, rows) => { $(target).innerHTML = [renderCard("", label, rows === null ? "Data currently unavailable" : rows.length, rows === null ? "UNAVAILABLE" : "TOTAL", rows === null ? "unavailable" : "")].join(""); };
+  totalCard("#entra-named-locations-cards", "Total named locations", locationRows);
+  totalCard("#intune-policies-cards", "Total compliance policies", policyRows);
+  totalCard("#intune-apps-cards", "Total mobile apps", appRows);
+  $("#entra-named-locations-table").innerHTML = locationRows === null ? renderEmpty("Named location data currently unavailable") : locationRows.length ? renderTable(["Name", "Type", "Trusted", "IP ranges", "Countries"], locationRows.map((item) => `<tr><th>${escapeHtml(item.display_name)}</th><td>${renderBadge(item.location_type || "Unknown")}</td><td>${item.is_trusted ? renderBadge("Trusted", "ready") : renderBadge("Not trusted", "warn")}</td><td>${escapeHtml(item.ip_ranges)}</td><td>${escapeHtml(item.countries_and_regions)}</td></tr>`)) : renderEmpty("No named locations found");
+  $("#intune-policies-table").innerHTML = policyRows === null ? renderEmpty("Compliance policy data currently unavailable") : policyRows.length ? renderTable(["Name", "Description", "Platforms", "Created", "Modified"], policyRows.map((item) => `<tr><th>${escapeHtml(item.display_name)}</th><td>${escapeHtml(item.description)}</td><td>${renderBadge(item.platforms || "Unknown")}</td><td>${escapeHtml(item.created_datetime)}</td><td>${escapeHtml(item.last_modified_datetime)}</td></tr>`)) : renderEmpty("No compliance policies found");
+  $("#intune-apps-table").innerHTML = appRows === null ? renderEmpty("Mobile app data currently unavailable") : appRows.length ? renderTable(["Name", "Publisher", "Type", "Platform", "Publishing state", "Modified"], appRows.map((item) => `<tr><th>${escapeHtml(item.display_name)}</th><td>${escapeHtml(item.publisher)}</td><td>${renderBadge(item.app_type || "Unknown")}</td><td>${escapeHtml(item.platform || "Unknown")}</td><td>${renderBadge(item.publishing_state || "Unknown", item.publishing_state === "published" ? "ready" : "warn")}</td><td>${escapeHtml(item.last_modified_datetime)}</td></tr>`)) : renderEmpty("No mobile apps found");
+}
 async function loadIntunePanel() {
   const [summary, noncompliant] = await Promise.all([get("/api/intune/compliance-summary"), get("/api/intune/noncompliant-devices")]);
   const data = summary.data || {};
@@ -358,7 +372,9 @@ async function start() {
         loadLicensesPanel(),
         loadOptimizerPanel(),
         loadSharePointPanel(),
-        loadIntunePanel(),
+         loadIntunePanel(),
+         loadPolicyPanels(),
+
         loadEntraGuestsPanel(),
          loadEntraAuthMethodsPanel(),
          loadNewPanels(),

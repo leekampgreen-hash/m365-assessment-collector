@@ -57,13 +57,10 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 0e62911 — CLAUDE-CONTEXT-CLEANUP
-Active task: Planning next sprint
+Last commit: 1490a25 - CLAUDE-CONTEXT-CLEANUP
+Active task: BATCH-3 - ENTRA-P05, INT-P05, INT-P06 New Collector + UI Panels
 Backlog (in order):
-1. ENTRA-P05 — Named locations panel
-2. INT-P05 — Compliance policy inventory panel
-3. INT-P06 — App deployment status panel
-4. INFRA-P02 — Scheduled email report
+1. INFRA-P02 — Scheduled email report
 
 ### Commit
     git add -A

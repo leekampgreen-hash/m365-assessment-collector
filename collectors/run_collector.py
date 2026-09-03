@@ -97,6 +97,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--entra-stale-devices", action="store_true", help="Collect stale Entra devices.")
     parser.add_argument("--entra-pim", action="store_true", help="Collect Entra PIM assignments.")
     parser.add_argument("--defender-devices", action="store_true", help="Collect Defender device threat state.")
+    parser.add_argument("--entra-named-locations", action="store_true", help="Collect Entra named locations.")
+    parser.add_argument("--intune-compliance-policies", action="store_true", help="Collect Intune compliance policies.")
+    parser.add_argument("--intune-mobile-apps", action="store_true", help="Collect Intune mobile apps.")
     parser.add_argument("--batch2-source", choices=("DEF-P02", "DEF-P03", "DLP-P01", "DLP-P02"), help="Collect a BATCH-2 security source.")
     parser.add_argument(
         "--granted-graph-permissions", nargs="*", default=(),
@@ -283,7 +286,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except SystemExit:
         return 2
 
-    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit) + int(args.sharepoint_sites) + int(args.intune_compliance) + int(args.entra_guests) + int(args.entra_auth_methods) + int(args.intune_enrollment) + int(args.entra_stale_devices) + int(args.entra_pim) + int(args.defender_devices) + int(bool(args.batch2_source))
+    selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit) + int(args.sharepoint_sites) + int(args.intune_compliance) + int(args.entra_guests) + int(args.entra_auth_methods) + int(args.intune_enrollment) + int(args.entra_stale_devices) + int(args.entra_pim) + int(args.defender_devices) + int(args.entra_named_locations) + int(args.intune_compliance_policies) + int(args.intune_mobile_apps) + int(bool(args.batch2_source))
     if args.batch2_source:
         if args.dry_run:
             print(safe_dumps({"mode": "dry-run", "collector": args.batch2_source, "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: collector={} no_token_requested=True no_graph_requested=True".format(args.batch2_source))
@@ -333,6 +336,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "entra_stale_devices": ("collectors.entra_stale_devices", "collect_and_persist_entra_stale_devices", "entra_stale_devices"),
         "entra_pim": ("collectors.entra_pim", "collect_and_persist_entra_pim", "entra_pim"),
         "defender_devices": ("collectors.defender_devices", "collect_and_persist_defender_devices", "defender_devices"),
+        "entra_named_locations": ("collectors.entra_named_locations", "collect_and_persist_entra_named_locations", "entra_named_locations"),
+        "intune_compliance_policies": ("collectors.intune_compliance_policies", "collect_and_persist_intune_compliance_policies", "intune_compliance_policies"),
+        "intune_mobile_apps": ("collectors.intune_mobile_apps", "collect_and_persist_intune_mobile_apps", "intune_mobile_apps"),
     }
     for flag, (module_name, function_name, label) in specialized.items():
         if getattr(args, flag) and args.dry_run:

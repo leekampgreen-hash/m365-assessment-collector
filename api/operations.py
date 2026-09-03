@@ -126,6 +126,27 @@ def _entra_auth_methods_users(connection: Any, tenant_id: int) -> dict[str, Any]
     return {"users": users, "total": len(users)}
 
 
+def _table_rows(connection: Any, table: str, columns: tuple[str, ...], tenant_id: int) -> list[dict[str, Any]]:
+    cur = connection.cursor()
+    cur.execute("SELECT {} FROM {} WHERE tenant_id=%s ORDER BY 1".format(", ".join(columns), table), (tenant_id,))
+    return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def _named_locations(connection: Any, tenant_id: int) -> dict[str, Any]:
+    rows = _table_rows(connection, "core.entra_named_location", ("location_id", "display_name", "location_type", "is_trusted", "ip_ranges", "countries_and_regions"), tenant_id)
+    return {"locations": rows, "total": len(rows)}
+
+
+def _compliance_policies(connection: Any, tenant_id: int) -> dict[str, Any]:
+    rows = _table_rows(connection, "core.intune_compliance_policy", ("policy_id", "display_name", "description", "platforms", "created_datetime", "last_modified_datetime", "scheduled_actions"), tenant_id)
+    return {"policies": rows, "total": len(rows)}
+
+
+def _mobile_apps(connection: Any, tenant_id: int) -> dict[str, Any]:
+    rows = _table_rows(connection, "core.intune_mobile_app", ("app_id", "display_name", "publisher", "app_type", "platform", "description", "is_featured", "publishing_state", "created_datetime", "last_modified_datetime"), tenant_id)
+    return {"apps": rows, "total": len(rows)}
+
+
 def _intune_summary(connection: Any, tenant_id: int) -> dict[str, Any]:
     cur = connection.cursor()
     cur.execute("SELECT compliance_state, operating_system, count(*) FROM core.intune_device WHERE tenant_id=%s GROUP BY compliance_state, operating_system", (tenant_id,))
@@ -583,6 +604,18 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
             self._write(404, _response("NOT_FOUND"))
             return
         try:
+            table_routes = {
+                "/api/entra/named-locations": (_named_locations, "READY"),
+                "/api/intune/compliance-policies": (_compliance_policies, "READY"),
+                "/api/intune/mobile-apps": (_mobile_apps, "READY"),
+            }
+            if path in table_routes:
+                connection = self.connection_factory()
+                try:
+                    self._write(200, _response(table_routes[path][1], table_routes[path][0](connection, self.tenant_id)))
+                finally:
+                    connection.close()
+                return
             if path == "/api/entra/guest-summary":
                 connection = self.connection_factory()
                 try:

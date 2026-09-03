@@ -98,6 +98,9 @@ EXPECTED_TABLES = {
     "core.defender_cloud_app_alert",
     "core.dlp_alert",
     "core.dlp_label",
+    "core.entra_named_location",
+    "core.intune_compliance_policy",
+    "core.intune_mobile_app",
 }
 
 EXPECTED_SCHEMAS = {"control", "raw", "core", "analytics", "security", "auth"}
@@ -141,6 +144,9 @@ EXPECTED_FILES_IN_ORDER = [
     "034_entra_pim.sql",
     "035_defender_devices.sql",
     "036_batch2_security_dlp.sql",
+    "036_entra_named_locations.sql",
+    "037_intune_compliance_policies.sql",
+    "038_intune_mobile_apps.sql",
 ]
 
 
@@ -276,7 +282,7 @@ class MigrationDiscoveryTests(unittest.TestCase):
         from collections import Counter
 
         repeated = {p for p, c in Counter(prefixes).items() if c > 1}
-        self.assertEqual(repeated, {13, 20})
+        self.assertEqual(repeated, {13, 20, 36})
 
 
 class SchemaTests(unittest.TestCase):
@@ -305,15 +311,15 @@ class SchemaTests(unittest.TestCase):
 
 
 class TableInventoryTests(unittest.TestCase):
-    def test_exactly_69_create_table_definitions(self) -> None:
+    def test_exactly_76_create_table_definitions(self) -> None:
         sql = _all_sql()
         tables = _extract_create_tables(sql)
         # Sanity: drop any duplicate literal entries but expect no
         # duplicates within a single migration run.
         self.assertEqual(
             len(tables),
-            73,
-            f"expected exactly 73 CREATE TABLE definitions, found {len(tables)}: {tables}",
+            76,
+            f"expected exactly 76 CREATE TABLE definitions, found {len(tables)}: {tables}",
         )
 
     def test_all_accepted_table_names_exist(self) -> None:
