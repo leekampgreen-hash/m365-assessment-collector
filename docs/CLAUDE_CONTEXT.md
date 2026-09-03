@@ -57,33 +57,33 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: current
-Active task: API-USER-SECURITY-STATUS - Add security_status, score, flags to user intelligence endpoint
-Backlog: None
-Verification: Pending pytest and operations-api rebuild.
+UI-V2 rebuild + security_status integration
+Last commit: a56d5d7 - API-USER-SECURITY-STATUS
+
+Backlog (in order):
+1. UI-V2-REBUILD-FINAL - Rebuild v2 UI cleanly (layout issues still unresolved)
+2. UI-V2-SECURITY-STATUS - Add security_status badge + flags to User Intelligence table
+3. UI-V2-SECURITY-PANEL - Build Security menu panels using createPaginatedTable()
+4. UI-V2-PRODUCTIVITY-PANEL - Build Productivity menu panels
+5. UI-V2-LICENSE-PANEL - Build License menu panels
+6. AGT-MULTI-P01 - Multi-tenant architecture
+7. SAAS-P01 - Customer onboarding flow
+
+Known issues in UI-V2:
+- Sidebar toggle button position and content expand not working correctly
+- Layout has gaps and overlap issues
+- Recommend full rebuild from clean Tabler starter before adding more features
+
+API ready:
+- GET /api/intelligence/users - 39 users, all attributes + security_status + security_score + security_flags
+- security_status: CRITICAL/HIGH/MEDIUM/LOW/GOOD per CIS M365 v6.0.1 benchmark
 
 ### Commit
     git add -A
-    git commit -m "UI-V2-REBUILD-CLEAN: Full rebuild with correct layout, toggle, tooltips, pagination"
+    git commit -m "DOCS-HANDOFF: Update context for session handoff"
     git push origin main
 
 ### Acceptance Criteria
-- [x] http://localhost:18080/v2/ loads with Tabler styling
-- [x] Sidebar toggle is in the topbar and expands content with no gap
-- [x] Left sidebar renders all sections and menu items with icons
-- [x] Clicking menu item loads dummy page in content area
-- [x] User Intelligence loads from /api/intelligence/users
-- [x] Pagination, sorting, frozen column, borders, resize, picker, and hover tooltips implemented
-- [ ] Existing UI at http://localhost:18080/ completely unchanged
-- [x] Do NOT introduce non-ASCII characters
-- [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
-
-### HARD RULES
-- Only touch operations-ui/public-v2/index.html, operations-ui/public-v2/app.js, operations-ui/public-v2/styles.css, and docs/CLAUDE_CONTEXT.md
-- Do NOT touch operations-ui/public/ or any existing files
-- Do NOT modify any SEALED workloads
-- Do NOT introduce non-ASCII characters
-- Update docs/CLAUDE_CONTEXT.md before every commit - no exceptions
-
-## VERIFICATION
-Path fix verified on 2026-09-03: files at /usr/share/nginx/v2/ (correct), nginx.conf serves /v2/ from /usr/share/nginx/v2/, HTTP 200 for styles.css, Tabler UI renders correctly.
+- [ ] docs/CLAUDE_CONTEXT.md updated with correct last commit and backlog
+- [ ] No code files touched
+- [ ] Do NOT introduce non-ASCII characters
