@@ -47,23 +47,32 @@
 .intelligence-table {
   min-width: max-content;
 }
+.intelligence-table th,
+.intelligence-table td {
+  border-right: 1px solid #dee2e6;
+}
 .intelligence-table th {
   position: relative;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
+  background-color: #f8fafc;
 }
 .intelligence-table .column-resize-handle {
   position: absolute;
   right: 0;
   top: 0;
-  width: 4px;
+  width: 6px;
   height: 100%;
   cursor: col-resize;
+  border-right: 2px solid #dee2e6;
   background: transparent;
 }
-.intelligence-table .column-resize-handle:hover {
-  background: var(--tblr-primary, #206bc4);
+.intelligence-table .column-resize-handle:hover,
+.intelligence-table .column-resize-handle:active,
+body.resizing-columns .intelligence-table .column-resize-handle {
+  border-right: 2px solid #0054a6;
+  background: rgba(0, 84, 166, 0.1);
 }
 body.resizing-columns,
 body.resizing-columns * {

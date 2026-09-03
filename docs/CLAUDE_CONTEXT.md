@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: 12b29eb
-Active task: UI-V2-TABLE-RESIZE - Add Excel-like column resize drag handles
+Last commit: 4c7bef1
+Active task: UI-V2-TABLE-RESIZE-UX - Improve resize handle and column border visibility
 Backlog: UI-V2 panels remaining
 
 ### Commit
