@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-AGENT_URL = os.getenv("AGENT_URL", "http://localhost:8080/api/agent/chat")
+AGENT_URL = os.getenv("AGENT_URL", "http://graph-agent-operations-api-dev:8080/api/agent/chat")
 API_KEY = os.getenv("API_KEY", "")
 DELAY_SECONDS = int(os.getenv("TEST_DELAY", "8"))
 QUESTIONS_FILE = Path(__file__).parent / "agent_test_questions.json"
@@ -123,9 +123,12 @@ def main() -> int:
     print(f"STATUS: {'EXCELLENT' if score >= 90 else 'ACCEPTABLE' if score >= 75 else 'NEEDS ATTENTION'}")
     print("=" * 60)
     output = Path(__file__).parent / "agent_test_results.json"
-    with output.open("w", encoding="utf-8") as results_file:
-        json.dump({"score": score, "passed": passed, "failed": failed, "total": len(results), "results": results}, results_file, indent=2)
-    print(f"\nDetailed results saved to: {output}")
+    try:
+        with output.open("w", encoding="utf-8") as results_file:
+            json.dump({"score": score, "passed": passed, "failed": failed, "total": len(results), "results": results}, results_file, indent=2)
+        print(f"\nDetailed results saved to: {output}")
+    except OSError:
+        pass
     return 0 if failed == 0 else 1
 
 
