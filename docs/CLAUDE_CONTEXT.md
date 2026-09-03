@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: cd359ce
-Active task: UI-V2-TABLE-FIX - Fix User Intelligence table not loading data
+Last commit: 12b29eb
+Active task: UI-V2-TABLE-RESIZE - Add Excel-like column resize drag handles
 Backlog: UI-V2 panels remaining
 
 ### Commit

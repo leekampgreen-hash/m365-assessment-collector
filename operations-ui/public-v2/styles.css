@@ -48,9 +48,27 @@
   min-width: max-content;
 }
 .intelligence-table th {
+  position: relative;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
+}
+.intelligence-table .column-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+}
+.intelligence-table .column-resize-handle:hover {
+  background: var(--tblr-primary, #206bc4);
+}
+body.resizing-columns,
+body.resizing-columns * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
 .intelligence-table th:first-child,
 .intelligence-table td:first-child {
