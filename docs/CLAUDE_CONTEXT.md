@@ -57,8 +57,8 @@ Legitimate OneDrive audit rows: 3 (DO NOT touch)
 Synthetic residue: NONE
 
 ## ACTIVE TASK
-Last commit: UI-V2-SHELL-TABLER
-Active task: Replace shell with Tabler-based layout
+Last commit: UI-V2-PATH-FIX (verification complete)
+Active task: None - path issue resolved
 Backlog: AGT-MULTI-P01, SAAS-P01, SAAS-P03, UI-P01, LIC-OPTIMIZER-P01
 
 ### Commit
@@ -77,7 +77,11 @@ Backlog: AGT-MULTI-P01, SAAS-P01, SAAS-P03, UI-P01, LIC-OPTIMIZER-P01
 - [x] Update docs/CLAUDE_CONTEXT.md: last commit before pushing
 
 ### HARD RULES
-- Only touch operations-ui/public-v2/
-- Do NOT touch operations-ui/public/ or any existing files
+- Only touch operations-ui/Dockerfile and operations-ui/nginx.conf if needed
+- Do NOT touch operations-ui/public/ or any existing UI files
 - Do NOT modify any SEALED workloads
 - Do NOT introduce non-ASCII characters
+- Update docs/CLAUDE_CONTEXT.md before every commit - no exceptions
+
+## VERIFICATION
+Path fix verified on 2026-09-03: files at /usr/share/nginx/v2/ (correct), nginx.conf serves /v2/ from /usr/share/nginx/v2/, HTTP 200 for styles.css, Tabler UI renders correctly.
