@@ -1,3 +1,12 @@
+## OPS-UI-SESSION-CACHE-CONSISTENCY-001
+
+- **Date:** 2026-09-04
+- **Model:** `Gemini 3.7 Flash`
+- **Result:** `OPS_UI_SESSION_CACHE_PASS`
+- **Scope:** Frontend consistency and session-scoped telemetry caching. Added `getSessionTelemetry`, `setSessionTelemetry`, and `clearSessionTelemetry` in `operations-ui/public/app.js`. Removed duplicate DOM financial hydration from `hydrateKpiCards()` to ensure `hydrateFinancialSummary()` is the single source of truth for License FinOps metrics and sidebar savings badge. Synchronized HTML initial placeholder in `operations-ui/public/index.html`.
+- **Validation:** JavaScript syntax check passed (`node --check operations-ui/public/app.js`); `operations-ui` rebuilt and container healthy (HTTP 200); single source of truth across Overview, Sidebar, and License Optimizer verified.
+- **Files changed:** `operations-ui/public/app.js`, `operations-ui/public/index.html`, `docs/CHANGELOG.md`, and this log.
+
 ## SP-P12-SHAREPOINT-WORKLOAD-SEAL-001
 
 - **Date:** 2026-08-29

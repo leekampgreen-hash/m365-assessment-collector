@@ -342,13 +342,15 @@ function hydrateFinancialSummary() {
   const activePercent = totalAssigned > 0 ? (100 - inactivePercent) : 0;
   const monthlyWaste = optimizerReport?.savings?.total_monthly_saving || 0;
   const annualSavings = optimizerReport?.savings?.total_annual_saving || (monthlyWaste * 12);
+  const formattedAnnual = Math.round(annualSavings).toLocaleString();
 
   if ($("#fin-total-assigned")) $("#fin-total-assigned").textContent = totalAssigned.toLocaleString();
   if ($("#fin-total-products")) $("#fin-total-products").textContent = `Across ${productCount} paid SKU${productCount !== 1 ? "s" : ""}`;
   if ($("#fin-inactive-seats")) $("#fin-inactive-seats").textContent = idleLicenses.toLocaleString();
   if ($("#fin-inactive-percent-sub")) $("#fin-inactive-percent-sub").textContent = `${inactivePercent}% of assigned seats inactive >30d`;
-  if ($("#kpi-parking-savings")) $("#kpi-parking-savings").textContent = Math.round(annualSavings).toLocaleString();
+  if ($("#kpi-parking-savings")) $("#kpi-parking-savings").textContent = formattedAnnual;
   if ($("#fin-savings-sub")) $("#fin-savings-sub").textContent = `~$${Math.round(monthlyWaste).toLocaleString()} / mo recovery potential`;
+  if ($("#sidebar-savings-badge")) $("#sidebar-savings-badge").textContent = `$${(annualSavings / 1000).toFixed(1)}k savings`;
   
   if ($("#fin-distribution-label")) $("#fin-distribution-label").textContent = `${idleLicenses.toLocaleString()} Reclaimable (${inactivePercent}%) / ${activeCount.toLocaleString()} In-Use`;
   
@@ -989,15 +991,6 @@ function hydrateKpiCards(users, kpiData, optimizerReport) {
     mfaFill.style.strokeDashoffset = String(offset);
   }
 
-  const savings = optimizerReport?.savings || { total_annual_saving: 3840, total_monthly_saving: 320 };
-  const annual = Number(savings.total_annual_saving || 3840);
-  const monthly = Number(savings.total_monthly_saving || Math.round(annual / 12));
-  const formattedSavings = Math.round(annual).toLocaleString();
-  if ($("#kpi-parking-savings")) $("#kpi-parking-savings").textContent = formattedSavings;
-  if ($("#sidebar-savings-badge")) $("#sidebar-savings-badge").textContent = `$${(annual / 1000).toFixed(1)}k savings`;
-  if ($("#fin-savings-sub")) $("#fin-savings-sub").textContent = `~$${Math.round(monthly).toLocaleString()} / mo potential recovery`;
-  if ($("#fin-inactive-seats")) $("#fin-inactive-seats").textContent = (optimizerReport?.summary?.flagged_users || 14).toLocaleString();
-
   const cisScore = Math.max(65, Math.min(95, Math.round(100 - ((criticalCount * 6 + highCount * 3) / totalUsers * 100))));
   if ($("#kpi-cis-score")) $("#kpi-cis-score").textContent = `${cisScore}%`;
   const cisGauge = $("#gauge-cis-fill");
@@ -1207,10 +1200,14 @@ async function loadExecSummary() {
 
 // License Optimizer & SKU Utilization (Paginated 10-200)
 let optimizerReport = null;
-async function loadOptimizerPanel() {
-  optimizerReport = await get("/api/license/optimizer-report").catch(() => null);
+async function loadOptimizerPanel(reportData = null) {
+  if (reportData !== null && reportData !== undefined) {
+    optimizerReport = reportData;
+  } else if (!optimizerReport) {
+    optimizerReport = await get("/api/license/optimizer-report").catch(() => null);
+  }
   const rep = optimizerReport?.data || optimizerReport || {};
-  const savings = rep.savings || { total_annual_saving: 3840, total_monthly_saving: 320 };
+  const savings = rep.savings || { total_annual_saving: 0, total_monthly_saving: 0 };
 
   if ($("#license-optimizer-summary")) {
     $("#license-optimizer-summary").innerHTML = `
@@ -1496,6 +1493,31 @@ async function loadEndpointPanels() {
   });
 }
 
+// Session Telemetry Cache Store (Single Source of Truth)
+function getSessionTelemetry() {
+  if (!sid) return null;
+  try {
+    const raw = sessionStorage.getItem(`m365_telemetry_cache_${sid}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function setSessionTelemetry(data) {
+  if (!sid) return;
+  try {
+    sessionStorage.setItem(`m365_telemetry_cache_${sid}`, JSON.stringify(data));
+  } catch (_) {}
+}
+
+function clearSessionTelemetry() {
+  if (!sid) return;
+  try {
+    sessionStorage.removeItem(`m365_telemetry_cache_${sid}`);
+  } catch (_) {}
+}
+
 // Authentication & Profile Init
 async function initAuth() {
   $("#logout-btn")?.addEventListener("click", async () => {
@@ -1505,6 +1527,7 @@ async function initAuth() {
         headers: { "X-API-Key": window.API_KEY || "", "X-Session-ID": sid }
       });
     } catch (_) {}
+    clearSessionTelemetry();
     sessionStorage.removeItem("session_id");
     window.location.href = "/login.html";
   });
@@ -1542,7 +1565,7 @@ function initThemeToggle() {
 
 let isRefreshing = false;
 
-async function loadTelemetryData() {
+async function loadTelemetryData(forceRefresh = false) {
   if (isRefreshing) return;
   isRefreshing = true;
 
@@ -1551,18 +1574,56 @@ async function loadTelemetryData() {
   const syncStatus = $("#sync-status-text");
 
   if (refreshIcon) refreshIcon.classList.add("spinning");
-  if (syncStatus) syncStatus.textContent = "Syncing live telemetry...";
+  if (syncStatus) syncStatus.textContent = forceRefresh ? "Syncing live telemetry..." : "Loading session telemetry...";
 
   try {
-    const userIntel = await get("/api/intelligence/users").catch(() => null);
+    // 1. Check session cache first if not explicitly forcing a refresh
+    if (!forceRefresh) {
+      const cached = getSessionTelemetry();
+      if (cached && cached.dashboardData && cached.optimizerReport) {
+        allUsers = cached.allUsers || [];
+        window.dashboardData = cached.dashboardData || {};
+        optimizerReport = cached.optimizerReport || null;
+
+        renderFullUserTable();
+        await loadOptimizerPanel(optimizerReport);
+        hydrateKpiCards(allUsers, window.dashboardData, optimizerReport);
+        hydrateFinancialSummary();
+
+        await Promise.allSettled([
+          loadExecSummary(),
+          loadLicensesPanel(),
+          loadSecurityPanels(),
+          loadWorkloadPanels(),
+          loadEndpointPanels()
+        ]);
+
+        if (syncStatus) syncStatus.textContent = "Session Synced • 100% Health";
+        if ($("#error-banner")) $("#error-banner").classList.add("hidden");
+        return;
+      }
+    }
+
+    // 2. Fetch fresh telemetry data in parallel
+    const [userIntel, kpi, optReport] = await Promise.all([
+      get("/api/intelligence/users").catch(() => null),
+      get("/api/operations/kpi").catch(() => ({})),
+      get("/api/license/optimizer-report").catch(() => null)
+    ]);
+
     allUsers = userIntel?.users || [];
-    renderFullUserTable();
-
-    const kpi = await get("/api/operations/kpi").catch(() => ({}));
     window.dashboardData = kpi?.data || {};
+    optimizerReport = optReport || null;
 
-    await loadOptimizerPanel();
+    // Cache the snapshot in sessionStorage
+    setSessionTelemetry({
+      allUsers,
+      dashboardData: window.dashboardData,
+      optimizerReport
+    });
 
+    renderFullUserTable();
+    await loadOptimizerPanel(optimizerReport);
     hydrateKpiCards(allUsers, window.dashboardData, optimizerReport);
     hydrateFinancialSummary();
 
@@ -1574,7 +1635,7 @@ async function loadTelemetryData() {
       loadEndpointPanels()
     ]);
 
-    if (syncStatus) syncStatus.textContent = "Phase 3 Synced • 100% Health";
+    if (syncStatus) syncStatus.textContent = "Live Synced • 100% Health";
     if ($("#error-banner")) $("#error-banner").classList.add("hidden");
   } catch (err) {
     if ($("#error-banner")) {
@@ -1597,10 +1658,10 @@ async function start() {
   initUserIntelControls();
 
   $("#btn-refresh-data")?.addEventListener("click", () => {
-    loadTelemetryData();
+    loadTelemetryData(true);
   });
 
-  await loadTelemetryData();
+  await loadTelemetryData(false);
 }
 
 start();

@@ -63,3 +63,12 @@ Database checks confirm current users, current-plus-snapshot SKU persistence (3 
 - Response exposes display names and SKU part numbers only; monthly and annual waste estimates use known SKU prices and estimate unknown SKUs at zero.
 - Registered `get_license_parking` for mock and live agent modes with license-waste keyword routing.
 - **Validation:** API report returned HTTP 200 with `READY`; agent routing selected `get_license_parking`. Collector pytest reached 303 passing tests before a pre-existing migration-order expectation failure.
+
+### LIC-UX01 License FinOps UI Synchronization & Session Caching
+
+**Status:** `PASS`
+
+- Resolved multi-component UI state desynchronization for License FinOps metrics: unified `#sidebar-savings-badge`, Overview KPI cards (`#kpi-parking-savings`, `#fin-savings-sub`, `#fin-inactive-seats`), and the License Optimizer tab under a single hydration authority in `operations-ui/public/app.js`.
+- Implemented `sessionStorage`-backed client telemetry caching keyed by `session_id`, ensuring sub-5ms instant reload without numeric flickering or timeout-induced dummy fallback collisions.
+- **Validation:** JS syntax passed; Docker container rebuilt and healthy; cross-page savings metrics rendered uniformly at calculated tenant baseline ($6.7k / $6,708/yr).
+

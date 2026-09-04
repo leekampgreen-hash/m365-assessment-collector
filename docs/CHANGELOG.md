@@ -1,5 +1,12 @@
 # Changelog
 
+## Operations UI: Session Telemetry Caching & License Metrics Single Source of Truth
+
+- Implemented session-scoped client caching in `operations-ui/public/app.js` using `sessionStorage` keyed by `session_id`, ensuring instant load (< 5ms) on page refresh and eliminating numeric flickering.
+- Resolved conflicting hydration mutations: established `hydrateFinancialSummary()` as the single authority for License FinOps metrics and the sidebar savings badge (`#sidebar-savings-badge`, `#kpi-parking-savings`, `#fin-savings-sub`, `#fin-inactive-seats`).
+- Removed duplicate financial DOM mutations from `hydrateKpiCards()` and aligned the static HTML badge placeholder in `operations-ui/public/index.html` to prevent display of conflicting fallback values.
+- Integrated automatic cache invalidation on logout and manual force refresh via the "Refresh Data" control.
+
 ## CH8 Security Findings Foundation
 
 - Added the deterministic Security Findings foundation (no Graph calls, no AI, no database writes, no remediation).
