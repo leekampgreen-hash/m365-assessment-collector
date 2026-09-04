@@ -169,17 +169,19 @@ def generate_security_report(system_prompt: str = None, choice: str = "", sessio
                 anonymized[section] = anon.anonymize_data(anonymized[section])
         logger.info("ANON_MAPPING: %s", anon.mapping_summary())
 
+        anonymized_choice = anon.anonymize_text(choice) if choice else ""
+
         if system_prompt:
             messages = [
                 {"role": "system", "content": system_prompt},
-                *[{"role": item["role"], "content": item["content"]} for item in history],
+                *[{"role": item["role"], "content": anon.anonymize_text(item["content"]) if item["role"] == "user" else item["content"]} for item in history],
                 {
                     "role": "user",
-                    "content": f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}\n\nImportant: always refer to users by their exact token (USER_A, USER_B, etc). Do not modify or paraphrase tokens.",
+                    "content": f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {anonymized_choice or 'Start analysis'}\n\nImportant: always refer to users by their exact token (USER_A, USER_B, etc). Do not modify or paraphrase tokens.",
                 },
             ]
         else:
-            messages = [{"role": "user", "content": _build_analysis_prompt(anonymized, choice)}]
+            messages = [{"role": "user", "content": _build_analysis_prompt(anonymized, anonymized_choice)}]
 
         logger.info("LLM_PAYLOAD_KEYS: %s", [message["role"] for message in messages])
         logger.info("LLM_PAYLOAD_DATA: %s", json.dumps(anonymized, separators=(",", ":"), default=str))
@@ -190,7 +192,7 @@ def generate_security_report(system_prompt: str = None, choice: str = "", sessio
         )
         raw_report = _plain_text_report(response.choices[0].message.content or "")
         report = anon.deanonymize(raw_report)
-        user_content = f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {choice or 'Start analysis'}"
+        user_content = f"Security data:\n{json.dumps(anonymized, separators=(',', ':'), default=str)}\n\nUser selection: {anonymized_choice or 'Start analysis'}"
         session_store.append_history(session_id, "user", user_content)
         session_store.append_history(session_id, "assistant", raw_report)
         tokens_used = getattr(response.usage, "total_tokens", None)

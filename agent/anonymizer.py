@@ -47,6 +47,19 @@ class Anonymizer:
             return [self.anonymize_data(item, keys) for item in data]
         return data
 
+    def anonymize_text(self, text: str) -> str:
+        if not text:
+            return text
+        import re
+        for real in sorted(self._real_to_token.keys(), key=len, reverse=True):
+            if not real:
+                continue
+            prefix = r"(?<!\w)" if real[0].isalnum() else ""
+            suffix = r"(?!\w)" if real[-1].isalnum() else ""
+            pattern = re.compile(prefix + re.escape(real) + suffix, re.IGNORECASE)
+            text = pattern.sub(self._real_to_token[real], text)
+        return text
+
     def deanonymize(self, text: str) -> str:
         for token, real in self._token_to_real.items():
             text = text.replace(token, real)
