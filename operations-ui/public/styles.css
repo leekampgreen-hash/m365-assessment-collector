@@ -2185,7 +2185,7 @@ th {
 }
 
 .filter-select {
-  background: var(--bg-tertiary);
+  background: var(--bg-card-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 8px 12px;
@@ -2198,6 +2198,27 @@ th {
 
 .filter-select:focus {
   border-color: var(--accent-cyan);
+}
+
+select option,
+.filter-select option,
+.saved-views-select option,
+.page-size-select option {
+  background-color: #161e2e;
+  color: #f1f5f9;
+  padding: 8px 12px;
+}
+
+[data-theme="light"] select option,
+[data-theme="light"] .filter-select option,
+[data-theme="light"] .saved-views-select option,
+[data-theme="light"] .page-size-select option,
+html.light select option,
+html.light .filter-select option,
+html.light .saved-views-select option,
+html.light .page-size-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 .filter-group-actions {
@@ -2231,11 +2252,11 @@ th {
 }
 
 .saved-views-select {
-  background: var(--bg-tertiary);
+  background: var(--bg-card-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 6px 10px;
-  color: var(--text-heading);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 500;
   outline: none;
