@@ -520,12 +520,11 @@ let userIntelActiveViewId = "view_default";
 
 function getUserStorageKey() {
   const email = $("#user-email")?.textContent?.trim() || localStorage.getItem("user_email") || "admin@localhost";
-  const tenant = currentTenantId || "default";
+  const tenant = (typeof currentTenantId !== "undefined" ? currentTenantId : null) || window.currentTenantId || localStorage.getItem("tenant_id") || "default";
   return `m365_user_intel_views_${email}_${tenant}`;
 }
 
 function loadUserSavedViews() {
-  const key = getUserStorageKey();
   const builtInViews = [
     { id: "view_default", name: "Default Posture Matrix", isDefault: true, isSystem: true, columns: [...USER_INTEL_PRESET_COLUMNS.default], filters: { search: "", role: "ALL", mfa: "ALL", risk: "ALL", status: "ALL" } },
     { id: "view_security", name: "Security & MFA Audit", isDefault: false, isSystem: true, columns: [...USER_INTEL_PRESET_COLUMNS.security], filters: { search: "", role: "ALL", mfa: "ALL", risk: "ALL", status: "ALL" } },
@@ -534,6 +533,7 @@ function loadUserSavedViews() {
   ];
 
   try {
+    const key = getUserStorageKey();
     const raw = localStorage.getItem(key);
     if (!raw) return builtInViews;
     const parsed = JSON.parse(raw);
@@ -543,30 +543,37 @@ function loadUserSavedViews() {
 }
 
 function saveUserViews(views) {
-  const key = getUserStorageKey();
   try {
+    const key = getUserStorageKey();
     localStorage.setItem(key, JSON.stringify(views));
   } catch (_) {}
 }
 
 function initUserIntelControls() {
-  const views = loadUserSavedViews();
-  const defaultView = views.find(v => v.isDefault) || views[0];
-  userIntelActiveViewId = defaultView.id;
-  userIntelActiveColumns = Array.isArray(defaultView.columns) && defaultView.columns.length ? [...defaultView.columns] : [...USER_INTEL_PRESET_COLUMNS.default];
+  try {
+    const views = loadUserSavedViews();
+    const defaultView = (views && views.find(v => v && v.isDefault)) || (views && views[0]) || {
+      id: "view_default",
+      columns: [...USER_INTEL_PRESET_COLUMNS.default]
+    };
+    userIntelActiveViewId = defaultView.id || "view_default";
+    userIntelActiveColumns = Array.isArray(defaultView.columns) && defaultView.columns.length ? [...defaultView.columns] : [...USER_INTEL_PRESET_COLUMNS.default];
 
-  // Set filter inputs if saved
-  if (defaultView.filters) {
-    if ($("#full-user-search")) $("#full-user-search").value = defaultView.filters.search || "";
-    if ($("#full-user-role-filter")) $("#full-user-role-filter").value = defaultView.filters.role || "ALL";
-    if ($("#full-user-mfa-filter")) $("#full-user-mfa-filter").value = defaultView.filters.mfa || "ALL";
-    if ($("#full-user-risk-filter")) $("#full-user-risk-filter").value = defaultView.filters.risk || "ALL";
-    if ($("#full-user-status-filter")) $("#full-user-status-filter").value = defaultView.filters.status || "ALL";
+    // Set filter inputs if saved
+    if (defaultView.filters) {
+      if ($("#full-user-search")) $("#full-user-search").value = defaultView.filters.search || "";
+      if ($("#full-user-role-filter")) $("#full-user-role-filter").value = defaultView.filters.role || "ALL";
+      if ($("#full-user-mfa-filter")) $("#full-user-mfa-filter").value = defaultView.filters.mfa || "ALL";
+      if ($("#full-user-risk-filter")) $("#full-user-risk-filter").value = defaultView.filters.risk || "ALL";
+      if ($("#full-user-status-filter")) $("#full-user-status-filter").value = defaultView.filters.status || "ALL";
+    }
+
+    renderSavedViewsDropdown();
+    renderColumnPickerList();
+    bindUserIntelEvents();
+  } catch (err) {
+    console.error("Error initializing user intel controls:", err);
   }
-
-  renderSavedViewsDropdown();
-  renderColumnPickerList();
-  bindUserIntelEvents();
 }
 
 function renderSavedViewsDropdown() {
@@ -682,7 +689,7 @@ function bindUserIntelEvents() {
   });
 
   document.addEventListener("click", (e) => {
-    if (!$("#column-picker-wrap")?.contains(e.target) && !$("#columns-picker-popover")?.contains(e.target)) {
+    if (!$(".column-picker-wrap")?.contains(e.target) && !$("#columns-picker-popover")?.contains(e.target)) {
       $("#columns-picker-popover")?.classList.add("hidden");
     }
   });
