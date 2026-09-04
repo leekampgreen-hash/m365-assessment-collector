@@ -34,6 +34,7 @@ from .models import (
 )
 from .registry import (
     EXPECTED_ENDPOINT_IDS,
+    VALID_RETENTION_CLASSES,
     LineageContext,
     REGISTRY,
     RegistryCoverageError,
@@ -50,6 +51,7 @@ __all__ = [
     "ENDPOINT_IDS",
     "AdapterSpec",
     "EXPECTED_ENDPOINT_IDS",
+    "VALID_RETENTION_CLASSES",
     "LineageContext",
     "NormalizedWorkloadRecord",
     "PERSISTENCE_CURRENT",

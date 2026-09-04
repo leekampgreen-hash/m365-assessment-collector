@@ -82,7 +82,7 @@ class G01_015RegistryAlignmentTests(unittest.TestCase):
         self.assertEqual(c.statements[0], c.statements[1])
 
     def test_g01_006_duplicate_replay_uses_sign_in_conflict_and_do_nothing(self):
-        c=FakeConnection(); row={"tenant_id":5,"event_source":"SIGN_IN","source_object_id":"s1","event_at":"2026-01-01T00:00:00Z","collected_at":"2026-01-01T00:01:00Z","collection_run_id":1,"endpoint_run_id":1,"actor_user_id":"u1","actor_app_id":"a1","activity":"Browser","category":"0","result":"ok","is_interactive":True,"risk_level":None,"extension":None,"retention_class":"HIGH_SENSITIVITY"}
+        c=FakeConnection(); row={"tenant_id":5,"event_source":"SIGN_IN","source_object_id":"s1","event_at":"2026-01-01T00:00:00Z","collected_at":"2026-01-01T00:01:00Z","collection_run_id":1,"endpoint_run_id":1,"actor_user_id":"u1","actor_app_id":"a1","activity":"Browser","category":"0","result":"ok","is_interactive":True,"risk_level":None,"extension":None,"retention_class":"LONG"}
         record = NormalizedWorkloadRecord("G01-006", PersistenceMode.EVENT, event_row=row)
         write_event_record(BoundSqlExecutor(c), record)
         write_event_record(BoundSqlExecutor(c), record)

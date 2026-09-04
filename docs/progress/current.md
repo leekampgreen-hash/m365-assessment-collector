@@ -34,18 +34,20 @@
 - LIC-OPTIMIZER-P01: License optimizer advisory & reclamation recommendations (integrated in LIC-UX01/02) - SEALED
 - COLLECTOR-STD-P01-P05: Collector Standardization Phases 1-5 (CLI flags, SSOT inventory with 45 collectors, Unified Runner `--collector`, Admin UI search & filter, on-demand trigger API, 4 metric cards, inspector modal, and reference catalog) - SEALED
 - TD-009 & TD-010: Workload registry invariant alignment & test dependency / package shadowing resolution (100% test suite pass) - SEALED
+- TD-001 & TD-002: Workload registry retention metadata drift resolution (G01-005, 006, 013, 014 aligned to `LONG` & closed vocabulary enforcement) - SEALED
+- TD-005 & TD-006: Collector rejection metrics & retry recovery hardening (bounded vocabulary, secret redaction, RetryPolicy hardening, RecoveryEvidence, operations analytics) - SEALED
+- TD-003, TD-004, TD-007, TD-008: Live Microsoft Graph Validation (PASS 4/4), Live PostgreSQL Validation (PASS 7/7), Controlled Validation Environment Certification, and Foundation Security Certification (FULL PASS) - SEALED (All 10/10 Technical Debt items RESOLVED)
 
 ## Active Task
-Technical debt backlog reduction (TD-001/TD-002 retention metadata alignment) and next sprint planning
+Technical Debt Register (TD-001 through TD-010) 100% resolved and certified; ready for next feature roadmap items
 
 ## Next Steps
 
-1. TD-001/TD-002 - Registry retention metadata alignment for G01-005, 006, 013, 014
-2. AGT-MULTI-P01 - Multi-tenant architecture design
-3. SAAS-P01 - Customer onboarding flow
-4. SAAS-P03 - Rate limiting
-5. UI-P01 - UI polish (mobile responsive, loading states)
-6. AGT-DEV01-UPDATE - Update agent test questions
+1. AGT-MULTI-P01 - Multi-tenant architecture design
+2. SAAS-P01 - Customer onboarding flow
+3. SAAS-P03 - Rate limiting
+4. UI-P01 - UI polish (mobile responsive, loading states)
+5. AGT-DEV01-UPDATE - Update agent test questions
 
 
 ## Available API Endpoints

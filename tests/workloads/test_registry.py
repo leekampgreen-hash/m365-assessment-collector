@@ -33,6 +33,7 @@ from collectors.workloads import (
     PersistenceMode,
     REGISTRY,
     RegistryCoverageError,
+    VALID_RETENTION_CLASSES,
     WorkloadEntry,
     endpoint_ids,
     get_entry,
@@ -242,6 +243,32 @@ class RegistryShapeTests(unittest.TestCase):
             },
         )
 
+    def test_td001_td002_reconciled_retention_classes(self):
+        # TD-001 & TD-002 reconciliation: G01-005, G01-006, G01-013, G01-014
+        # must declare retention_class='LONG' matching catalog and schema contracts.
+        reconciled = {
+            "G01-005": "LONG",
+            "G01-006": "LONG",
+            "G01-013": "LONG",
+            "G01-014": "LONG",
+            "G01-019": "LONG",
+        }
+        for endpoint_id, expected_retention in reconciled.items():
+            with self.subTest(endpoint_id=endpoint_id):
+                entry = REGISTRY[endpoint_id]
+                self.assertEqual(entry.retention_class, expected_retention)
+
+    def test_retention_class_vocabulary_is_closed(self):
+        # Every retention_class in the registry must belong to the controlled
+        # retention vocabulary ('SHORT', 'STANDARD', 'LONG', 'REFERENCE').
+        for endpoint_id, entry in REGISTRY.items():
+            with self.subTest(endpoint_id=endpoint_id):
+                self.assertIn(
+                    entry.retention_class,
+                    VALID_RETENTION_CLASSES,
+                    f"{endpoint_id} retention_class '{entry.retention_class}' not in {VALID_RETENTION_CLASSES}",
+                )
+
 
 class RegistryCoverageTests(unittest.TestCase):
     def test_inventory_endpoints_are_fully_covered(self):
@@ -275,6 +302,28 @@ class RegistryCoverageTests(unittest.TestCase):
         # Add a fake endpoint with a unique id that won't collide.
         broken["G01-020"] = broken["G01-001"]
         with self.assertRaises(RegistryCoverageError):
+            validate_registry(broken)
+
+    def test_validate_registry_rejects_invalid_retention_class(self):
+        broken = dict(REGISTRY)
+        target = broken["G01-005"]
+        # Create a copy of the entry with invalid sensitivity label as retention
+        broken["G01-005"] = WorkloadEntry(
+            endpoint_id=target.endpoint_id,
+            persistence_mode=target.persistence_mode,
+            current_table=target.current_table,
+            history_table=target.history_table,
+            snapshot_table=target.snapshot_table,
+            event_table=target.event_table,
+            reference_table=target.reference_table,
+            owner=target.owner,
+            adapter=target.adapter,
+            workload=target.workload,
+            retention_class="HIGH_SENSITIVITY",
+            event_source=target.event_source,
+            description=target.description,
+        )
+        with self.assertRaisesRegex(RegistryCoverageError, "invalid retention_class 'HIGH_SENSITIVITY'"):
             validate_registry(broken)
 
 

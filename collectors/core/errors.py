@@ -32,7 +32,31 @@ RETRY_EXHAUSTED = "RETRY_EXHAUSTED"
 SCHEMA_CONTRACT_FAILURE = "SCHEMA_CONTRACT_FAILURE"
 SOURCE_HISTORY_UNAVAILABLE = "SOURCE_HISTORY_UNAVAILABLE"
 SUBSCRIPTION_UNAVAILABLE = "SUBSCRIPTION_UNAVAILABLE"
+TENANT_MISMATCH = "TENANT_MISMATCH"
+MALFORMED_DATA = "MALFORMED_DATA"
+TIMEOUT_BUDGET_EXCEEDED = "TIMEOUT_BUDGET_EXCEEDED"
 
+# Failure permanence classes (TD-006)
+PERMANENCE_RETRYABLE = "RETRYABLE"
+PERMANENCE_PERMANENT = "PERMANENT"
+PERMANENCE_NON_ERROR = "NON_ERROR"
+
+RETRYABLE_CLASSIFICATIONS: Tuple[str, ...] = (
+    THROTTLED,
+    API_ERROR,
+    NETWORK_ERROR,
+    SOURCE_FAILURE,
+)
+
+PERMANENT_CLASSIFICATIONS: Tuple[str, ...] = (
+    AUTH_FAILURE,
+    PERMISSION_REQUIRED,
+    TENANT_MISMATCH,
+    MALFORMED_DATA,
+    SCHEMA_CONTRACT_FAILURE,
+    ENTITY_IDENTITY_UNAVAILABLE,
+    PERSISTENCE_ERROR,
+)
 
 CLASSIFICATIONS = (
     PASS,
@@ -73,6 +97,15 @@ def is_retryable(classification: str) -> bool:
     if classification in (AUTH_FAILURE, PERMISSION_REQUIRED, PASS):
         return False
     return classification in (THROTTLED, API_ERROR, NETWORK_ERROR, SOURCE_FAILURE)
+
+
+def classify_failure_permanence(classification: str) -> str:
+    """Classify failure permanence into RETRYABLE, PERMANENT, or NON_ERROR (TD-006)."""
+    if classification == PASS:
+        return PERMANENCE_NON_ERROR
+    if is_retryable(classification):
+        return PERMANENCE_RETRYABLE
+    return PERMANENCE_PERMANENT
 
 
 def classify_response(status: Optional[int], exc: Optional[BaseException] = None) -> Tuple[str, bool]:

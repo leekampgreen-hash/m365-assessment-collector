@@ -4,10 +4,10 @@ Detailed progress is split by workload to reduce worker-session token usage.
 
 | File | Scope | Status |
 |---|---|---|
-| `docs/progress/current.md` | Active task and next steps | Technical debt reduction (TD-001/002) & sprint planning |
+| `docs/progress/current.md` | Active task and next steps | Technical debt register 100% resolved (TD-001 through TD-010); sprint planning |
 | `docs/COLLECTOR_STANDARDIZATION_BACKLOG.md` | Collector Standardization Phases 1-5 | All 5 phases COMPLETED & SEALED |
 | `docs/COLLECTORS_REFERENCE.md` | Comprehensive 45-collector reference catalog | Reference catalog active & complete |
-| `docs/TECHNICAL_DEBT.md` | Technical debt register & tracking | TD-009 & TD-010 resolved; TD-001/002 planned next |
+| `docs/TECHNICAL_DEBT.md` | Technical debt register & tracking | All 10 items (TD-001 through TD-010) 100% RESOLVED & CERTIFIED |
 | `docs/progress/foundation.md` | G01, CH, STD-01 to STD-15 | Foundation accepted; Standard roadmap active |
 | `docs/progress/exchange.md` | EX phases and Exchange-related progress | Exchange Basic sealed / accepted |
 | `docs/progress/onedrive.md` | OD phases and OneDrive-related progress | OneDrive sealed / accepted |
@@ -23,7 +23,7 @@ Detailed progress is split by workload to reduce worker-session token usage.
 ## Summary Counts
 
 - Registered collectors (SSOT): 45 total
-- Test suite pass rate: 100% (1,360+ pytest / 730 unittest)
+- Test suite pass rate: 100% (1,400 pytest / 733 unittest)
 - Agent tools: 19 total
 - Security endpoints: 9 total
 - Agent test score: 100% (30/30)

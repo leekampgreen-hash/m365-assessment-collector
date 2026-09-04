@@ -48,6 +48,13 @@ EXPECTED_ENDPOINT_IDS: Tuple[str, ...] = tuple(
     "G01-{:03d}".format(index) for index in range(1, 21)
 ) + ("SP-A01", "TM-001", "DEF-P02", "DEF-P03", "DLP-P01", "DLP-P02")
 
+VALID_RETENTION_CLASSES: Tuple[str, ...] = (
+    "SHORT",
+    "STANDARD",
+    "LONG",
+    "REFERENCE",
+)
+
 
 # ---------------------------------------------------------------------------
 # Lineage context
@@ -386,7 +393,7 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         current_table="core.audit_event",
         event_table="core.audit_event",
         workload="Microsoft Entra ID",
-        retention_class="HIGH_SENSITIVITY",
+        retention_class="LONG",
         owner="security_service",
         event_source=EVENT_SOURCE_DIRECTORY_AUDIT,
         adapter=_wrap_g07b(g07b_adapters.adapt_directory_audit_logs),
@@ -398,7 +405,7 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         current_table="core.signin_log",
         event_table="core.signin_log",
         workload="Microsoft Entra ID",
-        retention_class="SHORT",
+        retention_class="LONG",
         owner="security_service",
         event_source=EVENT_SOURCE_SIGN_IN,
         adapter=_wrap_g07b(g07b_adapters.adapt_sign_in_logs),
@@ -431,7 +438,7 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         current_table="core.risky_user",
         snapshot_table="core.risky_user_snapshot",
         workload="Microsoft Entra ID Protection",
-        retention_class="HIGH_SENSITIVITY",
+        retention_class="LONG",
         owner="security_service",
         adapter=_wrap_g07b(g07b_adapters.risky_users),
         description="Risky Users -- current + per-run snapshot",
@@ -442,7 +449,7 @@ def _build_registry() -> Dict[str, WorkloadEntry]:
         current_table="core.risk_detection",
         event_table="core.risk_detection",
         workload="Microsoft Entra ID Protection",
-        retention_class="HIGH_SENSITIVITY",
+        retention_class="LONG",
         owner="security_service",
         adapter=_wrap_g07b(g07b_adapters.adapt_risk_detections),
         description="Risk Detections -- append-only event rows",
@@ -637,6 +644,12 @@ def validate_registry(
                         endpoint_id
                     )
                 )
+        if entry.retention_class not in VALID_RETENTION_CLASSES:
+            raise RegistryCoverageError(
+                "{}: invalid retention_class '{}', must be one of {}".format(
+                    endpoint_id, entry.retention_class, VALID_RETENTION_CLASSES
+                )
+            )
 
 
 validate_registry()
@@ -851,13 +864,58 @@ def normalize_records(
     out: List[NormalizedWorkloadRecord] = []
     materialized = list(records)
     for record in materialized:
-        adapter_output = entry.adapter(record, lineage)
-        out.append(_build_envelope(entry, adapter_output))
+        try:
+            adapter_output = entry.adapter(record, lineage)
+            out.append(_build_envelope(entry, adapter_output))
+        except Exception as exc:
+            # TD-005: Record structured rejection metrics and evidence before fail-closed re-raising
+            try:
+                from collectors.core.rejections import (
+                    REJECTION_CATEGORY_DATA_VALIDATION,
+                    REJECTION_CATEGORY_SECURITY_VALIDATION,
+                    REASON_INVALID_STRUCTURE,
+                    REASON_INVALID_TYPE,
+                    REASON_MALFORMED_FORMAT,
+                    REASON_MISSING_REQUIRED_FIELD,
+                    REASON_TENANT_MISMATCH,
+                    get_rejection_tracker,
+                )
+                category = REJECTION_CATEGORY_DATA_VALIDATION
+                exc_str = str(exc).lower()
+                if "tenant" in exc_str:
+                    category = REJECTION_CATEGORY_SECURITY_VALIDATION
+                    reason = REASON_TENANT_MISMATCH
+                elif isinstance(exc, KeyError):
+                    reason = REASON_MISSING_REQUIRED_FIELD
+                elif isinstance(exc, TypeError):
+                    reason = REASON_INVALID_TYPE
+                elif isinstance(exc, ValueError):
+                    reason = REASON_MALFORMED_FORMAT
+                else:
+                    reason = REASON_INVALID_STRUCTURE
+
+                src_id = None
+                if isinstance(record, Mapping):
+                    src_id = record.get("id") or record.get("id_guid") or record.get("userPrincipalName")
+
+                affected = str(exc.args[0]) if isinstance(exc, KeyError) and exc.args else None
+                get_rejection_tracker().record_raw(
+                    endpoint=endpoint_id,
+                    category=category,
+                    reason=reason,
+                    source_object_id=str(src_id) if src_id is not None else None,
+                    collection_run_id=lineage.collection_run_id,
+                    affected_field=affected,
+                )
+            except Exception:
+                pass
+            raise
     return out
 
 
 __all__ = [
     "EXPECTED_ENDPOINT_IDS",
+    "VALID_RETENTION_CLASSES",
     "LineageContext",
     "REGISTRY",
     "RegistryCoverageError",

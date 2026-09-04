@@ -93,6 +93,11 @@ class CollectionResult:
     pagination_detected: bool = False
     feature_status: Optional[str] = None
     capability_decision: Optional[str] = None
+    # TD-005 rejection metrics & tracing
+    rejected_rows: int = 0
+    rejections: List[Dict[str, Any]] = field(default_factory=list)
+    # TD-006 retry recovery hardening evidence
+    recovery_evidence: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

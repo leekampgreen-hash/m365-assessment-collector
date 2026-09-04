@@ -109,6 +109,13 @@ def auth_error_to_result(auth_error: AuthError, *, endpoint_id: str = "") -> Col
         retry_after=None,
         graph_error_code=auth_error.classification,
         pagination_detected=False,
+        recovery_evidence={
+            "endpoint": endpoint_id,
+            "failure_category": classification,
+            "retry_attempts": 0,
+            "final_status": "FAILED_PERMANENT",
+            "recommended_action": "CHECK_GRAPH_PERMISSION" if classification in (AUTH_FAILURE, "PERMISSION_REQUIRED") else "RETRY_RUN",
+        },
     )
 
 

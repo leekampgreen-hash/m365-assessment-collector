@@ -15,7 +15,16 @@ from typing import Any, Callable, Dict, List, Optional
 from . import errors
 from .models import CollectionResult, EndpointSpec, utcnow_iso
 from .pagination import PaginationResult, Paginator, make_fetch_from_transport
-from .retry import RetryDecision, RetryPolicy
+from .retry import (
+    RecoveryEvidence,
+    RetryDecision,
+    RetryPolicy,
+    STATUS_FAILED_PERMANENT,
+    STATUS_FAILED_RETRY_EXHAUSTED,
+    STATUS_PASS,
+    STATUS_RECOVERED,
+    recommend_recovery_action,
+)
 from .transport import GraphTransport
 
 
@@ -114,6 +123,24 @@ class BaseCollector:
         run.result.retry_count = max(0, attempts - 1)
         run.result.completed_at = utcnow_iso()
         run.result.duration = round(self._clock() - started, 3)
+
+        # TD-006: Construct bounded RecoveryEvidence
+        if run.result.status == "PASS":
+            final_status = STATUS_RECOVERED if attempts > 1 else STATUS_PASS
+        else:
+            final_status = STATUS_FAILED_RETRY_EXHAUSTED if attempts > 1 else STATUS_FAILED_PERMANENT
+
+        action = recommend_recovery_action(run.result.error_classification, final_status)
+        recovery_ev = RecoveryEvidence(
+            endpoint=self.spec.endpoint_id,
+            failure_category=run.result.error_classification if run.result.status != "PASS" else None,
+            retry_attempts=attempts,
+            final_status=final_status,
+            recommended_action=action,
+            timestamp=run.result.completed_at,
+        )
+        run.result.recovery_evidence = recovery_ev.to_dict()
+
         return run
 
     def _initial_url(self) -> str:

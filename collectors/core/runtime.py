@@ -626,6 +626,31 @@ class CollectorRuntime:
             run.result.error_classification = "PERSISTENCE_ERROR"
             run.result.error_message = type(exc).__name__
         run.result.completed_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
+        run.result.rejected_rows = max(0, run.result.source_rows - run.result.rows)
+
+        # TD-006: Attach structured RecoveryEvidence
+        from collectors.core.retry import (
+            RecoveryEvidence,
+            STATUS_FAILED_PERMANENT,
+            STATUS_FAILED_RETRY_EXHAUSTED,
+            STATUS_PASS,
+            STATUS_RECOVERED,
+            recommend_recovery_action,
+        )
+        if run.result.status == "PASS":
+            final_status = STATUS_RECOVERED if attempts > 1 else STATUS_PASS
+        else:
+            final_status = STATUS_FAILED_RETRY_EXHAUSTED if attempts > 1 else STATUS_FAILED_PERMANENT
+        action = recommend_recovery_action(run.result.error_classification, final_status)
+        recovery_ev = RecoveryEvidence(
+            endpoint=spec.endpoint_id,
+            failure_category=run.result.error_classification if run.result.status != "PASS" else None,
+            retry_attempts=attempts,
+            final_status=final_status,
+            recommended_action=action,
+            timestamp=run.result.completed_at,
+        )
+        run.result.recovery_evidence = recovery_ev.to_dict()
         return run
 
     def _normalize_run(self, run: CollectorRun) -> Optional[NormalizedCollection]:
