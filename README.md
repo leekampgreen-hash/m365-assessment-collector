@@ -57,7 +57,8 @@ It automates data collection across Microsoft Entra ID, Intune, Defender, Exchan
 - **Guest Governance**: Detection of inactive or stale external guest accounts.
 
 ### 2. License Optimization & Cost Reclamation
-- **Subscribed SKU Allocation**: Tracking of active licenses, total purchased units, consumed seats, and utilization rates.
+- **Subscribed SKU Allocation**: Tracking of active licenses, total purchased units, consumed seats, and utilization rates calculated at the commercial Parent SKU level (preventing multi-counting of underlying service plans).
+- **Trial & Free-Pool Isolation**: Filters out viral trial/free tier licenses (e.g., Power BI Free / standard quota pools) from commercial utilization calculations to ensure exact financial accuracy.
 - **License Parking & Waste Detection**: Identifies assigned paid licenses on inactive accounts (30/60/90 days), blocked/disabled users, and orphaned mailboxes for direct cost reclamation.
 - **Expiration Tracking**: Early warning on upcoming subscription renewals and license tier changes.
 

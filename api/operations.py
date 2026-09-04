@@ -10,7 +10,9 @@ from datetime import date, datetime, timedelta, timezone
 import json
 from pathlib import Path
 import os
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Lock
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlsplit
 
@@ -32,6 +34,9 @@ from capabilities.persistence import CapabilityQueryService
 
 BASE_PATH = "/api/operations"
 VALID_INACTIVITY_WINDOWS = (30, 60, 90)
+TELEMETRY_CACHE_TTL_SECONDS = int(os.environ.get("TELEMETRY_CACHE_TTL_SECONDS", "60"))
+_TELEMETRY_CACHE: dict[tuple[int, str], tuple[float, dict[str, Any]]] = {}
+_TELEMETRY_CACHE_LOCK = Lock()
 PATH_FEATURE_FLAGS = {
     "/api/agent/analyze/security": ("security_analyst",),
     "/api/license/optimizer-report": ("license_optimizer", "cost_analysis"),
@@ -86,6 +91,19 @@ def _response(status: str, data: Any = None, *, quality: Any = None, limitations
 
 def _service_status(value: Any) -> str:
     return "DATA_DEPENDENCY_UNAVAILABLE" if _contains_status(value, "DATA_DEPENDENCY_UNAVAILABLE") else "READY"
+
+
+def _cached_telemetry(tenant_id: int, key: str, loader: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    cache_key = (tenant_id, key)
+    now = time.monotonic()
+    with _TELEMETRY_CACHE_LOCK:
+        cached = _TELEMETRY_CACHE.get(cache_key)
+        if cached and now - cached[0] < TELEMETRY_CACHE_TTL_SECONDS:
+            return cached[1]
+        value = loader()
+        _TELEMETRY_CACHE[cache_key] = (now, value)
+        return value
+
 
 
 def _entra_guest_summary(connection: Any, tenant_id: int) -> dict[str, int]:
@@ -573,6 +591,31 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _load_cached_report(self, path: str) -> dict[str, Any]:
+        connection = self.connection_factory()
+        try:
+            if path == "/api/license/optimizer-report":
+                return _license_optimizer_report(connection, self.tenant_id)
+            service = self._load_service() if self.service_factory is not None else OperationsAnalyticsQueryService.from_connection(connection, self.tenant_id)
+            data = service.standard_kpi_summary()
+            return _response(_service_status(data), data, quality=_quality(service))
+        finally:
+            connection.close()
+
+    def _load_cached_security(self, path: str) -> dict[str, Any]:
+        service = self._load_security_service()
+        try:
+            methods = {
+                "/api/security/admin-roles": service.admin_roles,
+                "/api/security/mfa-coverage": service.mfa_coverage,
+                "/api/security/ca-policies": service.ca_policies,
+                "/api/security/signin-summary": lambda: SigninSummaryService(service.connection, self.tenant_id).summary(),
+                "/api/security/mfa-registration": service.mfa_registration,
+            }
+            return _response("READY", methods[path]())
+        finally:
+            service.connection.close()
+
     def _load_service(self) -> OperationsAnalyticsQueryService:
         if self.service_factory is not None:
             return self.service_factory()
@@ -843,11 +886,8 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                     connection.close()
                 return
             if path == "/api/license/optimizer-report":
-                connection = self.connection_factory()
-                try:
-                    self._write(200, _license_optimizer_report(connection, self.tenant_id))
-                finally:
-                    connection.close()
+                payload = self._load_cached_report(path) if self.service_factory is not None else _cached_telemetry(self.tenant_id, path, lambda: self._load_cached_report(path))
+                self._write(200, payload)
                 return
             if path == "/api/license/parking-report":
                 connection = self.connection_factory()
@@ -855,6 +895,9 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                     self._write(200, _response("READY", _license_parking(connection, self.tenant_id)))
                 finally:
                     connection.close()
+                return
+            if path in {"/api/security/admin-roles", "/api/security/mfa-coverage", "/api/security/ca-policies", "/api/security/signin-summary", "/api/security/mfa-registration"}:
+                self._write(200, _cached_telemetry(self.tenant_id, path, lambda: self._load_cached_security(path)))
                 return
             if path.startswith("/api/security"):
                 try:
@@ -946,9 +989,8 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 self._write(200, _response("READY", {"users": service.cross_workload_user_status()}))
                 return
             if path == BASE_PATH + "/kpi":
-                service = self._load_service()
-                data = service.standard_kpi_summary()
-                self._write(200, _response(_service_status(data), data, quality=_quality(service)))
+                payload = self._load_cached_report(path) if self.service_factory is not None else _cached_telemetry(self.tenant_id, path, lambda: self._load_cached_report(path))
+                self._write(200, payload)
                 return
             if path == BASE_PATH + "/summary":
                 service = self._load_service()
