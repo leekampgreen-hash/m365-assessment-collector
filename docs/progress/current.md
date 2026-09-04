@@ -31,9 +31,10 @@
 - INFRA-P02: Scheduled email report - SEALED
 - API-CLEANUP-01: Dead code removal, exchange capacity caching, defensive security guard, dynamic KPI deltas, SKU pricing consolidation - SEALED
 - LIC-UX02: License FinOps Command Center & Identities Reclamation Redesign - SEALED
+- LIC-OPTIMIZER-P01: License optimizer advisory & reclamation recommendations (integrated in LIC-UX01/02) - SEALED
 
 ## Active Task
-Planning next sprint
+Planning next sprint & Technical Debt reduction
 
 ## Next Steps
 
@@ -41,8 +42,7 @@ Planning next sprint
 2. SAAS-P01 - Customer onboarding flow
 3. SAAS-P03 - Rate limiting
 4. UI-P01 - UI polish (mobile responsive, loading states)
-5. LIC-OPTIMIZER-P01 - License optimizer agent
-6. AGT-DEV01-UPDATE - Update agent test questions
+5. AGT-DEV01-UPDATE - Update agent test questions
 
 
 ## Available API Endpoints

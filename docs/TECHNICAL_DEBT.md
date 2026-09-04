@@ -130,3 +130,27 @@ approved implementation work.
 **Plan:** `docs/evidence/TD-006-RETRY-RECOVERY-HARDENING-PLAN.md`; consolidated in `docs/evidence/CH-2.4-COLLECTOR-OPERATIONAL-HARDENING.md`
 
 **Scope:** Define retryable and permanent failure categories, a bounded retry/backoff/timeout policy, redacted recovery evidence, agentic operations questions, and possible future metrics, dashboard, alerting, and recovery workflow. No runtime or schema change is authorized by the plan.
+
+## TD-009: Workload Registry vs Specialized Collector Invariant Alignment
+
+**Description:** Invariant tests (`test_registry.py` and `test_security_wiring.py`) expected all `WORKLOAD` endpoints in `api_inventory.json` to have declarative adapters in `collectors/workloads/REGISTRY`, failing when 12 specialized script collectors were added.
+
+**Status:** RESOLVED
+
+**Resolution:**
+- Formalized `collector_type: str = "declarative"` in `EndpointSpec` typed model and inventory loader.
+- Updated `_load_inventory_ids()` and security wiring assertions to distinguish declarative adapters from specialized script collectors (`collector_type == "specialized"`).
+- All 34 registry and architectural invariant tests now pass cleanly.
+
+## TD-010: Test Environment Dependencies & Namespace Shadowing
+
+**Description:** Python unit test discovery failed due to missing host libraries (`pytest`, `openai`, `psycopg3`, `pyotp`) and an empty `tests/agent/__init__.py` that shadowed the root `agent` package during test discovery.
+
+**Status:** RESOLVED
+
+**Resolution:**
+- Installed required system packages: `python3-pytest`, `python3-openai`, `python3-psycopg`, `python3-psycopg-pool`, and `python3-pyotp`.
+- Removed shadowing empty file `tests/agent/__init__.py`.
+- Fixed `test_operations_api.py` connection mock to provide standard cursor context manager protocol.
+- Both `python3 -m unittest discover` (730 tests) and `pytest` (1,360 tests) now pass at 100%.
+
