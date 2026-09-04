@@ -328,14 +328,118 @@
                 <p class="section-desc">Comprehensive identity assessment, authentication methods, last sign-in telemetry, and assigned licenses.</p>
               </div>
             </div>
-            <div class="detail-controls" style="margin-bottom: 16px;">
-              <input type="search" id="full-user-search" placeholder="Search by name, UPN, department, or job title...">
-              <select id="full-user-role-filter">
-                <option value="ALL">All Roles</option>
-                <option value="ADMIN">Privileged Administrators</option>
-                <option value="MEMBER">Standard Members</option>
-              </select>
+            <!-- Top Filter Bar: Search, Multi-Faceted Filters, Saved Views & Columns Customizer -->
+            <div class="user-intel-filter-bar">
+              <div class="filter-group-primary">
+                <div class="search-input-wrap">
+                  <i class="ti ti-search search-icon-subtle"></i>
+                  <input type="search" id="full-user-search" placeholder="Search by name, UPN, department, SKU..." autocomplete="off">
+                </div>
+                <select id="full-user-role-filter" class="filter-select" title="Filter by directory role">
+                  <option value="ALL">All Roles</option>
+                  <option value="ADMIN">Privileged Administrators</option>
+                  <option value="MEMBER">Standard Members</option>
+                  <option value="GUEST">External Guests</option>
+                </select>
+                <select id="full-user-mfa-filter" class="filter-select" title="Filter by MFA status">
+                  <option value="ALL">All MFA Status</option>
+                  <option value="REGISTERED">MFA Registered (Active)</option>
+                  <option value="NO_MFA">No MFA (Unprotected)</option>
+                  <option value="FIDO2">Phishing-Resistant (FIDO2)</option>
+                  <option value="AUTHENTICATOR">MS Authenticator</option>
+                  <option value="PHONE">Phone / SMS</option>
+                </select>
+                <select id="full-user-risk-filter" class="filter-select" title="Filter by CIS Risk Posture">
+                  <option value="ALL">All CIS Risk</option>
+                  <option value="CRITICAL">Critical Risk</option>
+                  <option value="HIGH">High Risk</option>
+                  <option value="MEDIUM">Medium Risk</option>
+                  <option value="GOOD">Good Posture</option>
+                  <option value="AT_RISK">At Risk (Crit + High)</option>
+                </select>
+                <select id="full-user-status-filter" class="filter-select" title="Filter by account status">
+                  <option value="ALL">All Account States</option>
+                  <option value="ENABLED">Active Accounts Only</option>
+                  <option value="DISABLED">Disabled / Blocked Only</option>
+                </select>
+              </div>
+
+              <!-- Action Controls: Saved Views & Column Customizer -->
+              <div class="filter-group-actions">
+                <div class="saved-views-wrap">
+                  <label class="control-label-micro">View Preset:</label>
+                  <div class="saved-views-dropdown-box">
+                    <select id="user-saved-views-select" class="saved-views-select">
+                      <!-- Populated dynamically via JS -->
+                    </select>
+                    <button type="button" class="btn-tool-icon" id="btn-save-current-view" title="Save current filters &amp; columns as custom view">
+                      <i class="ti ti-bookmark-plus"></i>
+                    </button>
+                    <button type="button" class="btn-tool-icon btn-delete-view text-danger" id="btn-delete-current-view" title="Delete this custom view" style="display: none;">
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="column-picker-wrap">
+                  <button type="button" class="plain-action-btn" id="btn-toggle-columns-picker" title="Customize visible table columns">
+                    <i class="ti ti-columns"></i> <span id="columns-btn-label">Columns (8/16)</span> <i class="ti ti-chevron-down"></i>
+                  </button>
+                  
+                  <!-- Columns Popover Dropdown -->
+                  <div id="columns-picker-popover" class="columns-picker-popover hidden">
+                    <div class="popover-header">
+                      <strong>Customize Columns</strong>
+                      <button type="button" class="btn-close-mini" id="btn-close-columns-picker" aria-label="Close column picker"><i class="ti ti-x"></i></button>
+                    </div>
+                    <div class="popover-presets">
+                      <span class="preset-label">Presets:</span>
+                      <button type="button" class="preset-chip" data-preset="security">Security Audit</button>
+                      <button type="button" class="preset-chip" data-preset="finops">FinOps &amp; Licenses</button>
+                      <button type="button" class="preset-chip" data-preset="directory">Directory</button>
+                      <button type="button" class="preset-chip" data-preset="all">Select All</button>
+                    </div>
+                    <div class="columns-checkbox-list" id="columns-checkbox-container">
+                      <!-- Rendered dynamically by app.js -->
+                    </div>
+                    <div class="popover-footer">
+                      <button type="button" class="btn-subtle-mini" id="btn-reset-columns">Reset Default</button>
+                      <small class="text-muted"><i class="ti ti-arrows-move"></i> Drag headers in table to reorder</small>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" class="plain-action-btn" id="btn-export-user-csv" title="Export filtered users to CSV">
+                  <i class="ti ti-download"></i> CSV
+                </button>
+              </div>
             </div>
+
+            <!-- Modal for Saving Custom View -->
+            <div id="modal-save-view" class="modal-backdrop-custom hidden">
+              <div class="modal-card-custom">
+                <div class="modal-head">
+                  <h3>Save Custom View</h3>
+                  <button type="button" class="btn-close-mini" id="btn-modal-close-save" aria-label="Close modal"><i class="ti ti-x"></i></button>
+                </div>
+                <div class="modal-body">
+                  <p class="modal-help-text">Save the currently active column set, column order, and filter criteria as your personal preset.</p>
+                  <div class="form-group-custom">
+                    <label for="input-view-name">View Name</label>
+                    <input type="text" id="input-view-name" placeholder="e.g. Unprotected Admins, E5 License Audit" maxlength="40">
+                  </div>
+                  <label class="checkbox-label-custom">
+                    <input type="checkbox" id="check-set-default-view">
+                    <span>Set as my default view when opening User Intelligence</span>
+                  </label>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="plain-button" id="btn-cancel-save-view">Cancel</button>
+                  <button type="button" class="btn-primary-neon" id="btn-confirm-save-view">Save View</button>
+                </div>
+              </div>
+            </div>
+
             <div class="table-responsive-custom" id="full-user-table-container">
               <!-- Rendered via JS -->
             </div>

@@ -62,7 +62,8 @@ function createPaginatedTable(containerSelector, {
   renderRow,
   defaultSize = 10,
   key = containerSelector,
-  emptyMessage = "No records found"
+  emptyMessage = "No records found",
+  onColumnReorder = null
 }) {
   const container = typeof containerSelector === "string" ? $(containerSelector) : containerSelector;
   if (!container) return;
@@ -90,11 +91,19 @@ function createPaginatedTable(containerSelector, {
       `<option value="${opt}" ${opt === size ? "selected" : ""}>${opt}</option>`
     ).join("");
 
+    const thsHtml = columns.map((c) => {
+      if (typeof c === "object" && c !== null) {
+        const isDrag = c.draggable !== false;
+        return `<th class="${isDrag ? "draggable-header" : ""}" data-col-key="${escapeHtml(c.key || "")}" ${isDrag ? 'draggable="true"' : ''} title="${isDrag ? 'Drag header to reorder column position' : ''}">${escapeHtml(c.label || c.key || "")}</th>`;
+      }
+      return `<th>${escapeHtml(c)}</th>`;
+    }).join("");
+
     container.innerHTML = `
       <div class="table-responsive-custom">
         <table class="modern-data-table">
           <thead>
-            <tr>${columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr>
+            <tr>${thsHtml}</tr>
           </thead>
           <tbody>
             ${rowsHtml}
@@ -116,6 +125,54 @@ function createPaginatedTable(containerSelector, {
         </div>
       </div>
     `;
+
+    if (onColumnReorder) {
+      const headers = container.querySelectorAll("th.draggable-header");
+      let draggedKey = null;
+
+      headers.forEach((th) => {
+        th.addEventListener("dragstart", (e) => {
+          draggedKey = th.dataset.colKey;
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", draggedKey);
+          th.classList.add("dragging-header");
+        });
+
+        th.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          const rect = th.getBoundingClientRect();
+          const isLeft = e.clientX < rect.left + rect.width / 2;
+          if (isLeft) {
+            th.classList.add("drag-over-left");
+            th.classList.remove("drag-over-right");
+          } else {
+            th.classList.add("drag-over-right");
+            th.classList.remove("drag-over-left");
+          }
+        });
+
+        th.addEventListener("dragleave", () => {
+          th.classList.remove("drag-over-left", "drag-over-right");
+        });
+
+        th.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const targetKey = th.dataset.colKey;
+          const rect = th.getBoundingClientRect();
+          const isBefore = e.clientX < rect.left + rect.width / 2;
+          th.classList.remove("drag-over-left", "drag-over-right");
+          if (draggedKey && targetKey && draggedKey !== targetKey) {
+            onColumnReorder(draggedKey, targetKey, isBefore);
+          }
+        });
+
+        th.addEventListener("dragend", () => {
+          headers.forEach(h => h.classList.remove("dragging-header", "drag-over-left", "drag-over-right"));
+          draggedKey = null;
+        });
+      });
+    }
 
     container.querySelector(".table-size-select")?.addEventListener("change", (e) => {
       state.size = Number(e.target.value);
@@ -299,28 +356,553 @@ function hydrateFinancialSummary() {
   if ($("#bar-active")) $("#bar-active").style.width = `${activePercent}%`;
 }
 
-// User Intelligence Full Matrix (With 10-200 Pagination)
+// ==========================================
+// User Intelligence: Catalog, Drag & Drop, & Saved Views
+// ==========================================
+
+const USER_INTEL_COLUMNS_CATALOG = {
+  user: {
+    id: "user",
+    label: "User Identity",
+    category: "Identity",
+    draggable: false,
+    renderCell: (u) => `
+      <td>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="user-avatar-mini" style="background: ${getAvatarColor(u.display_name || u.user_principal_name || u.upn)}; width: 32px; height: 32px; font-size: 11px; border-radius: 8px;">
+            ${getInitials(u.display_name || u.user_principal_name || u.upn)}
+          </div>
+          <div>
+            <strong>${escapeHtml(u.display_name || "Unknown")}</strong><br>
+            <small class="text-muted">${escapeHtml(u.user_principal_name || u.upn || "-")}</small>
+          </div>
+        </div>
+      </td>
+    `
+  },
+  user_type: {
+    id: "user_type",
+    label: "User Type",
+    category: "Identity",
+    draggable: true,
+    renderCell: (u) => `<td><span class="role-pill ${String(u.user_type || "").toLowerCase() === "guest" ? "role-guest" : "role-member"}">${escapeHtml(u.user_type || "Member")}</span></td>`
+  },
+  account_status: {
+    id: "account_status",
+    label: "Account Status",
+    category: "Identity",
+    draggable: true,
+    renderCell: (u) => {
+      const enabled = u.account_enabled !== false;
+      return `<td><span class="account-status-badge ${enabled ? 'account-status-active' : 'account-status-disabled'}"><i class="ti ti-${enabled ? 'check' : 'ban'}"></i> ${enabled ? 'Active' : 'Disabled'}</span></td>`;
+    }
+  },
+  privilege: {
+    id: "privilege",
+    label: "Privilege",
+    category: "Security",
+    draggable: true,
+    renderCell: (u) => `<td>${u.is_admin ? '<span class="role-pill role-admin">Admin</span>' : '<span class="role-pill role-member">Member</span>'}</td>`
+  },
+  mfa_method: {
+    id: "mfa_method",
+    label: "MFA Method",
+    category: "Security",
+    draggable: true,
+    renderCell: (u) => `<td>${getMfaLabel(u)}</td>`
+  },
+  cis_risk: {
+    id: "cis_risk",
+    label: "CIS Risk Posture",
+    category: "Security",
+    draggable: true,
+    renderCell: (u) => {
+      const riskStatus = String(u.security_status || u.risk_level || "GOOD").toUpperCase();
+      const riskClass = `badge-risk-${riskStatus.toLowerCase()}`;
+      return `<td><span class="badge-risk ${riskClass}">${riskStatus} (${u.security_score || 0})</span></td>`;
+    }
+  },
+  license_names: {
+    id: "license_names",
+    label: "Assigned Licenses",
+    category: "FinOps",
+    draggable: true,
+    renderCell: (u) => {
+      const licenses = Array.isArray(u.license_names) ? u.license_names : [];
+      if (!licenses.length) return `<td class="text-muted">None</td>`;
+      return `<td><div style="display: flex; flex-wrap: wrap; gap: 2px;">${licenses.map(l => `<span class="sku-badge-pill" title="${escapeHtml(l)}">${escapeHtml(l)}</span>`).join("")}</div></td>`;
+    }
+  },
+  license_count: {
+    id: "license_count",
+    label: "License Count",
+    category: "FinOps",
+    draggable: true,
+    renderCell: (u) => `<td><strong>${Number(u.license_count || (Array.isArray(u.license_names) ? u.license_names.length : 0))}</strong> SKU(s)</td>`
+  },
+  last_signin: {
+    id: "last_signin",
+    label: "Last Sign-In",
+    category: "Activity",
+    draggable: true,
+    renderCell: (u) => {
+      const dt = u.signin_datetime || u.last_signin || u.exchange_last_activity || "-";
+      const loc = u.location_city ? `<br><small class="text-muted"><i class="ti ti-map-pin"></i> ${escapeHtml(u.location_city)}${u.location_country ? `, ${escapeHtml(u.location_country)}` : ""}</small>` : "";
+      return `<td>${escapeHtml(dt)}${loc}</td>`;
+    }
+  },
+  exchange_activity: {
+    id: "exchange_activity",
+    label: "Exchange Activity",
+    category: "Activity",
+    draggable: true,
+    renderCell: (u) => `<td>${escapeHtml(u.exchange_last_activity || u.last_activity_date || "-")}</td>`
+  },
+  teams_activity: {
+    id: "teams_activity",
+    label: "Teams Activity",
+    category: "Activity",
+    draggable: true,
+    renderCell: (u) => `<td>${escapeHtml(u.teams_last_activity || "-")}</td>`
+  },
+  onedrive_activity: {
+    id: "onedrive_activity",
+    label: "OneDrive Activity",
+    category: "Activity",
+    draggable: true,
+    renderCell: (u) => `<td>${escapeHtml(u.onedrive_last_activity || "-")}</td>`
+  },
+  department: {
+    id: "department",
+    label: "Department",
+    category: "Governance",
+    draggable: true,
+    renderCell: (u) => `<td>${escapeHtml(u.department || "-")}</td>`
+  },
+  job_title: {
+    id: "job_title",
+    label: "Job Title",
+    category: "Governance",
+    draggable: true,
+    renderCell: (u) => `<td>${escapeHtml(u.job_title || "-")}</td>`
+  },
+  country: {
+    id: "country",
+    label: "Country / Region",
+    category: "Governance",
+    draggable: true,
+    renderCell: (u) => `<td>${escapeHtml(u.country || u.location_country || "-")}</td>`
+  },
+  devices: {
+    id: "devices",
+    label: "Intune Devices",
+    category: "Device",
+    draggable: true,
+    renderCell: (u) => {
+      const count = Number(u.device_count || 0);
+      if (!count) return `<td class="text-muted">0 Devices</td>`;
+      const isCompliant = u.device_compliant !== false;
+      return `<td><span class="role-pill ${isCompliant ? 'role-member' : 'role-admin'}"><i class="ti ti-device-laptop"></i> ${count} Device(s)</span></td>`;
+    }
+  }
+};
+
+const USER_INTEL_PRESET_COLUMNS = {
+  default: ["user", "user_type", "privilege", "mfa_method", "cis_risk", "last_signin", "department", "job_title"],
+  security: ["user", "privilege", "mfa_method", "cis_risk", "last_signin", "devices"],
+  finops: ["user", "account_status", "license_names", "license_count", "exchange_activity", "teams_activity", "last_signin"],
+  directory: ["user", "user_type", "account_status", "department", "job_title", "country"],
+  all: Object.keys(USER_INTEL_COLUMNS_CATALOG)
+};
+
+let userIntelActiveColumns = [...USER_INTEL_PRESET_COLUMNS.default];
+let userIntelActiveViewId = "view_default";
+
+function getUserStorageKey() {
+  const email = $("#user-email")?.textContent?.trim() || localStorage.getItem("user_email") || "admin@localhost";
+  const tenant = currentTenantId || "default";
+  return `m365_user_intel_views_${email}_${tenant}`;
+}
+
+function loadUserSavedViews() {
+  const key = getUserStorageKey();
+  const builtInViews = [
+    { id: "view_default", name: "Default Posture Matrix", isDefault: true, isSystem: true, columns: [...USER_INTEL_PRESET_COLUMNS.default], filters: { search: "", role: "ALL", mfa: "ALL", risk: "ALL", status: "ALL" } },
+    { id: "view_security", name: "Security & MFA Audit", isDefault: false, isSystem: true, columns: [...USER_INTEL_PRESET_COLUMNS.security], filters: { search: "", role: "ALL", mfa: "ALL", risk: "ALL", status: "ALL" } },
+    { id: "view_finops", name: "FinOps & License Recovery", isDefault: false, isSystem: true, columns: [...USER_INTEL_PRESET_COLUMNS.finops], filters: { search: "", role: "ALL", mfa: "ALL", risk: "ALL", status: "ALL" } },
+    { id: "view_directory", name: "Directory & Governance", isDefault: false, isSystem: true, columns: [...USER_INTEL_PRESET_COLUMNS.directory], filters: { search: "", role: "ALL", mfa: "ALL", risk: "ALL", status: "ALL" } }
+  ];
+
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return builtInViews;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  } catch (_) {}
+  return builtInViews;
+}
+
+function saveUserViews(views) {
+  const key = getUserStorageKey();
+  try {
+    localStorage.setItem(key, JSON.stringify(views));
+  } catch (_) {}
+}
+
+function initUserIntelControls() {
+  const views = loadUserSavedViews();
+  const defaultView = views.find(v => v.isDefault) || views[0];
+  userIntelActiveViewId = defaultView.id;
+  userIntelActiveColumns = Array.isArray(defaultView.columns) && defaultView.columns.length ? [...defaultView.columns] : [...USER_INTEL_PRESET_COLUMNS.default];
+
+  // Set filter inputs if saved
+  if (defaultView.filters) {
+    if ($("#full-user-search")) $("#full-user-search").value = defaultView.filters.search || "";
+    if ($("#full-user-role-filter")) $("#full-user-role-filter").value = defaultView.filters.role || "ALL";
+    if ($("#full-user-mfa-filter")) $("#full-user-mfa-filter").value = defaultView.filters.mfa || "ALL";
+    if ($("#full-user-risk-filter")) $("#full-user-risk-filter").value = defaultView.filters.risk || "ALL";
+    if ($("#full-user-status-filter")) $("#full-user-status-filter").value = defaultView.filters.status || "ALL";
+  }
+
+  renderSavedViewsDropdown();
+  renderColumnPickerList();
+  bindUserIntelEvents();
+}
+
+function renderSavedViewsDropdown() {
+  const select = $("#user-saved-views-select");
+  if (!select) return;
+  const views = loadUserSavedViews();
+  select.innerHTML = views.map(v => 
+    `<option value="${escapeHtml(v.id)}" ${v.id === userIntelActiveViewId ? "selected" : ""}>${escapeHtml(v.name)}${v.isDefault ? " (Default)" : ""}</option>`
+  ).join("");
+
+  const activeView = views.find(v => v.id === userIntelActiveViewId);
+  const deleteBtn = $("#btn-delete-current-view");
+  if (deleteBtn) {
+    deleteBtn.style.display = (activeView && !activeView.isSystem) ? "inline-flex" : "none";
+  }
+}
+
+function renderColumnPickerList() {
+  const container = $("#columns-checkbox-container");
+  const label = $("#columns-btn-label");
+  if (!container) return;
+
+  const totalCols = Object.keys(USER_INTEL_COLUMNS_CATALOG).length;
+  if (label) label.textContent = `Columns (${userIntelActiveColumns.length}/${totalCols})`;
+
+  container.innerHTML = Object.values(USER_INTEL_COLUMNS_CATALOG).map(col => {
+    const checked = userIntelActiveColumns.includes(col.id);
+    const isPinned = col.id === "user";
+    return `
+      <label class="column-checkbox-item">
+        <input type="checkbox" value="${escapeHtml(col.id)}" ${checked ? "checked" : ""} ${isPinned ? "disabled" : ""}>
+        <span>${escapeHtml(col.label)}</span>
+      </label>
+    `;
+  }).join("");
+
+  container.querySelectorAll("input[type='checkbox']").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const colId = cb.value;
+      if (cb.checked) {
+        if (!userIntelActiveColumns.includes(colId)) userIntelActiveColumns.push(colId);
+      } else {
+        userIntelActiveColumns = userIntelActiveColumns.filter(c => c !== colId);
+      }
+      if (!userIntelActiveColumns.includes("user")) userIntelActiveColumns.unshift("user");
+      renderFullUserTable();
+      renderColumnPickerList();
+    });
+  });
+}
+
+function bindUserIntelEvents() {
+  // Search & Filter change triggers
+  const filterInputs = [
+    "#full-user-search",
+    "#full-user-role-filter",
+    "#full-user-mfa-filter",
+    "#full-user-risk-filter",
+    "#full-user-status-filter"
+  ];
+
+  filterInputs.forEach(sel => {
+    $(sel)?.addEventListener("input", () => renderFullUserTable());
+    $(sel)?.addEventListener("change", () => renderFullUserTable());
+  });
+
+  // Saved Views Select Switch
+  $("#user-saved-views-select")?.addEventListener("change", (e) => {
+    const viewId = e.target.value;
+    const views = loadUserSavedViews();
+    const view = views.find(v => v.id === viewId);
+    if (view) {
+      userIntelActiveViewId = view.id;
+      userIntelActiveColumns = [...view.columns];
+      if (view.filters) {
+        if ($("#full-user-search")) $("#full-user-search").value = view.filters.search || "";
+        if ($("#full-user-role-filter")) $("#full-user-role-filter").value = view.filters.role || "ALL";
+        if ($("#full-user-mfa-filter")) $("#full-user-mfa-filter").value = view.filters.mfa || "ALL";
+        if ($("#full-user-risk-filter")) $("#full-user-risk-filter").value = view.filters.risk || "ALL";
+        if ($("#full-user-status-filter")) $("#full-user-status-filter").value = view.filters.status || "ALL";
+      }
+      renderSavedViewsDropdown();
+      renderColumnPickerList();
+      renderFullUserTable();
+    }
+  });
+
+  // Delete Custom View
+  $("#btn-delete-current-view")?.addEventListener("click", () => {
+    let views = loadUserSavedViews();
+    const activeView = views.find(v => v.id === userIntelActiveViewId);
+    if (!activeView || activeView.isSystem) return;
+    if (confirm(`Delete custom view "${activeView.name}"?`)) {
+      views = views.filter(v => v.id !== userIntelActiveViewId);
+      saveUserViews(views);
+      userIntelActiveViewId = "view_default";
+      const defaultView = views.find(v => v.isDefault) || views[0];
+      userIntelActiveColumns = [...defaultView.columns];
+      renderSavedViewsDropdown();
+      renderColumnPickerList();
+      renderFullUserTable();
+    }
+  });
+
+  // Column Picker Popover Toggle
+  $("#btn-toggle-columns-picker")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    $("#columns-picker-popover")?.classList.toggle("hidden");
+  });
+
+  $("#btn-close-columns-picker")?.addEventListener("click", () => {
+    $("#columns-picker-popover")?.classList.add("hidden");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!$("#column-picker-wrap")?.contains(e.target) && !$("#columns-picker-popover")?.contains(e.target)) {
+      $("#columns-picker-popover")?.classList.add("hidden");
+    }
+  });
+
+  // Preset Chips
+  $$(".preset-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const presetKey = chip.dataset.preset;
+      if (USER_INTEL_PRESET_COLUMNS[presetKey]) {
+        userIntelActiveColumns = [...USER_INTEL_PRESET_COLUMNS[presetKey]];
+        renderColumnPickerList();
+        renderFullUserTable();
+      }
+    });
+  });
+
+  $("#btn-reset-columns")?.addEventListener("click", () => {
+    userIntelActiveColumns = [...USER_INTEL_PRESET_COLUMNS.default];
+    renderColumnPickerList();
+    renderFullUserTable();
+  });
+
+  // Save Current View Modal
+  $("#btn-save-current-view")?.addEventListener("click", () => {
+    $("#modal-save-view")?.classList.remove("hidden");
+    if ($("#input-view-name")) $("#input-view-name").value = "";
+    if ($("#check-set-default-view")) $("#check-set-default-view").checked = false;
+  });
+
+  $("#btn-modal-close-save")?.addEventListener("click", () => {
+    $("#modal-save-view")?.classList.add("hidden");
+  });
+
+  $("#btn-cancel-save-view")?.addEventListener("click", () => {
+    $("#modal-save-view")?.classList.add("hidden");
+  });
+
+  $("#btn-confirm-save-view")?.addEventListener("click", () => {
+    const name = $("#input-view-name")?.value?.trim();
+    if (!name) {
+      alert("Please enter a name for your custom view.");
+      return;
+    }
+    const isDefault = $("#check-set-default-view")?.checked || false;
+    let views = loadUserSavedViews();
+
+    if (isDefault) {
+      views.forEach(v => v.isDefault = false);
+    }
+
+    const newId = `view_${Date.now()}`;
+    const newView = {
+      id: newId,
+      name: name,
+      isDefault: isDefault,
+      isSystem: false,
+      columns: [...userIntelActiveColumns],
+      filters: {
+        search: $("#full-user-search")?.value || "",
+        role: $("#full-user-role-filter")?.value || "ALL",
+        mfa: $("#full-user-mfa-filter")?.value || "ALL",
+        risk: $("#full-user-risk-filter")?.value || "ALL",
+        status: $("#full-user-status-filter")?.value || "ALL"
+      }
+    };
+
+    views.push(newView);
+    saveUserViews(views);
+    userIntelActiveViewId = newId;
+    $("#modal-save-view")?.classList.add("hidden");
+    renderSavedViewsDropdown();
+  });
+
+  // Export to CSV
+  $("#btn-export-user-csv")?.addEventListener("click", () => {
+    exportUserIntelligenceCsv();
+  });
+}
+
+function exportUserIntelligenceCsv() {
+  const filteredUsers = getFilteredUsers();
+  if (!filteredUsers.length) {
+    alert("No records to export with current filters.");
+    return;
+  }
+
+  const activeCols = userIntelActiveColumns.map(k => USER_INTEL_COLUMNS_CATALOG[k]).filter(Boolean);
+  const headerRow = activeCols.map(c => `"${c.label.replace(/"/g, '""')}"`).join(",");
+  
+  const dataRows = filteredUsers.map(u => {
+    return activeCols.map(c => {
+      let val = "";
+      if (c.id === "user") val = `${u.display_name || ""} (${u.user_principal_name || u.upn || ""})`;
+      else if (c.id === "user_type") val = u.user_type || "Member";
+      else if (c.id === "account_status") val = u.account_enabled !== false ? "Active" : "Disabled";
+      else if (c.id === "privilege") val = u.is_admin ? "Admin" : "Member";
+      else if (c.id === "mfa_method") val = u.default_mfa_method || (u.mfa_registered ? "Registered" : "None");
+      else if (c.id === "cis_risk") val = `${u.security_status || u.risk_level || "GOOD"} (${u.security_score || 0})`;
+      else if (c.id === "license_names") val = Array.isArray(u.license_names) ? u.license_names.join("; ") : "";
+      else if (c.id === "license_count") val = u.license_count || 0;
+      else if (c.id === "last_signin") val = u.signin_datetime || u.last_signin || u.exchange_last_activity || "";
+      else if (c.id === "exchange_activity") val = u.exchange_last_activity || "";
+      else if (c.id === "teams_activity") val = u.teams_last_activity || "";
+      else if (c.id === "onedrive_activity") val = u.onedrive_last_activity || "";
+      else if (c.id === "department") val = u.department || "";
+      else if (c.id === "job_title") val = u.job_title || "";
+      else if (c.id === "country") val = u.country || "";
+      else if (c.id === "devices") val = `${u.device_count || 0} Devices`;
+      return `"${String(val).replace(/"/g, '""')}"`;
+    }).join(",");
+  });
+
+  const csvContent = [headerRow, ...dataRows].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `m365_users_intel_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function getFilteredUsers() {
+  const searchTerm = ($("#full-user-search")?.value || "").toLowerCase().trim();
+  const roleFilter = $("#full-user-role-filter")?.value || "ALL";
+  const mfaFilter = $("#full-user-mfa-filter")?.value || "ALL";
+  const riskFilter = $("#full-user-risk-filter")?.value || "ALL";
+  const statusFilter = $("#full-user-status-filter")?.value || "ALL";
+
+  return allUsers.filter(u => {
+    // Search
+    if (searchTerm) {
+      const name = String(u.display_name || "").toLowerCase();
+      const upn = String(u.user_principal_name || u.upn || "").toLowerCase();
+      const dept = String(u.department || "").toLowerCase();
+      const title = String(u.job_title || "").toLowerCase();
+      const licenses = Array.isArray(u.license_names) ? u.license_names.join(" ").toLowerCase() : "";
+      if (!name.includes(searchTerm) && !upn.includes(searchTerm) && !dept.includes(searchTerm) && !title.includes(searchTerm) && !licenses.includes(searchTerm)) {
+        return false;
+      }
+    }
+
+    // Role
+    if (roleFilter === "ADMIN" && !u.is_admin) return false;
+    if (roleFilter === "MEMBER" && (u.is_admin || String(u.user_type || "").toLowerCase() === "guest")) return false;
+    if (roleFilter === "GUEST" && String(u.user_type || "").toLowerCase() !== "guest") return false;
+
+    // MFA
+    const isMfa = Boolean(u.mfa_registered || u.is_mfa_registered);
+    const mfaMethod = String(u.default_mfa_method || u.mfa_method || "").toLowerCase();
+    if (mfaFilter === "REGISTERED" && !isMfa) return false;
+    if (mfaFilter === "NO_MFA" && isMfa) return false;
+    if (mfaFilter === "FIDO2" && !mfaMethod.includes("fido")) return false;
+    if (mfaFilter === "AUTHENTICATOR" && !mfaMethod.includes("authenticator")) return false;
+    if (mfaFilter === "PHONE" && !mfaMethod.includes("phone") && !mfaMethod.includes("sms")) return false;
+
+    // Risk
+    const risk = String(u.security_status || u.risk_level || "GOOD").toUpperCase();
+    if (riskFilter === "CRITICAL" && risk !== "CRITICAL") return false;
+    if (riskFilter === "HIGH" && risk !== "HIGH") return false;
+    if (riskFilter === "MEDIUM" && risk !== "MEDIUM") return false;
+    if (riskFilter === "GOOD" && risk !== "GOOD") return false;
+    if (riskFilter === "AT_RISK" && risk !== "CRITICAL" && risk !== "HIGH") return false;
+
+    // Account Status
+    const isEnabled = u.account_enabled !== false;
+    if (statusFilter === "ENABLED" && !isEnabled) return false;
+    if (statusFilter === "DISABLED" && isEnabled) return false;
+
+    return true;
+  });
+}
+
+// User Intelligence Full Dynamic Matrix
 function renderFullUserTable() {
+  const filtered = getFilteredUsers();
+  
+  // Build active column objects
+  const colObjects = userIntelActiveColumns
+    .map(key => USER_INTEL_COLUMNS_CATALOG[key])
+    .filter(Boolean)
+    .map(col => ({
+      key: col.id,
+      label: col.label,
+      draggable: col.draggable !== false
+    }));
+
   createPaginatedTable("#full-user-table-container", {
-    columns: ["User", "Type", "Privilege", "MFA Method", "CIS Risk", "Last Activity", "Department", "Job Title"],
-    data: allUsers,
+    columns: colObjects,
+    data: filtered,
     defaultSize: 10,
     key: "full-users-table",
+    emptyMessage: "No directory users match current filter criteria.",
     renderRow: (u) => {
-      const riskStatus = String(u.security_status || "GOOD").toUpperCase();
-      const riskClass = `badge-risk-${riskStatus.toLowerCase()}`;
-      return `
-        <tr>
-          <td><strong>${escapeHtml(u.display_name)}</strong><br><small class="text-muted">${escapeHtml(u.upn)}</small></td>
-          <td>${escapeHtml(u.user_type || "Member")}</td>
-          <td>${u.is_admin ? '<span class="role-pill role-admin">Admin</span>' : '<span class="role-pill role-member">Member</span>'}</td>
-          <td>${getMfaLabel(u)}</td>
-          <td><span class="badge-risk ${riskClass}">${riskStatus} (${u.security_score || 0})</span></td>
-          <td>${escapeHtml(u.exchange_last_activity || u.last_signin || "-")}</td>
-          <td>${escapeHtml(u.department || "-")}</td>
-          <td>${escapeHtml(u.job_title || "-")}</td>
-        </tr>
-      `;
+      const cellsHtml = userIntelActiveColumns
+        .map(key => {
+          const colDef = USER_INTEL_COLUMNS_CATALOG[key];
+          return colDef ? colDef.renderCell(u) : `<td>-</td>`;
+        })
+        .join("");
+      return `<tr>${cellsHtml}</tr>`;
+    },
+    onColumnReorder: (draggedKey, targetKey, isBefore) => {
+      if (!draggedKey || !targetKey || draggedKey === targetKey) return;
+      const idxFrom = userIntelActiveColumns.indexOf(draggedKey);
+      if (idxFrom === -1) return;
+      userIntelActiveColumns.splice(idxFrom, 1);
+      
+      let idxTo = userIntelActiveColumns.indexOf(targetKey);
+      if (idxTo === -1) idxTo = userIntelActiveColumns.length;
+      if (!isBefore) idxTo++;
+      userIntelActiveColumns.splice(idxTo, 0, draggedKey);
+
+      // Ensure user is always at index 0
+      userIntelActiveColumns = userIntelActiveColumns.filter(k => k !== "user");
+      userIntelActiveColumns.unshift("user");
+
+      renderColumnPickerList();
+      renderFullUserTable();
     }
   });
 }
@@ -967,6 +1549,7 @@ async function start() {
   initAuth().catch(() => {});
   initNavigation();
   initAssistantChat();
+  initUserIntelControls();
 
   $("#btn-refresh-data")?.addEventListener("click", () => {
     loadTelemetryData();
