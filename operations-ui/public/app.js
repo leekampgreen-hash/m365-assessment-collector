@@ -281,18 +281,22 @@ function hydrateFinancialSummary() {
   const productCount = paidSkus.length || (skuEntries.length > 0 ? skuEntries.length : 2);
   const idleLicenses = optimizerReport?.summary?.flagged_users || 0;
   const activeCount = Math.max(0, totalAssigned - idleLicenses);
-  const activePercent = totalAssigned > 0 ? Math.round((activeCount / totalAssigned) * 100) : 0;
+  const inactivePercent = totalAssigned > 0 ? Math.round((idleLicenses / totalAssigned) * 100) : 0;
+  const activePercent = totalAssigned > 0 ? (100 - inactivePercent) : 0;
   const monthlyWaste = optimizerReport?.savings?.total_monthly_saving || 0;
+  const annualSavings = optimizerReport?.savings?.total_annual_saving || (monthlyWaste * 12);
 
   if ($("#fin-total-assigned")) $("#fin-total-assigned").textContent = totalAssigned.toLocaleString();
-  if ($("#fin-total-products")) $("#fin-total-products").textContent = `Across ${productCount} product${productCount !== 1 ? "s" : ""}`;
-  if ($("#fin-active-utilization")) $("#fin-active-utilization").textContent = `${activePercent}%`;
-  if ($("#fin-monthly-waste")) $("#fin-monthly-waste").textContent = `$${Math.round(monthlyWaste).toLocaleString()}`;
+  if ($("#fin-total-products")) $("#fin-total-products").textContent = `Across ${productCount} paid SKU${productCount !== 1 ? "s" : ""}`;
+  if ($("#fin-inactive-seats")) $("#fin-inactive-seats").textContent = idleLicenses.toLocaleString();
+  if ($("#fin-inactive-percent-sub")) $("#fin-inactive-percent-sub").textContent = `${inactivePercent}% of assigned seats inactive >30d`;
+  if ($("#kpi-parking-savings")) $("#kpi-parking-savings").textContent = Math.round(annualSavings).toLocaleString();
+  if ($("#fin-savings-sub")) $("#fin-savings-sub").textContent = `~$${Math.round(monthlyWaste).toLocaleString()} / mo recovery potential`;
   
-  if ($("#fin-distribution-label")) $("#fin-distribution-label").textContent = `${activeCount.toLocaleString()} Active / ${idleLicenses.toLocaleString()} Idle`;
+  if ($("#fin-distribution-label")) $("#fin-distribution-label").textContent = `${idleLicenses.toLocaleString()} Reclaimable (${inactivePercent}%) / ${activeCount.toLocaleString()} In-Use`;
   
+  if ($("#bar-idle")) $("#bar-idle").style.width = `${inactivePercent}%`;
   if ($("#bar-active")) $("#bar-active").style.width = `${activePercent}%`;
-  if ($("#bar-idle")) $("#bar-idle").style.width = `${100 - activePercent}%`;
 }
 
 // User Intelligence Full Matrix (With 10-200 Pagination)
@@ -358,16 +362,14 @@ function hydrateKpiCards(users, kpiData, optimizerReport) {
     mfaFill.style.strokeDashoffset = String(offset);
   }
 
-  const savings = optimizerReport?.savings || { total_annual_saving: 3840 };
+  const savings = optimizerReport?.savings || { total_annual_saving: 3840, total_monthly_saving: 320 };
   const annual = Number(savings.total_annual_saving || 3840);
+  const monthly = Number(savings.total_monthly_saving || Math.round(annual / 12));
   const formattedSavings = Math.round(annual).toLocaleString();
   if ($("#kpi-parking-savings")) $("#kpi-parking-savings").textContent = formattedSavings;
   if ($("#sidebar-savings-badge")) $("#sidebar-savings-badge").textContent = `$${(annual / 1000).toFixed(1)}k savings`;
-  
-  const flaggedUsers = optimizerReport?.summary?.flagged_users || 14;
-  if ($("#kpi-parking-seats-label")) {
-    $("#kpi-parking-seats-label").textContent = `${flaggedUsers} Parked Licenses Detected`;
-  }
+  if ($("#fin-savings-sub")) $("#fin-savings-sub").textContent = `~$${Math.round(monthly).toLocaleString()} / mo potential recovery`;
+  if ($("#fin-inactive-seats")) $("#fin-inactive-seats").textContent = (optimizerReport?.summary?.flagged_users || 14).toLocaleString();
 
   const cisScore = Math.max(65, Math.min(95, Math.round(100 - ((criticalCount * 6 + highCount * 3) / totalUsers * 100))));
   if ($("#kpi-cis-score")) $("#kpi-cis-score").textContent = `${cisScore}%`;

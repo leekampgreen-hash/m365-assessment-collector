@@ -135,7 +135,7 @@
             <i class="ti ti-menu-2"></i>
           </button>
           <div class="header-titles">
-            <h1 id="page-heading">Executive</h1>
+            <h1 id="page-heading">Executive Overview</h1>
             <span class="header-subtitle" id="page-subheading">Tenant-level view of adoption, security posture, and license optimization</span>
           </div>
         </div>
@@ -211,153 +211,117 @@
             </div>
           </section>
 
-          <!-- Middle Row: 4 Glowing Executive KPI Cards & Visual Gauges -->
-          <section class="kpi-grid-row" aria-label="Executive KPIs" style="margin-bottom: 24px;">
-            <!-- Card 1: Total Users & Composite Risk Score -->
-            <article class="kpi-card card-glow-cyan">
-              <div class="kpi-head">
-                <div class="kpi-title-wrap">
-                  <span class="kpi-title">Total Users with Composite Risk Score</span>
-                  <i class="ti ti-info-circle kpi-info-icon" title="Total directory users scored against CIS M365 v6.0.1 benchmark"></i>
-                </div>
-                <span class="kpi-delta delta-stable" id="delta-users-badge"><i class="ti ti-minus"></i> 0% vs run</span>
+          <!-- Middle Row: Security & Compliance Posture Panel -->
+          <section class="workstation-card security-summary-panel" style="margin-bottom: 24px;">
+            <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px; padding-bottom: 12px;">
+              <div class="panel-header-title">
+                <h2>Security Posture &amp; Compliance</h2>
+                <span class="badge-pill-cyan">CIS M365 v6.0.1</span>
               </div>
-              <div class="kpi-body">
-                <div class="kpi-main-stat" id="kpi-total-users">39</div>
-                <div class="gauge-wrap">
-                  <svg class="semi-gauge" viewBox="0 0 100 50">
-                    <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"/>
-                    <path class="gauge-fill gauge-cyan" id="gauge-user-risk" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="126" stroke-dashoffset="35"/>
-                  </svg>
-                  <div class="gauge-needle" id="gauge-user-needle"></div>
-                </div>
-              </div>
-              <div class="kpi-footer-chips" id="kpi-risk-distribution">
-                <span class="chip-mini chip-critical">2 Critical</span>
-                <span class="chip-mini chip-high">5 High</span>
-                <span class="chip-mini chip-medium">8 Med</span>
-                <span class="chip-mini chip-good">24 Good</span>
-              </div>
-            </article>
+            </div>
 
-            <!-- Card 2: MFA Adoption Rate -->
-            <article class="kpi-card card-glow-emerald">
-              <div class="kpi-head">
-                <div class="kpi-title-wrap">
-                  <span class="kpi-title">MFA Adoption rate</span>
-                  <i class="ti ti-info-circle kpi-info-icon" title="Percentage of directory users with registered and active MFA methods"></i>
+            <div class="kpi-grid-row grid-3" aria-label="Security &amp; Compliance Posture" style="margin-bottom: 0;">
+              <!-- Card 1: Directory Identity & Risk Posture -->
+              <article class="kpi-card card-glow-cyan">
+                <div class="kpi-head">
+                  <div class="kpi-title-wrap">
+                    <span class="kpi-title">Directory Identity &amp; Risk Posture</span>
+                    <i class="ti ti-info-circle kpi-info-icon" title="Total directory identities scored against CIS M365 v6.0.1 benchmark"></i>
+                  </div>
+                  <span class="kpi-delta delta-stable" id="delta-users-badge"><i class="ti ti-minus"></i> 0% vs run</span>
                 </div>
-                <span class="kpi-delta delta-up" id="delta-mfa-badge"><i class="ti ti-trending-up"></i> +2.1%</span>
-              </div>
-              <div class="kpi-body flex-center">
-                <div class="radial-ring-wrap">
-                  <svg class="radial-ring" viewBox="0 0 100 100">
-                    <circle class="ring-bg" cx="50" cy="50" r="40" fill="none" stroke-width="8"/>
-                    <circle class="ring-fill ring-emerald" id="mfa-radial-fill" cx="50" cy="50" r="40" fill="none" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="13"/>
-                  </svg>
-                  <div class="ring-center-stat">
-                    <span class="stat-number" id="kpi-mfa-rate">94.8%</span>
-                    <span class="stat-caption">Covered</span>
+                <div class="kpi-body">
+                  <div class="kpi-main-stat" id="kpi-total-users">39</div>
+                  <div class="gauge-wrap">
+                    <svg class="semi-gauge" viewBox="0 0 100 50">
+                      <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"/>
+                      <path class="gauge-fill gauge-cyan" id="gauge-user-risk" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="126" stroke-dashoffset="35"/>
+                    </svg>
+                    <div class="gauge-needle" id="gauge-user-needle"></div>
                   </div>
                 </div>
-              </div>
-              <div class="kpi-footer-meta">
-                <span class="meta-tag meta-good" id="kpi-mfa-registered-label">37 of 39 Registered</span>
-              </div>
-            </article>
+                <div class="kpi-footer-chips" id="kpi-risk-distribution">
+                  <span class="chip-mini chip-critical">2 Critical</span>
+                  <span class="chip-mini chip-high">5 High</span>
+                  <span class="chip-mini chip-medium">8 Med</span>
+                  <span class="chip-mini chip-good">24 Good</span>
+                </div>
+              </article>
 
-            <!-- Card 3: License Parking Reclaimable Cost -->
-            <article class="kpi-card card-glow-teal">
-              <div class="kpi-head">
-                <div class="kpi-title-wrap">
-                  <span class="kpi-title">License Parking Reclaimable Cost</span>
-                  <i class="ti ti-info-circle kpi-info-icon" title="Estimated annual license savings from reclaimable inactive or disabled accounts"></i>
+              <!-- Card 2: MFA Registration & Coverage -->
+              <article class="kpi-card card-glow-emerald">
+                <div class="kpi-head">
+                  <div class="kpi-title-wrap">
+                    <span class="kpi-title">MFA Registration &amp; Coverage</span>
+                    <i class="ti ti-info-circle kpi-info-icon" title="Percentage of directory users with registered and active MFA methods"></i>
+                  </div>
+                  <span class="kpi-delta delta-up" id="delta-mfa-badge"><i class="ti ti-trending-up"></i> +2.1%</span>
                 </div>
-                <span class="kpi-delta delta-down" id="delta-parking-badge"><i class="ti ti-trending-down"></i> -$427/mo</span>
-              </div>
-              <div class="kpi-body">
-                <div class="kpi-currency-stat">
-                  <span class="currency-symbol">$</span>
-                  <span class="currency-value" id="kpi-parking-savings">3,840</span>
-                  <span class="currency-frequency">/yr saved</span>
-                </div>
-                <div class="kpi-parking-meter">
-                  <div class="meter-bar">
-                    <div class="meter-bar-fill" id="kpi-parking-bar" style="width: 32%;"></div>
+                <div class="kpi-body flex-center">
+                  <div class="radial-ring-wrap">
+                    <svg class="radial-ring" viewBox="0 0 100 100">
+                      <circle class="ring-bg" cx="50" cy="50" r="40" fill="none" stroke-width="8"/>
+                      <circle class="ring-fill ring-emerald" id="mfa-radial-fill" cx="50" cy="50" r="40" fill="none" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="13"/>
+                    </svg>
+                    <div class="ring-center-stat">
+                      <span class="stat-number" id="kpi-mfa-rate">94.8%</span>
+                      <span class="stat-caption">Covered</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="kpi-footer-meta">
-                <span class="meta-tag meta-warn" id="kpi-parking-seats-label">14 Parked Licenses Detected</span>
-              </div>
-            </article>
+                <div class="kpi-footer-meta">
+                  <span class="meta-tag meta-good" id="kpi-mfa-registered-label">37 of 39 Registered</span>
+                </div>
+              </article>
 
-            <!-- Card 4: CIS Benchmark Compliance -->
-            <article class="kpi-card card-glow-blue">
-              <div class="kpi-head">
-                <div class="kpi-title-wrap">
-                  <span class="kpi-title">CIS Benchmark Compliance</span>
-                  <i class="ti ti-info-circle kpi-info-icon" title="Assessment adherence against CIS Microsoft 365 Foundations Benchmark v6.0.1"></i>
+              <!-- Card 3: CIS Benchmark Compliance -->
+              <article class="kpi-card card-glow-blue">
+                <div class="kpi-head">
+                  <div class="kpi-title-wrap">
+                    <span class="kpi-title">CIS M365 Benchmark Compliance</span>
+                    <i class="ti ti-info-circle kpi-info-icon" title="Assessment adherence against CIS Microsoft 365 Foundations Benchmark v6.0.1"></i>
+                  </div>
+                  <span class="kpi-delta delta-up" id="delta-cis-badge"><i class="ti ti-trending-up"></i> +1.5%</span>
                 </div>
-                <span class="kpi-delta delta-up" id="delta-cis-badge"><i class="ti ti-trending-up"></i> +1.5%</span>
-              </div>
-              <div class="kpi-body">
-                <div class="gauge-wrap gauge-wrap-lg">
-                  <svg class="semi-gauge" viewBox="0 0 100 50">
-                    <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"/>
-                    <path class="gauge-fill gauge-blue" id="gauge-cis-fill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="126" stroke-dashoffset="28"/>
-                  </svg>
-                  <div class="gauge-center-val" id="kpi-cis-score">78%</div>
+                <div class="kpi-body">
+                  <div class="gauge-wrap gauge-wrap-lg">
+                    <svg class="semi-gauge" viewBox="0 0 100 50">
+                      <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"/>
+                      <path class="gauge-fill gauge-blue" id="gauge-cis-fill" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="126" stroke-dashoffset="28"/>
+                    </svg>
+                    <div class="gauge-center-val" id="kpi-cis-score">78%</div>
+                  </div>
                 </div>
-              </div>
-              <div class="kpi-footer-meta">
-                <span class="meta-tag meta-info">Level 1 &amp; Level 2 Controls</span>
-              </div>
-            </article>
+                <div class="kpi-footer-meta">
+                  <span class="meta-tag meta-info">Level 1 &amp; Level 2 Controls</span>
+                </div>
+              </article>
+            </div>
           </section>
 
-          <!-- Bottom Row: Financial & License Utilization Panel -->
+          <!-- Bottom Row: Financial & License Optimization Panel -->
           <section class="workstation-card finops-summary-panel">
             <div class="panel-header" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px; padding-bottom: 12px;">
               <div class="panel-header-title">
-                <h2>Financial &amp; License Utilization</h2>
+                <h2>License FinOps &amp; Cost Reclamation</h2>
               </div>
             </div>
 
             <div class="financial-summary-grid">
               <div class="fin-stat-box">
-                <div class="fin-stat-title">Total Licenses Assigned</div>
+                <div class="fin-stat-title">Total Assigned Seats</div>
                 <div class="fin-stat-value" id="fin-total-assigned">26</div>
-                <div class="fin-stat-sub" id="fin-total-products">Across 2 products</div>
+                <div class="fin-stat-sub" id="fin-total-products">Across 2 paid SKUs</div>
               </div>
               <div class="fin-stat-box">
-                <div class="fin-stat-title">Active Utilization</div>
-                <div class="fin-stat-value text-emerald" id="fin-active-utilization">94%</div>
-                <div class="fin-stat-sub">Users active in last 30d</div>
+                <div class="fin-stat-title">Reclaimable Inactive Seats</div>
+                <div class="fin-stat-value text-warning" id="fin-inactive-seats">25</div>
+                <div class="fin-stat-sub" id="fin-inactive-percent-sub">96% of assigned seats inactive &gt;30d</div>
               </div>
               <div class="fin-stat-box">
-                <div class="fin-stat-title">Estimated Monthly Waste</div>
-                <div class="fin-stat-value text-warning" id="fin-monthly-waste">$320</div>
-                <div class="fin-stat-sub">From idle &amp; parked licenses</div>
-              </div>
-            </div>
-
-            <div class="utilization-bar-container" style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; border: 1px solid var(--border-subtle);">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 500;">
-                <span>License Distribution</span>
-                <span id="fin-distribution-label">1,334 Active / 86 Idle</span>
-              </div>
-              <div class="multi-progress-bar" style="height: 12px; background: var(--bg-tertiary); border-radius: 6px; display: flex; overflow: hidden;">
-                <div class="bar-segment segment-emerald" id="bar-active" style="width: 94%; background: var(--accent-emerald);" title="Active"></div>
-                <div class="bar-segment segment-warning" id="bar-idle" style="width: 6%; background: var(--accent-orange);" title="Idle"></div>
-              </div>
-              <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--text-muted);">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-emerald);"></div> Active Usage
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-orange);"></div> Idle / Parked
-                </div>
+                <div class="fin-stat-title">Potential Cost Savings</div>
+                <div class="fin-stat-value text-teal"><span style="font-size: 20px; font-weight: 600;">$</span><span id="kpi-parking-savings">6,708</span><span style="font-size: 13px; font-weight: 500; color: var(--text-muted);">/yr</span></div>
+                <div class="fin-stat-sub" id="fin-savings-sub">~$559 / mo recovery potential</div>
               </div>
             </div>
           </section>
@@ -368,7 +332,7 @@
           <section class="workstation-card">
             <div class="panel-header">
               <div>
-                <h2>User Intelligence &amp; CIS Posture Matrix</h2>
+                <h2>User Intelligence &amp; Identity Posture</h2>
                 <p class="section-desc">Comprehensive identity assessment, authentication methods, last sign-in telemetry, and assigned licenses.</p>
               </div>
             </div>
@@ -425,7 +389,7 @@
           <section class="workstation-card mb-4">
             <div class="panel-header">
               <div>
-                <h2>License Parking &amp; Cost Reclamation</h2>
+                <h2>License Optimization &amp; Cost Reclamation</h2>
                 <p class="section-desc">Identify inactive users, disabled accounts, and over-licensed seats to recover recurring licensing costs.</p>
               </div>
             </div>
@@ -448,7 +412,7 @@
           <section class="workstation-card mb-4">
             <div class="panel-header">
               <div>
-                <h2>Workload Adoption (Exchange &amp; OneDrive)</h2>
+                <h2>Workload Adoption &amp; Activity (Exchange &amp; OneDrive)</h2>
                 <p class="section-desc">Click any card below to open detailed user-level usage metrics.</p>
               </div>
             </div>

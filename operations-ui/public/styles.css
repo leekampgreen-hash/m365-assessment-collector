@@ -620,6 +620,10 @@ body {
   margin-bottom: 24px;
 }
 
+.kpi-grid-row.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .kpi-card {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -1492,7 +1496,7 @@ th {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .fin-stat-box {
@@ -1525,6 +1529,7 @@ th {
 
 .text-emerald { color: var(--accent-emerald) !important; }
 .text-warning { color: var(--accent-orange) !important; }
+.text-teal { color: var(--accent-teal) !important; }
 
 .multi-progress-bar {
   display: flex;
@@ -2054,6 +2059,10 @@ th {
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 10px !important;
     margin-bottom: 20px !important;
+  }
+
+  .kpi-grid-row.grid-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   .kpi-card, .workstation-card {

@@ -135,6 +135,10 @@ services:
       - /var/cache/nginx
       - /var/run
 
+    volumes:
+      - ./operations-ui/public:/usr/share/nginx/html:ro
+      - ./operations-ui/public-v2:/usr/share/nginx/v2:ro
+
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/ >/dev/null"]
       interval: 5s

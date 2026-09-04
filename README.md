@@ -89,7 +89,9 @@ It automates data collection across Microsoft Entra ID, Intune, Defender, Exchan
 - **Executive PDF Export (A4 Landscape)**: Instant one-click PDF export styled in A4 landscape format with dedicated print-ready executive header, tenant audit metadata, and prioritized risk summaries.
 
 ### 6. Modern Dashboards & RBAC
-- **Actionable Findings-First Executive Dashboard**: Front-page view prioritizing critical security findings and active alerts at the very top, followed by 4 glowing KPI scorecards (Total Users Risk Score, MFA Adoption Ring, License Savings Meter, CIS Compliance Gauge) and FinOps utilization breakdowns.
+- **Unified Executive Overview Dashboard**: Front-page executive overview prioritizing actionable live findings, followed by two cohesive, divider-separated panels:
+  - **Security Posture & Compliance**: Scored identities against CIS M365 v6.0.1, directory risk distribution, MFA registration & coverage radial gauge, and CIS benchmark compliance score.
+  - **License FinOps & Cost Reclamation**: Standardized 3-metric financial optimization cards covering Total Assigned Seats across paid SKUs, Reclaimable Inactive Seats (>30d inactivity), and Projected Annual/Monthly Cost Savings ($/yr & $/mo).
 - **Adaptive Mobile & Tablet Design**: Fully responsive layout across smartphones (320px–480px), tablets, and desktops with slide-out navigation drawer, tap-outside backdrop overlay, touch-friendly scrollable tables, and mobile-optimized AI assistant.
 - **Smooth Live Telemetry Refresh**: Zero-layout-shift live telemetry hydration and smooth spinning indicator on manual refresh.
 - **Modern UI v2**: Tabler-based responsive interface with paginated User Intelligence, CIS benchmark badges, and filterable tables.
