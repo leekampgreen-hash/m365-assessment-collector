@@ -640,6 +640,16 @@ function bindUserIntelEvents() {
     $(sel)?.addEventListener("change", () => renderFullUserTable());
   });
 
+  // Reset All Filters Button
+  $("#btn-reset-all-filters")?.addEventListener("click", () => {
+    if ($("#full-user-search")) $("#full-user-search").value = "";
+    if ($("#full-user-role-filter")) $("#full-user-role-filter").value = "ALL";
+    if ($("#full-user-mfa-filter")) $("#full-user-mfa-filter").value = "ALL";
+    if ($("#full-user-risk-filter")) $("#full-user-risk-filter").value = "ALL";
+    if ($("#full-user-status-filter")) $("#full-user-status-filter").value = "ALL";
+    renderFullUserTable();
+  });
+
   // Saved Views Select Switch
   $("#user-saved-views-select")?.addEventListener("change", (e) => {
     const viewId = e.target.value;
@@ -864,8 +874,36 @@ function getFilteredUsers() {
   });
 }
 
+function updateFilterResetButtonState() {
+  const search = $("#full-user-search")?.value?.trim() || "";
+  const role = $("#full-user-role-filter")?.value || "ALL";
+  const mfa = $("#full-user-mfa-filter")?.value || "ALL";
+  const risk = $("#full-user-risk-filter")?.value || "ALL";
+  const status = $("#full-user-status-filter")?.value || "ALL";
+
+  let activeCount = 0;
+  if (search) activeCount++;
+  if (role !== "ALL") activeCount++;
+  if (mfa !== "ALL") activeCount++;
+  if (risk !== "ALL") activeCount++;
+  if (status !== "ALL") activeCount++;
+
+  const resetBtn = $("#btn-reset-all-filters");
+  const countBadge = $("#active-filter-count");
+
+  if (resetBtn) {
+    if (activeCount > 0) {
+      resetBtn.classList.remove("hidden");
+      if (countBadge) countBadge.textContent = activeCount;
+    } else {
+      resetBtn.classList.add("hidden");
+    }
+  }
+}
+
 // User Intelligence Full Dynamic Matrix
 function renderFullUserTable() {
+  updateFilterResetButtonState();
   const filtered = getFilteredUsers();
   
   // Build active column objects

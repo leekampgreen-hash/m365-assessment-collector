@@ -2221,6 +2221,61 @@ html.light .page-size-select option {
   color: #0f172a !important;
 }
 
+.btn-reset-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger-text, #fca5a5);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-filters:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-reset-filters.hidden {
+  display: none !important;
+}
+
+.active-filter-badge {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border-radius: 99px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+[data-theme="light"] .btn-reset-filters,
+html.light .btn-reset-filters {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+[data-theme="light"] .btn-reset-filters:hover,
+html.light .btn-reset-filters:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+[data-theme="light"] .active-filter-badge,
+html.light .active-filter-badge {
+  background: #fecaca;
+  color: #991b1b;
+}
+
 .filter-group-actions {
   display: flex;
   flex-wrap: wrap;
