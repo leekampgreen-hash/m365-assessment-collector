@@ -350,11 +350,12 @@ class OperationsAnalyticsQueryService:
             applicable = len({_key(row) or "row:{}".format(index)
                               for index, row in enumerate(mailbox)
                               if _deleted(row.get("is_deleted")) is False})
+            cap = self.exchange_capacity()
             result = {
-                "capacity_usage": self.exchange_capacity()["capacity_usage"],
-                "data_last_refreshed": self.exchange_capacity()["data_last_refreshed"],
-                "mailbox_capacity_risk": self.exchange_capacity()["mailbox_capacity_risk"],
-                "mailbox_details": self.exchange_capacity()["mailboxes"],
+                "capacity_usage": cap["capacity_usage"],
+                "data_last_refreshed": cap["data_last_refreshed"],
+                "mailbox_capacity_risk": cap["mailbox_capacity_risk"],
+                "mailbox_details": cap["mailboxes"],
                 "active_users": active,
                 "inactive_users": inactive,
                 "applicable_users": _metric(applicable, mailbox),

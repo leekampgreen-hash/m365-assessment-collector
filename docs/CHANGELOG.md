@@ -1,5 +1,13 @@
 # Changelog
 
+## API & Operations Optimization: Minimum-Impact Codebase Improvements
+
+- **Cleaned Up Unreachable Security Handlers**: Removed dead handler `if` blocks in `api/operations.py` for `/api/security/admin-roles`, `/api/security/mfa-coverage`, `/api/security/ca-policies`, `/api/security/signin-summary`, and `/api/security/mfa-registration`, which were previously intercepted by the telemetry caching handler. Kept reachable handlers such as `/api/security/signin-risk`.
+- **Exchange Capacity Performance Optimization**: Cached `self.exchange_capacity()` to a local variable `cap` inside `OperationsAnalyticsQueryService.exchange_adoption()` in `analytics/operations.py`, reducing redundant 4x computation calls.
+- **Defensive Security Cache Route Guard**: Added a defensive `path not in methods` guard in `_load_cached_security()` in `api/operations.py` returning `{"status": "NOT_FOUND"}` instead of raising uncaught `KeyError`.
+- **Honest KPI & Dynamic MFA Deltas**: Updated `hydrateKpiDeltas()` in `operations-ui/public/app.js` and placeholder badges in `operations-ui/public/index.html` to compute actual MFA coverage dynamically and display honest `Live` indicators instead of deceptive hardcoded percentages (`+2.1%`, `+1.5%`, `0% vs run`).
+- **SKU Pricing Consolidation**: Removed the hardcoded `LICENSE_PRICES` dictionary from `api/operations.py`. Consolidated all license parking calculations to use centralized `config/sku_pricing.json` via `load_pricing()`, `get_sku_price()`, and `calculate_user_monthly_cost()`. Added `DESKLESSPACK` SKU to `config/sku_pricing.json` to ensure 100% price parity.
+
 ## Operations UI: Session Telemetry Caching & License Metrics Single Source of Truth
 
 - Implemented session-scoped client caching in `operations-ui/public/app.js` using `sessionStorage` keyed by `session_id`, ensuring instant load (< 5ms) on page refresh and eliminating numeric flickering.

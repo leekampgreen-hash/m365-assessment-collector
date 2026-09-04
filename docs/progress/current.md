@@ -29,6 +29,7 @@
 - BATCH-3: ENTRA-P05 (Named locations), INT-P05 (Compliance policy inventory), INT-P06 (App deployment status) - SEALED
 - UI-BATCH-01: Font hierarchy, token format badge, Tailwind CDN fix - SEALED
 - INFRA-P02: Scheduled email report - SEALED
+- API-CLEANUP-01: Dead code removal, exchange capacity caching, defensive security guard, dynamic KPI deltas, SKU pricing consolidation - SEALED
 
 ## Active Task
 Planning next sprint

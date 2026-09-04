@@ -28,7 +28,7 @@ from collectors.persistence import open_database_connection
 from collectors import auth_service
 from collectors.email_report import report_status
 from collectors.feature_flags import is_feature_enabled
-from collectors.sku_pricing import load_pricing, get_sku_name, calculate_user_monthly_cost, calculate_savings
+from collectors.sku_pricing import load_pricing, get_sku_price, get_sku_name, calculate_user_monthly_cost, calculate_savings
 from capabilities.persistence import CapabilityQueryService
 
 
@@ -56,17 +56,6 @@ PATH_FEATURE_FLAGS = {
     "/api/security/defender-cloud-app-summary": ("defender_cloud_app",),
     "/api/security/dlp-alerts-summary": ("dlp_alerts",),
     "/api/security/dlp-labels-summary": ("dlp_labels",),
-}
-
-
-LICENSE_PRICES = {
-    "SPB": 22.00,
-    "AAD_PREMIUM_P2": 9.00,
-    "POWER_BI_STANDARD": 10.00,
-    "O365_BUSINESS_PREMIUM": 22.00,
-    "ENTERPRISEPACK": 36.00,
-    "ENTERPRISEPREMIUM": 57.00,
-    "DESKLESSPACK": 4.00,
 }
 
 
@@ -503,6 +492,7 @@ SUMMARY DATA:
 
 
 def _license_parking(connection: Any, tenant_id: int) -> dict[str, Any]:
+    pricing = load_pricing(Path(__file__).resolve().parents[1] / "config" / "sku_pricing.json")
     cursor = connection.cursor()
     cursor.execute("""
         SELECT u.user_id, u.display_name, u.account_enabled, oa.last_activity_date,
@@ -520,7 +510,7 @@ def _license_parking(connection: Any, tenant_id: int) -> dict[str, Any]:
         if sku not in user["licenses"]:
             user["licenses"].append(sku)
     def shaped(user: dict[str, Any]) -> dict[str, Any]:
-        cost = round(sum(LICENSE_PRICES.get(sku, 0.0) for sku in user["licenses"]), 2)
+        cost = calculate_user_monthly_cost(user["licenses"], pricing)
         return {"display_name": user["display_name"], "licenses": user["licenses"], "monthly_cost_usd": cost}
     now = datetime.now(timezone.utc).date()
     categories = {}
@@ -533,7 +523,7 @@ def _license_parking(connection: Any, tenant_id: int) -> dict[str, Any]:
     unassigned = []
     for sku, purchased, assigned in cursor.fetchall():
         count = purchased - assigned
-        unassigned.append({"sku_part_number": sku, "purchased": purchased, "assigned": assigned, "unassigned_count": count, "monthly_waste_usd": round(count * LICENSE_PRICES.get(sku, 0.0), 2)})
+        unassigned.append({"sku_part_number": sku, "purchased": purchased, "assigned": assigned, "unassigned_count": count, "monthly_waste_usd": round(count * get_sku_price(sku, pricing), 2)})
     unassigned.sort(key=lambda item: item["monthly_waste_usd"], reverse=True)
     total_users = len(users)
     waste = disabled + categories["inactive_90d"] + unassigned
@@ -612,6 +602,8 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                 "/api/security/signin-summary": lambda: SigninSummaryService(service.connection, self.tenant_id).summary(),
                 "/api/security/mfa-registration": service.mfa_registration,
             }
+            if path not in methods:
+                return _response("NOT_FOUND")
             return _response("READY", methods[path]())
         finally:
             service.connection.close()
@@ -931,29 +923,9 @@ class OperationsApiHandler(BaseHTTPRequestHandler):
                         service = self._load_security_service()
                         self._write(200, _response("READY", service.risk_score()))
                         return
-                    if path == "/api/security/signin-summary":
-                        service = SigninSummaryService(self._load_security_service().connection, self.tenant_id)
-                        self._write(200, _response("READY", service.summary()))
-                        return
                     if path == "/api/security/signin-risk":
                         service = self._load_security_service()
                         self._write(200, _response("READY", service.signin_risk()))
-                        return
-                    if path == "/api/security/mfa-registration":
-                        service = self._load_security_service()
-                        self._write(200, _response("READY", service.mfa_registration()))
-                        return
-                    if path == "/api/security/mfa-coverage":
-                        service = self._load_security_service()
-                        self._write(200, _response("READY", service.mfa_coverage()))
-                        return
-                    if path == "/api/security/ca-policies":
-                        service = self._load_security_service()
-                        self._write(200, _response("READY", service.ca_policies()))
-                        return
-                    if path == "/api/security/admin-roles":
-                        service = self._load_security_service()
-                        self._write(200, _response("READY", service.admin_roles()))
                         return
                     detail_prefix = "/api/security/findings/"
                     if path.startswith(detail_prefix) and path[len(detail_prefix):]:

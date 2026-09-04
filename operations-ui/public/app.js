@@ -1004,33 +1004,46 @@ function hydrateKpiCards(users, kpiData, optimizerReport) {
 }
 
 function hydrateKpiDeltas(users, kpiData, optimizerReport) {
-  // Delta User Total / Risk
+  // Directory Identity & Risk Posture
   const usersBadge = $("#delta-users-badge");
   if (usersBadge) {
     usersBadge.className = "kpi-delta delta-stable";
-    usersBadge.innerHTML = `<i class="ti ti-minus"></i> 0% vs run`;
+    usersBadge.innerHTML = `<i class="ti ti-point-filled"></i> Live`;
   }
 
-  // Delta MFA (Positive security posture progress)
+  // MFA Registration & Coverage
   const mfaBadge = $("#delta-mfa-badge");
   if (mfaBadge) {
-    mfaBadge.className = "kpi-delta delta-up";
-    mfaBadge.innerHTML = `<i class="ti ti-trending-up"></i> +2.1%`;
+    const total = Array.isArray(users) ? users.length : (kpiData?.users_total ?? 0);
+    const mfaRegistered = Array.isArray(users) ? users.filter((u) => u.mfa_registered).length : 0;
+    if (total > 0) {
+      const pct = ((mfaRegistered / total) * 100).toFixed(1);
+      mfaBadge.className = "kpi-delta delta-up";
+      mfaBadge.innerHTML = `<i class="ti ti-shield-check"></i> ${pct}% coverage`;
+    } else {
+      mfaBadge.className = "kpi-delta delta-stable";
+      mfaBadge.innerHTML = `<i class="ti ti-point-filled"></i> Live`;
+    }
   }
 
-  // Delta Parking Reclaimable Cost ($ savings potential identified)
+  // Parking Reclaimable Cost ($ savings potential identified)
   const parkingBadge = $("#delta-parking-badge");
   if (parkingBadge) {
-    const monthlySaving = optimizerReport?.savings?.total_monthly_saving || 427;
-    parkingBadge.className = "kpi-delta delta-down";
-    parkingBadge.innerHTML = `<i class="ti ti-trending-down"></i> -$${Math.round(monthlySaving)}/mo`;
+    const monthlySaving = optimizerReport?.savings?.total_monthly_saving ?? optimizerReport?.summary?.total_waste_monthly_usd ?? 0;
+    if (monthlySaving > 0) {
+      parkingBadge.className = "kpi-delta delta-down";
+      parkingBadge.innerHTML = `<i class="ti ti-trending-down"></i> -$${Math.round(monthlySaving)}/mo`;
+    } else {
+      parkingBadge.className = "kpi-delta delta-stable";
+      parkingBadge.innerHTML = `<i class="ti ti-point-filled"></i> $0/mo`;
+    }
   }
 
-  // Delta CIS Score
+  // CIS Benchmark Compliance
   const cisBadge = $("#delta-cis-badge");
   if (cisBadge) {
-    cisBadge.className = "kpi-delta delta-up";
-    cisBadge.innerHTML = `<i class="ti ti-trending-up"></i> +1.5%`;
+    cisBadge.className = "kpi-delta delta-stable";
+    cisBadge.innerHTML = `<i class="ti ti-point-filled"></i> Live`;
   }
 }
 
