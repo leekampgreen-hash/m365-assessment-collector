@@ -175,33 +175,47 @@ function switchView(viewName) {
 }
 
 function initNavigation() {
+  const sidebar = $("#sidebar");
+  const backdrop = $("#sidebar-backdrop");
+
+  const closeMobileSidebar = () => {
+    sidebar?.classList.remove("open");
+    backdrop?.classList.remove("active");
+  };
+
   $$(".nav-link[data-view]").forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       const view = link.dataset.view;
       location.hash = view;
       switchView(view);
+      closeMobileSidebar();
     });
   });
 
   $("#mobile-menu-btn")?.addEventListener("click", () => {
     if (window.innerWidth <= 900) {
-      $("#sidebar")?.classList.add("open");
+      const isOpen = sidebar?.classList.toggle("open");
+      backdrop?.classList.toggle("active", isOpen);
     } else {
-      $("#sidebar")?.classList.toggle("desktop-closed");
+      sidebar?.classList.toggle("desktop-closed");
     }
   });
+
   $("#sidebar-close")?.addEventListener("click", () => {
     if (window.innerWidth <= 900) {
-      $("#sidebar")?.classList.remove("open");
+      closeMobileSidebar();
     } else {
-      $("#sidebar")?.classList.add("desktop-closed");
+      sidebar?.classList.add("desktop-closed");
     }
   });
+
+  backdrop?.addEventListener("click", closeMobileSidebar);
 
   window.addEventListener("hashchange", () => {
     const slug = location.hash.replace(/^#\/?/, "") || "overview";
     switchView(slug);
+    closeMobileSidebar();
   });
 
   const initialView = location.hash.replace(/^#\/?/, "") || "overview";

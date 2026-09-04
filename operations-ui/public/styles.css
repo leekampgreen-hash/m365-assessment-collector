@@ -1441,47 +1441,6 @@ th {
   margin-bottom: 16px;
 }
 
-/* Responsive Media Queries */
-@media (max-width: 1200px) {
-  .kpi-grid-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .split-workstation-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .sidebar {
-    position: fixed;
-    transform: translateX(-100%);
-  }
-  .sidebar.open {
-    transform: translateX(0);
-  }
-  .topbar {
-    padding: 0 16px;
-  }
-  .topbar-search-wrap {
-    display: none;
-  }
-  .content-canvas {
-    padding: 16px;
-  }
-  .card-grid.four, .card-grid.three {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .kpi-grid-row {
-    grid-template-columns: 1fr;
-  }
-  .card-grid.four, .card-grid.three, .card-grid.two {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Executive Insights Panel Styles */
 .executive-insights-panel {
   display: flex;
@@ -1531,8 +1490,9 @@ th {
 /* Financial Summary Styles */
 .financial-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 .fin-stat-box {
@@ -1741,6 +1701,297 @@ th {
 
 .print-only-header {
   display: none;
+}
+
+/* ==========================================================================
+   Comprehensive Adaptive Mobile & Tablet Media Queries
+   ========================================================================== */
+
+/* Mobile Backdrop Overlay */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tablet & Smaller Desktops (max-width: 1200px) */
+@media (max-width: 1200px) {
+  .kpi-grid-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .split-workstation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablets & Mobile Navigation (max-width: 900px) */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .topbar {
+    height: auto;
+    min-height: 60px;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  .topbar-search-wrap {
+    display: none;
+  }
+
+  .content-canvas {
+    padding: 16px 14px 48px;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  .card-grid.four, .card-grid.three {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .financial-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .analyst-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .analyst-top-stats {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile Handphones & Small Screens (max-width: 768px) */
+@media (max-width: 768px) {
+  .topbar {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+
+  .topbar-left {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .header-titles h1 {
+    font-size: 16px;
+  }
+
+  .header-subtitle {
+    display: none;
+  }
+
+  .topbar-right {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .sync-pill {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .plain-action-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .action-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .kpi-grid-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card-grid.four, .card-grid.three, .card-grid.two {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .workstation-card {
+    padding: 16px 12px;
+    border-radius: 10px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .panel-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .table-search-box {
+    width: 100%;
+  }
+
+  .table-search-box input {
+    width: 100% !important;
+  }
+
+  .filter-pills-group {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-responsive-custom, .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    display: block;
+    margin: 0 -4px;
+  }
+
+  .table-responsive-custom table, .table-wrap table {
+    min-width: 600px;
+  }
+
+  .table-footer-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pagination-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .floating-assistant-window {
+    position: fixed;
+    inset: auto 10px 72px 10px;
+    width: auto;
+    height: 75vh;
+    max-height: calc(100vh - 84px);
+    border-radius: 12px;
+    z-index: 10000;
+  }
+
+  .floating-assistant-btn {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    z-index: 9999;
+  }
+}
+
+/* Compact Mobile Handphones (max-width: 480px) */
+@media (max-width: 480px) {
+  .content-canvas {
+    padding: 10px 8px 48px;
+  }
+
+  .topbar {
+    padding: 8px 10px;
+  }
+
+  .header-titles h1 {
+    font-size: 15px;
+  }
+
+  .topbar-right .btn-export-pdf,
+  .topbar-right a.plain-action-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .insight-alert {
+    padding: 12px 10px;
+    gap: 8px;
+  }
+
+  .insight-alert i {
+    font-size: 18px;
+  }
+
+  .insight-content {
+    font-size: 12px;
+  }
+
+  .kpi-card {
+    padding: 12px;
+  }
+
+  .kpi-main-stat {
+    font-size: 24px;
+  }
+
+  .stat-number {
+    font-size: 13px;
+  }
+
+  .fin-stat-value {
+    font-size: 22px;
+  }
+
+  .fin-stat-box {
+    padding: 12px;
+  }
+
+  .semi-gauge {
+    width: 70px;
+  }
+
+  .radial-ring-wrap {
+    width: 64px;
+    height: 64px;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-box {
+    width: 95% !important;
+    max-height: 90vh !important;
+    padding: 16px !important;
+  }
 }
 
 /* Executive A4 PDF Print Stylesheet */

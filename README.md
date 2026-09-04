@@ -90,6 +90,7 @@ It automates data collection across Microsoft Entra ID, Intune, Defender, Exchan
 
 ### 6. Modern Dashboards & RBAC
 - **Actionable Findings-First Executive Dashboard**: Front-page view prioritizing critical security findings and active alerts at the very top, followed by 4 glowing KPI scorecards (Total Users Risk Score, MFA Adoption Ring, License Savings Meter, CIS Compliance Gauge) and FinOps utilization breakdowns.
+- **Adaptive Mobile & Tablet Design**: Fully responsive layout across smartphones (320px–480px), tablets, and desktops with slide-out navigation drawer, tap-outside backdrop overlay, touch-friendly scrollable tables, and mobile-optimized AI assistant.
 - **Smooth Live Telemetry Refresh**: Zero-layout-shift live telemetry hydration and smooth spinning indicator on manual refresh.
 - **Modern UI v2**: Tabler-based responsive interface with paginated User Intelligence, CIS benchmark badges, and filterable tables.
 - **Security Analyst Workbench**: Focused view for security teams to triage risky users, sign-in alerts, and CA policies.

@@ -439,6 +439,7 @@
         </button>
       </div>
     </aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
     <!-- Main Wrapper -->
     <div class="main-wrapper">
@@ -955,20 +956,27 @@
     }
 
     // Sidebar Mobile Controls
+    const closeMobileSidebar = () => {
+      $('#sidebar')?.classList.remove('open');
+      $('#sidebar-backdrop')?.classList.remove('active');
+    };
+
     $('#mobile-menu-btn')?.addEventListener('click', () => {
       if (window.innerWidth <= 900) {
-        $('#sidebar')?.classList.add('open');
+        const isOpen = $('#sidebar')?.classList.toggle('open');
+        $('#sidebar-backdrop')?.classList.toggle('active', isOpen);
       } else {
         $('#sidebar')?.classList.toggle('desktop-closed');
       }
     });
     $('#sidebar-close')?.addEventListener('click', () => {
       if (window.innerWidth <= 900) {
-        $('#sidebar')?.classList.remove('open');
+        closeMobileSidebar();
       } else {
         $('#sidebar')?.classList.add('desktop-closed');
       }
     });
+    $('#sidebar-backdrop')?.addEventListener('click', closeMobileSidebar);
 
     async function initAuth() {
       $('logout-btn')?.addEventListener('click', async () => {
