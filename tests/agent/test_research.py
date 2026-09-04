@@ -39,6 +39,6 @@ def test_research_fetches_curated_pages():
     assert "multifactor authentication" in result
 
 
-def test_research_returns_empty_on_network_error():
-    with patch("agent.research.urlopen", side_effect=URLError("offline")):
+def test_research_returns_empty_on_network_error(tmp_path):
+    with patch("agent.research._CACHE_DIR", tmp_path), patch("agent.research.urlopen", side_effect=URLError("offline")):
         assert research.research("MFA best practices") == ""

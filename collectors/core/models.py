@@ -64,6 +64,7 @@ class EndpointSpec:
     period: Optional[str] = None
     required_capabilities: List[str] = field(default_factory=list)
     endpoint_type: str = ENDPOINT_TYPE_WORKLOAD
+    collector_type: str = "declarative"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

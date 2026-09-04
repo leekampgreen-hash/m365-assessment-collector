@@ -236,12 +236,18 @@ class NoDependencyTests(unittest.TestCase):
     def test_no_network_dependency(self):
         # The service imports only stdlib + local modules; no http client,
         # requests, graph sdk, or AI module is imported.
+        import subprocess
         import sys
-        loaded = ".".join(sys.modules)
-        for forbidden in ("requests", "msgraph", "httpx"):
-            # only flag top-level modules actually imported
-            self.assertFalse(any(m == forbidden or m.startswith(forbidden + ".") for m in sys.modules),
-                             f"unexpected dependency {forbidden} loaded")
+
+        cmd = [
+            sys.executable,
+            "-c",
+            "import security; import sys; forbidden = ('requests', 'msgraph', 'httpx'); "
+            "assert not any(m == f or m.startswith(f + '.') for m in sys.modules for f in forbidden), "
+            "[m for m in sys.modules if any(m == f or m.startswith(f + '.') for f in forbidden)]",
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertEqual(res.returncode, 0, f"unexpected dependency loaded by security: {res.stderr}")
 
     def test_service_has_no_ai(self):
         service = DeterministicSecurityFindingService(recommended_baseline())

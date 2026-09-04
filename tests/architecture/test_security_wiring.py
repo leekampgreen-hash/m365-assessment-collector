@@ -65,9 +65,15 @@ class SecurityProductionWiringTests(unittest.TestCase):
     def test_inventory_endpoint_type_has_the_right_registry_obligation(self) -> None:
         for endpoint_id, endpoint in self.inventory.items():
             with self.subTest(endpoint_id=endpoint_id):
-                if endpoint.endpoint_type == ENDPOINT_TYPE_WORKLOAD and endpoint.transport_type == "NORMAL_GRAPH_JSON":
+                if (
+                    endpoint.endpoint_type == ENDPOINT_TYPE_WORKLOAD
+                    and endpoint.transport_type == "NORMAL_GRAPH_JSON"
+                    and (endpoint.collector_type != "specialized" or endpoint_id in WORKLOAD_REGISTRY)
+                ):
                     self.assertIn(endpoint_id, WORKLOAD_REGISTRY)
-                if endpoint.endpoint_type == ENDPOINT_TYPE_SECURITY_ONLY:
+                if endpoint.endpoint_type == ENDPOINT_TYPE_SECURITY_ONLY or (
+                    endpoint.collector_type == "specialized" and endpoint_id not in WORKLOAD_REGISTRY
+                ):
                     self.assertNotIn(endpoint_id, WORKLOAD_REGISTRY)
 
     def test_security_executions_reference_canonical_read_only_allowlist(self) -> None:

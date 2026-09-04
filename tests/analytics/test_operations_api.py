@@ -76,11 +76,20 @@ class FakeService:
 
 
 class FakeHealthCursor:
-    def execute(self, query):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def execute(self, query, params=None):
         self.query = query
 
     def fetchone(self):
         return (1,)
+
+    def fetchall(self):
+        return []
 
 
 class FakeHealthConnection:
@@ -93,7 +102,10 @@ class FakeHealthConnection:
 
 class OperationsApiTests(unittest.TestCase):
     def setUp(self):
-        handler = type("TestHandler", (OperationsApiHandler,), {"service_factory": staticmethod(FakeService)})
+        handler = type("TestHandler", (OperationsApiHandler,), {
+            "service_factory": staticmethod(FakeService),
+            "connection_factory": staticmethod(FakeHealthConnection),
+        })
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()

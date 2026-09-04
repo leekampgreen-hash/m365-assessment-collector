@@ -162,6 +162,7 @@ def entry_to_spec(entry: Dict[str, Any]) -> EndpointSpec:
     endpoint_type = entry.get("endpoint_type") or ENDPOINT_TYPE_WORKLOAD
     if endpoint_type not in ENDPOINT_TYPES:
         raise InventoryValidationError("endpoint_type must be WORKLOAD or SECURITY_ONLY")
+    collector_type = entry.get("collector_type") or "declarative"
     if transport_type == "USAGE_REPORT_CSV":
         if not isinstance(report_key, str) or not report_key:
             raise InventoryValidationError("usage report entry requires report_key")
@@ -189,6 +190,7 @@ def entry_to_spec(entry: Dict[str, Any]) -> EndpointSpec:
         period=period,
         required_capabilities=required_capabilities,
         endpoint_type=endpoint_type,
+        collector_type=collector_type,
     )
     return spec
 

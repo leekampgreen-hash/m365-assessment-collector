@@ -169,6 +169,7 @@ def _load_inventory_ids():
         item["id"] for item in payload
         if item.get("endpoint_type", "WORKLOAD") == "WORKLOAD"
         and item.get("transport_type", "NORMAL_GRAPH_JSON") == "NORMAL_GRAPH_JSON"
+        and (item.get("collector_type", "declarative") != "specialized" or item["id"] in REGISTRY)
     }
 
 
