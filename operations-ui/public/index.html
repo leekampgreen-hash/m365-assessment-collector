@@ -97,13 +97,6 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link nav-link-sparkle" href="#assistant" data-view="assistant">
-              <i class="ti ti-sparkles nav-icon"></i>
-              <span class="nav-title">M365 AI Assistant</span>
-              <span class="sparkle-chip"><i class="ti ti-sparkles"></i></span>
-            </a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link" href="/admin.html" id="admin-link">
               <i class="ti ti-settings nav-icon"></i>
               <span class="nav-title">Admin Settings</span>
@@ -154,9 +147,6 @@
           <button class="plain-action-btn btn-export-pdf" id="btn-export-pdf" title="Export Executive Summary (PDF)">
             <i class="ti ti-printer"></i> Export PDF
           </button>
-          <a href="/security-analyst.html" class="plain-action-btn" title="Security Analyst view">
-            <i class="ti ti-shield"></i> Security Workbench
-          </a>
         </div>
       </header>
 
@@ -451,34 +441,134 @@
 
         <!-- =================== VIEW: SECURITY & RISK =================== -->
         <div id="view-security" class="view-panel hidden">
-          <section class="workstation-card mb-4">
-            <div class="panel-header">
-              <div>
-                <h2>Security Posture &amp; CIS Controls</h2>
-                <p class="section-desc">MFA coverage, Conditional Access policy evaluations, and privileged role distribution.</p>
+          <!-- View Header -->
+          <div class="panel-header mb-4">
+            <div>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Security Posture &amp; Compliance</h2>
+              <p class="section-desc" style="margin: 4px 0 0 0;">Continuous CIS v6.0.1 benchmark evaluation, identity hygiene, and access governance</p>
+            </div>
+          </div>
+
+          <!-- Executive KPI Row (4 Unified Cards) -->
+          <div class="kpi-grid-row mb-4">
+            <!-- Card 1: Overall Risk Level -->
+            <article class="kpi-card card-glow-rose">
+              <div class="kpi-head">
+                <span class="kpi-title">Overall Risk Level</span>
+                <i class="ti ti-shield-alert kpi-info-icon" title="Aggregated tenant risk tier based on Entra ID and CIS evaluations"></i>
               </div>
-            </div>
-            <div class="security-cards-row">
-              <div id="entra-auth-methods-summary-cards" class="card-grid four"></div>
-            </div>
-            <div class="mt-4">
-              <div id="entra-auth-methods-breakdown" class="metric-list"></div>
-            </div>
-          </section>
+              <div class="kpi-body">
+                <div class="kpi-main-stat">
+                  <span id="sec-overall-risk" class="snapshot-risk">-</span>
+                </div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-warn" id="sec-risk-meta-tag">Continuous Posture Evaluation</span>
+              </div>
+            </article>
 
+            <!-- Card 2: MFA Registration Posture -->
+            <article class="kpi-card card-glow-amber">
+              <div class="kpi-head">
+                <span class="kpi-title">MFA Registration Posture</span>
+                <i class="ti ti-key kpi-info-icon" title="MFA registration and enforcement status across directory users"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="sec-kpi-mfa-stat">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-bad" id="sec-kpi-mfa-meta">Action Required</span>
+              </div>
+            </article>
+
+            <!-- Card 3: Open CIS Findings -->
+            <article class="kpi-card card-glow-teal">
+              <div class="kpi-head">
+                <span class="kpi-title">Open CIS Findings</span>
+                <i class="ti ti-clipboard-check kpi-info-icon" title="Active CIS v6.0.1 benchmark recommendations pending remediation"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="sec-kpi-open-findings">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-info">CIS v6.0.1 Benchmark</span>
+              </div>
+            </article>
+
+            <!-- Card 4: Permanent Privileged Admins -->
+            <article class="kpi-card card-glow-blue">
+              <div class="kpi-head">
+                <span class="kpi-title">Permanent Privileged Admins</span>
+                <i class="ti ti-crown kpi-info-icon" title="Accounts holding permanent directory administration permissions"></i>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-main-stat" id="sec-kpi-privileged-admins">-</div>
+              </div>
+              <div class="kpi-footer-meta">
+                <span class="meta-tag meta-good">Directory Roles Active</span>
+              </div>
+            </article>
+          </div>
+
+          <!-- Main 2-Column Balanced Dashboard (Full Width) -->
+          <div class="sec-dashboard-grid mb-4">
+            <!-- Left Column: CIS Security Findings & Mitigation -->
+            <section class="workstation-card sec-panel-card">
+              <div class="panel-header-clean">
+                <div class="sec-section-title">
+                  <i class="ti ti-shield-check"></i> CIS Security Findings &amp; Mitigation
+                </div>
+                <span class="badge-pill-cyan"><i class="ti ti-activity"></i> CIS v6.0.1</span>
+              </div>
+
+              <!-- Risk Distribution Tiles -->
+              <div id="sec-finding-counts" class="count-grid mb-4">
+                <div class="count-tile tile-critical"><strong>-</strong><span>Critical</span></div>
+                <div class="count-tile tile-high"><strong>-</strong><span>High Risk</span></div>
+                <div class="count-tile"><strong>-</strong><span>Medium</span></div>
+              </div>
+
+              <!-- Priority Open Findings List -->
+              <div class="sec-subhead-row mb-2">
+                <span class="sec-subhead-title">Priority Recommendations</span>
+                <span class="sec-subhead-hint">Click 'Investigate' to analyze risk with AI Assistant</span>
+              </div>
+              <div id="sec-open-findings-list" class="sec-findings-container">
+                <div class="loading-placeholder">Loading open CIS findings...</div>
+              </div>
+            </section>
+
+            <!-- Right Column: Authentication & Identity Hygiene -->
+            <section class="workstation-card sec-panel-card">
+              <div class="panel-header-clean">
+                <div class="sec-section-title">
+                  <i class="ti ti-key"></i> Authentication Methods Coverage
+                </div>
+                <span class="badge-pill-cyan"><i class="ti ti-lock"></i> Entra ID</span>
+              </div>
+
+              <!-- 4 Clean Coverage Cards (2x2 Grid) -->
+              <div id="entra-auth-methods-summary-cards" class="card-grid two mb-4"></div>
+
+              <!-- High-Risk Identities -->
+              <div class="sec-subhead-row mb-2 mt-4">
+                <span class="sec-subhead-title"><i class="ti ti-user-exclamation"></i> High-Risk Identities</span>
+                <span class="sec-subhead-hint">Sign-in anomalies &amp; missing controls</span>
+              </div>
+              <div id="sec-risk-users-list" class="sec-risk-users-grid">
+                <div class="loading-placeholder">Loading risk identities...</div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Bottom Full-Width Section: Named Locations & Boundary Trust -->
           <section class="workstation-card mb-4">
-            <div class="panel-header">
-              <h2>Privileged Roles &amp; PIM Assignments</h2>
+            <div class="panel-header-clean mb-3">
+              <div class="sec-section-title">
+                <i class="ti ti-map-pin"></i> Named Locations &amp; Boundary Trust
+              </div>
+              <span class="badge-pill-cyan"><i class="ti ti-shield-lock"></i> Conditional Access</span>
             </div>
-            <div id="pim-cards" class="card-grid four mb-4"></div>
-            <div id="pim-table" class="table-wrap"></div>
-          </section>
-
-          <section class="workstation-card">
-            <div class="panel-header">
-              <h2>Conditional Access &amp; Named Locations</h2>
-            </div>
-            <div id="entra-named-locations-cards" class="card-grid three mb-4"></div>
             <div id="entra-named-locations-table" class="table-wrap"></div>
           </section>
         </div>

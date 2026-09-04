@@ -70,17 +70,56 @@ function createPaginatedTable(containerSelector, {
 
   const state = tableStateStore[key] || (tableStateStore[key] = {
     page: 1,
-    size: defaultSize
+    size: defaultSize,
+    sortCol: null,
+    sortDir: null
   });
 
   const render = () => {
-    const total = data.length;
+    // Check if active sort column is still in columns
+    const activeColKeys = columns.map(c => typeof c === "object" && c !== null ? c.key : c);
+    if (state.sortCol && !activeColKeys.includes(state.sortCol)) {
+      state.sortCol = null;
+      state.sortDir = null;
+    }
+
+    // Sort data if sortCol and sortDir are active
+    const sortedData = [...data];
+    if (state.sortCol && state.sortDir) {
+      const colDef = columns.find(c => (typeof c === "object" && c !== null ? c.key : c) === state.sortCol);
+      sortedData.sort((a, b) => {
+        let va, vb;
+        if (colDef && typeof colDef.sortVal === "function") {
+          va = colDef.sortVal(a);
+          vb = colDef.sortVal(b);
+        } else {
+          va = a ? a[state.sortCol] : "";
+          vb = b ? b[state.sortCol] : "";
+        }
+
+        const aEmpty = va === null || va === undefined || va === "" || va === "-";
+        const bEmpty = vb === null || vb === undefined || vb === "" || vb === "-";
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return 1;
+        if (bEmpty) return -1;
+
+        if (typeof va === "number" && typeof vb === "number") {
+          return state.sortDir === "asc" ? va - vb : vb - va;
+        }
+
+        return state.sortDir === "asc"
+          ? String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: "base" })
+          : String(vb).localeCompare(String(va), undefined, { numeric: true, sensitivity: "base" });
+      });
+    }
+
+    const total = sortedData.length;
     const size = state.size;
     const totalPages = Math.max(1, Math.ceil(total / size));
     state.page = Math.min(Math.max(1, state.page), totalPages);
 
     const startIdx = (state.page - 1) * size;
-    const pageItems = data.slice(startIdx, startIdx + size);
+    const pageItems = sortedData.slice(startIdx, startIdx + size);
     const endIdx = Math.min(startIdx + size, total);
 
     const rowsHtml = pageItems.length
@@ -94,7 +133,33 @@ function createPaginatedTable(containerSelector, {
     const thsHtml = columns.map((c) => {
       if (typeof c === "object" && c !== null) {
         const isDrag = c.draggable !== false;
-        return `<th class="${isDrag ? "draggable-header" : ""}" data-col-key="${escapeHtml(c.key || "")}" ${isDrag ? 'draggable="true"' : ''} title="${isDrag ? 'Drag header to reorder column position' : ''}">${escapeHtml(c.label || c.key || "")}</th>`;
+        const isSort = c.sortable !== false;
+        const colKey = c.key || "";
+        const isCurrentSort = state.sortCol === colKey;
+        const dir = isCurrentSort ? state.sortDir : null;
+
+        let sortIconHtml = "";
+        let sortTitle = isDrag ? "Drag to reorder column position" : "";
+        let sortClass = "";
+
+        if (isSort) {
+          sortClass = "sortable-th";
+          if (dir === "asc") {
+            sortClass += " sorted-asc";
+            sortIconHtml = `<span class="sort-icon-indicator" aria-label="Sorted ascending"><i class="ti ti-arrow-up"></i></span>`;
+            sortTitle = isDrag ? "Sorted Ascending. Drag to reorder or click to sort Descending." : "Sorted Ascending. Click to sort Descending.";
+          } else if (dir === "desc") {
+            sortClass += " sorted-desc";
+            sortIconHtml = `<span class="sort-icon-indicator" aria-label="Sorted descending"><i class="ti ti-arrow-down"></i></span>`;
+            sortTitle = isDrag ? "Sorted Descending. Drag to reorder or click to clear sort." : "Sorted Descending. Click to clear sort.";
+          } else {
+            sortIconHtml = `<span class="sort-icon-indicator" aria-label="Sortable"><i class="ti ti-arrows-sort"></i></span>`;
+            sortTitle = isDrag ? "Drag to reorder column. Click to sort Ascending." : "Click to sort Ascending.";
+          }
+        }
+
+        const dragClass = isDrag ? "draggable-header" : "";
+        return `<th class="${dragClass} ${sortClass}" data-col-key="${escapeHtml(colKey)}" ${isDrag ? 'draggable="true"' : ''} title="${escapeHtml(sortTitle)}"><div class="th-inner"><span class="th-label">${escapeHtml(c.label || colKey)}</span>${sortIconHtml}</div></th>`;
       }
       return `<th>${escapeHtml(c)}</th>`;
     }).join("");
@@ -126,12 +191,15 @@ function createPaginatedTable(containerSelector, {
       </div>
     `;
 
+    let isDragging = false;
+
     if (onColumnReorder) {
       const headers = container.querySelectorAll("th.draggable-header");
       let draggedKey = null;
 
       headers.forEach((th) => {
         th.addEventListener("dragstart", (e) => {
+          isDragging = true;
           draggedKey = th.dataset.colKey;
           e.dataTransfer.effectAllowed = "move";
           e.dataTransfer.setData("text/plain", draggedKey);
@@ -170,9 +238,35 @@ function createPaginatedTable(containerSelector, {
         th.addEventListener("dragend", () => {
           headers.forEach(h => h.classList.remove("dragging-header", "drag-over-left", "drag-over-right"));
           draggedKey = null;
+          setTimeout(() => {
+            isDragging = false;
+          }, 150);
         });
       });
     }
+
+    const sortableHeaders = container.querySelectorAll("th.sortable-th");
+    sortableHeaders.forEach((th) => {
+      th.addEventListener("click", () => {
+        if (isDragging) return;
+        const colKey = th.dataset.colKey;
+        if (!colKey) return;
+
+        if (state.sortCol === colKey) {
+          if (state.sortDir === "asc") {
+            state.sortDir = "desc";
+          } else if (state.sortDir === "desc") {
+            state.sortCol = null;
+            state.sortDir = null;
+          }
+        } else {
+          state.sortCol = colKey;
+          state.sortDir = "asc";
+        }
+        state.page = 1;
+        render();
+      });
+    });
 
     container.querySelector(".table-size-select")?.addEventListener("change", (e) => {
       state.size = Number(e.target.value);
@@ -368,6 +462,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "User Identity",
     category: "Identity",
     draggable: false,
+    sortVal: (u) => (u.display_name || u.user_principal_name || u.upn || "").toLowerCase(),
     renderCell: (u) => `
       <td>
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -387,6 +482,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "User Type",
     category: "Identity",
     draggable: true,
+    sortVal: (u) => String(u.user_type || "Member").toLowerCase(),
     renderCell: (u) => `<td><span class="role-pill ${String(u.user_type || "").toLowerCase() === "guest" ? "role-guest" : "role-member"}">${escapeHtml(u.user_type || "Member")}</span></td>`
   },
   account_status: {
@@ -394,6 +490,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Account Status",
     category: "Identity",
     draggable: true,
+    sortVal: (u) => (u.account_enabled !== false ? 1 : 0),
     renderCell: (u) => {
       const enabled = u.account_enabled !== false;
       return `<td><span class="account-status-badge ${enabled ? 'account-status-active' : 'account-status-disabled'}"><i class="ti ti-${enabled ? 'check' : 'ban'}"></i> ${enabled ? 'Active' : 'Disabled'}</span></td>`;
@@ -404,6 +501,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Privilege",
     category: "Security",
     draggable: true,
+    sortVal: (u) => (u.is_admin ? 1 : 0),
     renderCell: (u) => `<td>${u.is_admin ? '<span class="role-pill role-admin">Admin</span>' : '<span class="role-pill role-member">Member</span>'}</td>`
   },
   mfa_method: {
@@ -411,6 +509,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "MFA Method",
     category: "Security",
     draggable: true,
+    sortVal: (u) => (u.mfa_registered ? (Array.isArray(u.auth_methods) && u.auth_methods.length ? u.auth_methods.join(", ") : "MFA Registered") : "None").toLowerCase(),
     renderCell: (u) => `<td>${getMfaLabel(u)}</td>`
   },
   cis_risk: {
@@ -418,6 +517,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "CIS Risk Posture",
     category: "Security",
     draggable: true,
+    sortVal: (u) => Number(u.security_score ?? (u.risk_level === 'CRITICAL' ? 50 : u.risk_level === 'HIGH' ? 40 : u.risk_level === 'MEDIUM' ? 20 : 0)),
     renderCell: (u) => {
       const riskStatus = String(u.security_status || u.risk_level || "GOOD").toUpperCase();
       const riskClass = `badge-risk-${riskStatus.toLowerCase()}`;
@@ -429,6 +529,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Assigned Licenses",
     category: "FinOps",
     draggable: true,
+    sortVal: (u) => (Array.isArray(u.license_names) ? u.license_names.join(", ") : "").toLowerCase(),
     renderCell: (u) => {
       const licenses = Array.isArray(u.license_names) ? u.license_names : [];
       if (!licenses.length) return `<td class="text-muted">None</td>`;
@@ -440,6 +541,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "License Count",
     category: "FinOps",
     draggable: true,
+    sortVal: (u) => Number(u.license_count || (Array.isArray(u.license_names) ? u.license_names.length : 0)),
     renderCell: (u) => `<td><strong>${Number(u.license_count || (Array.isArray(u.license_names) ? u.license_names.length : 0))}</strong> SKU(s)</td>`
   },
   last_signin: {
@@ -447,6 +549,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Last Sign-In",
     category: "Activity",
     draggable: true,
+    sortVal: (u) => (u.signin_datetime || u.last_signin || u.exchange_last_activity || ""),
     renderCell: (u) => {
       const dt = u.signin_datetime || u.last_signin || u.exchange_last_activity || "-";
       const loc = u.location_city ? `<br><small class="text-muted"><i class="ti ti-map-pin"></i> ${escapeHtml(u.location_city)}${u.location_country ? `, ${escapeHtml(u.location_country)}` : ""}</small>` : "";
@@ -458,6 +561,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Exchange Activity",
     category: "Activity",
     draggable: true,
+    sortVal: (u) => (u.exchange_last_activity || u.last_activity_date || ""),
     renderCell: (u) => `<td>${escapeHtml(u.exchange_last_activity || u.last_activity_date || "-")}</td>`
   },
   teams_activity: {
@@ -465,6 +569,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Teams Activity",
     category: "Activity",
     draggable: true,
+    sortVal: (u) => (u.teams_last_activity || ""),
     renderCell: (u) => `<td>${escapeHtml(u.teams_last_activity || "-")}</td>`
   },
   onedrive_activity: {
@@ -472,6 +577,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "OneDrive Activity",
     category: "Activity",
     draggable: true,
+    sortVal: (u) => (u.onedrive_last_activity || ""),
     renderCell: (u) => `<td>${escapeHtml(u.onedrive_last_activity || "-")}</td>`
   },
   department: {
@@ -479,6 +585,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Department",
     category: "Governance",
     draggable: true,
+    sortVal: (u) => (u.department || "").toLowerCase(),
     renderCell: (u) => `<td>${escapeHtml(u.department || "-")}</td>`
   },
   job_title: {
@@ -486,6 +593,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Job Title",
     category: "Governance",
     draggable: true,
+    sortVal: (u) => (u.job_title || "").toLowerCase(),
     renderCell: (u) => `<td>${escapeHtml(u.job_title || "-")}</td>`
   },
   country: {
@@ -493,6 +601,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Country / Region",
     category: "Governance",
     draggable: true,
+    sortVal: (u) => (u.country || u.location_country || "").toLowerCase(),
     renderCell: (u) => `<td>${escapeHtml(u.country || u.location_country || "-")}</td>`
   },
   devices: {
@@ -500,6 +609,7 @@ const USER_INTEL_COLUMNS_CATALOG = {
     label: "Intune Devices",
     category: "Device",
     draggable: true,
+    sortVal: (u) => Number(u.device_count || 0),
     renderCell: (u) => {
       const count = Number(u.device_count || 0);
       if (!count) return `<td class="text-muted">0 Devices</td>`;
@@ -915,7 +1025,9 @@ function renderFullUserTable() {
     .map(col => ({
       key: col.id,
       label: col.label,
-      draggable: col.draggable !== false
+      draggable: col.draggable !== false,
+      sortable: col.sortable !== false,
+      sortVal: col.sortVal
     }));
 
   createPaginatedTable("#full-user-table-container", {
@@ -1092,6 +1204,16 @@ async function sendAssistantMessage(promptText) {
     chatHistory.push({ role: "assistant", content: reply });
   } catch (err) {
     loadingBubble.querySelector(".bubble-content").innerHTML = `<p style="color: var(--danger-text)">Assistant service temporarily unavailable: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function openAssistantWithPrompt(promptText) {
+  const win = $("#floating-assistant-window");
+  if (win) {
+    win.classList.add("show");
+  }
+  if (promptText) {
+    sendAssistantMessage(promptText);
   }
 }
 
@@ -1284,56 +1406,179 @@ async function loadLicensesPanel() {
   });
 }
 
-// Security, PIM, CA, and Entra Panels (Paginated 10-200)
+// Rule translation dictionary for CIS Open Findings
+const secRuleLabels = {
+  "M365-ENTRA-CA-LEGACY-AUTH-001": "Legacy authentication not blocked",
+  "M365-ENTRA-CA-ENFORCEMENT-001": "No CA policy in enforcement mode",
+  "M365-ENTRA-CA-MFA-001": "MFA not required by CA policy",
+  "M365-ENTRA-MFA-REG-001": "MFA registration incomplete",
+  "M365-ENTRA-ADMIN-ROLES-001": "Excessive Global Admin assignments"
+};
+
+const getSecFindingTitle = (finding) => {
+  const ruleId = String(finding?.rule_id || "").trim();
+  if (secRuleLabels[ruleId]) return secRuleLabels[ruleId];
+  const category = String(finding?.category || "").trim();
+  const title = String(finding?.title || "").trim();
+  if (title && title.toLowerCase() !== category.toLowerCase()) return title;
+  const recommendation = String(finding?.recommendation || "").trim();
+  if (recommendation) {
+    const sentence = recommendation.split(/(?<=[.!?])\s+/)[0].trim();
+    return sentence.length > 60 ? sentence.slice(0, 57).replace(/\s+\S*$/, "").trim() + "..." : sentence;
+  }
+  return category || title || "Security finding";
+};
+
+// Security Contextual AI Handlers (Unified Assistant)
+function initSecurityTriggers() {
+  $("#sec-open-findings-list")?.addEventListener("click", (e) => {
+    const invBtn = e.target.closest(".btn-action-investigate");
+    if (invBtn && invBtn.dataset.finding) {
+      openAssistantWithPrompt(`Investigate CIS security finding: "${invBtn.dataset.finding}". Explain the tenant risk and provide remediation steps.`);
+    }
+  });
+
+  $("#sec-risk-users-list")?.addEventListener("click", (e) => {
+    const auditBtn = e.target.closest(".btn-audit-user");
+    if (auditBtn && auditBtn.dataset.user) {
+      openAssistantWithPrompt(`Audit high-risk identity "${auditBtn.dataset.user}": why is this account flagged and what containment actions are recommended?`);
+    }
+  });
+}
+
+// Security, PIM, CA, and Unified SecOps Hub
 async function loadSecurityPanels() {
-  const [authSummary, pim, locations] = await Promise.all([
+  const [riskRes, summaryRes, findingsRes, authSummary, pim, locations] = await Promise.all([
+    get("/api/security/risk-score").catch(() => null),
+    get("/api/security/summary").catch(() => null),
+    get("/api/security/findings?status=OPEN").catch(() => null),
     get("/api/entra/auth-methods-summary").catch(() => null),
     get("/api/entra/pim-summary").catch(() => null),
     get("/api/entra/named-locations").catch(() => null)
   ]);
 
+  // 1. Executive Risk Level & Distribution
+  const riskData = riskRes?.data || riskRes || {};
+  const dist = riskData.risk_distribution || {};
+  const critical = Number(dist.CRITICAL || 0);
+  const high = Number(dist.HIGH || 0);
+  const medium = Number(dist.MEDIUM || 0);
+  const level = critical > 0 ? "CRITICAL" : high > 0 ? "HIGH" : medium > 0 ? "MEDIUM" : "LOW";
+
+  if ($("#sec-overall-risk")) {
+    $("#sec-overall-risk").textContent = level;
+    $("#sec-overall-risk").className = `snapshot-risk risk-${level.toLowerCase()}`;
+  }
+  if ($("#sec-risk-meta-tag")) {
+    $("#sec-risk-meta-tag").textContent = `${critical} Critical • ${high} High Risk`;
+  }
+  if ($("#sec-finding-counts")) {
+    $("#sec-finding-counts").innerHTML = [
+      ["Critical", critical, "tile-critical"],
+      ["High Risk", high, "tile-high"],
+      ["Medium", medium, ""]
+    ].map(([lbl, cnt, cls]) => `<div class="count-tile ${cls}"><strong>${cnt}</strong><span>${lbl}</span></div>`).join("");
+  }
+
+  // 2. MFA Posture KPI Card & Summary Cards
   if (authSummary && authSummary.data) {
     const d = authSummary.data;
+    if ($("#sec-kpi-mfa-stat")) {
+      $("#sec-kpi-mfa-stat").textContent = `${d.mfa_registered || 0} / ${d.total_users || 0} (${d.mfa_registration_rate_pct || 0}%)`;
+    }
+    if ($("#sec-kpi-mfa-meta")) {
+      $("#sec-kpi-mfa-meta").textContent = `${d.mfa_not_registered || 0} Action Required`;
+    }
     const cards = [
-      ["", "MFA Registered", `${d.mfa_registered || 0} (${d.mfa_registration_rate_pct || 0}%)`, "REGISTERED"],
-      ["", "Unregistered", d.mfa_not_registered || 0, "ACTION REQUIRED", (d.mfa_not_registered || 0) > 0 ? "unavailable" : ""],
-      ["", "Passwordless Capable", d.passwordless_capable || 0, "SECURE"],
-      ["", "Total Directory Users", d.total_users || 0, "INVENTORY"]
+      ['<i class="ti ti-shield-check"></i>', "MFA Registered", `${d.mfa_registered || 0} (${d.mfa_registration_rate_pct || 0}%)`, "REGISTERED"],
+      ['<i class="ti ti-alert-triangle"></i>', "Unregistered", d.mfa_not_registered || 0, "ACTION REQUIRED", (d.mfa_not_registered || 0) > 0 ? "unavailable" : ""],
+      ['<i class="ti ti-key"></i>', "Passwordless Capable", d.passwordless_capable || 0, "SECURE"],
+      ['<i class="ti ti-users"></i>', "Total Directory Users", d.total_users || 0, "INVENTORY"]
     ];
     if ($("#entra-auth-methods-summary-cards")) {
       $("#entra-auth-methods-summary-cards").innerHTML = cards.map((c) => renderCard(c[0], c[1], c[2], c[3], c[4])).join("");
     }
   }
 
-  if (pim && pim.data) {
-    const p = pim.data;
-    const assignments = p.assignments || [];
-    if ($("#pim-cards")) {
-      $("#pim-cards").innerHTML = [
-        renderCard("", "Total Role Assignments", p.total || assignments.length || 0, "ASSIGNED"),
-        renderCard("", "Permanent Admins", p.permanent_count || 2, "HIGH PRIVILEGE", "unavailable"),
-        renderCard("", "Eligible (PIM)", p.eligible_count || 0, "JUST-IN-TIME"),
-        renderCard("", "Unique Privileged Roles", p.unique_roles || 4, "ROLES")
-      ].join("");
-    }
+  // 3. Open CIS Findings KPI & Priority List
+  const findingsList = (findingsRes?.data || findingsRes)?.findings || [];
+  if ($("#sec-kpi-open-findings")) {
+    $("#sec-kpi-open-findings").textContent = `${findingsList.length} Open`;
+  }
+  const severityRank = { CRITICAL: 3, HIGH: 2, MEDIUM: 1, LOW: 0 };
+  findingsList.sort((a, b) => (severityRank[String(b.severity).toUpperCase()] ?? -1) - (severityRank[String(a.severity).toUpperCase()] ?? -1));
 
-    createPaginatedTable("#pim-table", {
-      columns: ["Principal", "Role", "Type", "Start Date", "End Date"],
-      data: assignments,
-      defaultSize: 10,
-      key: "pim-table",
-      renderRow: (x) => `
-        <tr>
-          <th>${escapeHtml(x.principal_display_name || "Admin Principal")}</th>
-          <td><span class="role-pill role-admin">${escapeHtml(x.role_display_name || x.role)}</span></td>
-          <td>${escapeHtml(x.assignment_type || x.type || "Permanent")}</td>
-          <td>${escapeHtml(x.start_date || "-")}</td>
-          <td>${escapeHtml(x.end_date || "Never")}</td>
-        </tr>
-      `
-    });
+  const shownTitles = new Set();
+  const prioritizedFindings = findingsList.map(x => ({ finding: x, title: getSecFindingTitle(x) })).filter(x => {
+    const key = x.title.toLowerCase();
+    if (shownTitles.has(key)) return false;
+    shownTitles.add(key);
+    return true;
+  }).slice(0, 5);
+
+  if ($("#sec-open-findings-list")) {
+    if (prioritizedFindings.length) {
+      $("#sec-open-findings-list").innerHTML = prioritizedFindings.map(({ finding, title }) => {
+        const sev = String(finding.severity || "HIGH").toUpperCase();
+        return `
+          <div class="sec-finding-card">
+            <div class="sec-finding-left">
+              <span class="severity-badge severity-${sev.toLowerCase()}">${escapeHtml(sev)}</span>
+              <span class="sec-finding-desc" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
+            </div>
+            <div class="sec-finding-actions">
+              <button type="button" class="btn-action-investigate" data-finding="${escapeHtml(title)}">
+                <i class="ti ti-shield-search"></i> Investigate
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    } else {
+      $("#sec-open-findings-list").innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 8px;">No open CIS findings detected</div>';
+    }
   }
 
+  // 4. Top Risk Users
+  const topRisks = riskData.top_risks || [];
+  if ($("#sec-risk-users-list")) {
+    if (topRisks.length) {
+      $("#sec-risk-users-list").innerHTML = topRisks.slice(0, 4).map(u => {
+        const initials = escapeHtml((u.display_name || "U").slice(0, 2).toUpperCase());
+        const sev = String(u.risk_level || "HIGH").toUpperCase();
+        const sevClass = sev === "CRITICAL" ? "severity-critical" : sev === "HIGH" ? "severity-high" : "severity-medium";
+        return `
+          <div class="sec-risk-user-card">
+            <div class="sec-user-meta">
+              <span class="user-avatar-mini">${initials}</span>
+              <div class="sec-user-info">
+                <div class="sec-user-name" title="${escapeHtml(u.display_name)}">${escapeHtml(u.display_name)}</div>
+                <div class="sec-user-badge-row">
+                  <span class="severity-badge ${sevClass}">${escapeHtml(sev)}</span>
+                  <small style="color: var(--text-muted); font-size: 10px;">Score: ${escapeHtml(u.score || 85)}</small>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn-audit-user" data-user="${escapeHtml(u.display_name)}">
+              <i class="ti ti-shield-search"></i> Audit User
+            </button>
+          </div>
+        `;
+      }).join("");
+    } else {
+      $("#sec-risk-users-list").innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 8px;">No high-risk users detected</div>';
+    }
+  }
+
+  // 5. Privileged Role Assignments (KPI)
+  if (pim && pim.data) {
+    const p = pim.data;
+    if ($("#sec-kpi-privileged-admins")) {
+      $("#sec-kpi-privileged-admins").textContent = `${p.permanent_count || 2} High Privilege`;
+    }
+  }
+
+  // 6. Named Locations & Conditional Access
   if (locations && locations.data) {
     const locationRows = locations.data.locations || [];
     createPaginatedTable("#entra-named-locations-table", {
@@ -1669,6 +1914,7 @@ async function start() {
   initNavigation();
   initAssistantChat();
   initUserIntelControls();
+  initSecurityTriggers();
 
   $("#btn-refresh-data")?.addEventListener("click", () => {
     loadTelemetryData(true);

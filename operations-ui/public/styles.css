@@ -978,6 +978,51 @@ body {
   letter-spacing: 0.05em;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.modern-data-table th.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.modern-data-table th.sortable-th:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.modern-data-table th .th-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.modern-data-table th .sort-icon-indicator {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.modern-data-table th.sortable-th:hover .sort-icon-indicator {
+  opacity: 0.85;
+  color: var(--accent-cyan);
+}
+
+.modern-data-table th.sortable-th.sorted-asc,
+.modern-data-table th.sortable-th.sorted-desc {
+  color: var(--text-primary);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.modern-data-table th.sortable-th.sorted-asc .sort-icon-indicator,
+.modern-data-table th.sortable-th.sorted-desc .sort-icon-indicator {
+  opacity: 1;
+  color: var(--accent-cyan);
 }
 
 .modern-data-table td {
@@ -2649,4 +2694,378 @@ th.drag-over-right {
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
+
+/* ==========================================================================
+   UNIFIED SECURITY & RISK COMMAND CENTER WITH AGENTIC AI CO-PILOT
+   ========================================================================== */
+
+/* Meta Bad */
+.meta-bad {
+  color: #f87171;
+}
+
+/* Glowing KPI Cards */
+.card-glow-rose {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.08);
+}
+.card-glow-rose:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.18);
+}
+
+.card-glow-amber {
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.08);
+}
+.card-glow-amber:hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.18);
+}
+
+.card-glow-teal {
+  border-color: rgba(0, 210, 255, 0.35);
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.08);
+}
+.card-glow-teal:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 4px 24px rgba(0, 210, 255, 0.2);
+}
+
+.card-glow-blue {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.08);
+}
+.card-glow-blue:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 4px 24px rgba(56, 189, 248, 0.18);
+}
+
+/* Risk Level Typography */
+.snapshot-risk {
+  font-size: 30px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.risk-critical {
+  color: #f87171;
+  text-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+.risk-high {
+  color: #fbbf24;
+  text-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+}
+.risk-medium {
+  color: #fde047;
+}
+.risk-low {
+  color: #34d399;
+}
+
+/* Clean Unified Security Dashboard (Option 1) */
+.sec-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .sec-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sec-panel-card {
+  padding: 20px 22px;
+  border-radius: 12px;
+}
+
+.panel-header-clean {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.action-sparkle-btn {
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  color: var(--accent-cyan);
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-sparkle-btn:hover {
+  background: var(--accent-cyan);
+  color: #0b0f19;
+  box-shadow: 0 0 16px rgba(0, 210, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Section Subheadings */
+.sec-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sec-subhead-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sec-subhead-title {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sec-subhead-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Risk Count Tiles */
+.count-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.count-tile {
+  background: var(--bg-input-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.count-tile.tile-critical {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.count-tile.tile-high {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.count-tile strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.count-tile.tile-critical strong { color: #f87171; }
+.count-tile.tile-high strong { color: #fbbf24; }
+
+.count-tile span {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Priority Open CIS Findings List */
+.sec-findings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sec-finding-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-input-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9px;
+  padding: 10px 14px;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.sec-finding-card:hover {
+  border-color: rgba(0, 210, 255, 0.4);
+  background: rgba(0, 210, 255, 0.03);
+  transform: translateX(2px);
+}
+
+.sec-finding-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sec-finding-desc {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sec-finding-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-action-investigate {
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  color: var(--accent-cyan);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-investigate:hover {
+  background: var(--accent-cyan);
+  color: #0b0f19;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Severity Badges */
+.severity-badge {
+  flex: 0 0 auto;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.severity-critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #ef4444;
+}
+
+.severity-high {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid #f59e0b;
+}
+
+.severity-medium {
+  background: rgba(253, 224, 71, 0.15);
+  color: #fde047;
+  border: 1px solid rgba(253, 224, 71, 0.4);
+}
+
+.severity-low {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* Top Risk Users Grid */
+.sec-risk-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.sec-risk-user-card {
+  background: var(--bg-input-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.sec-risk-user-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.sec-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sec-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sec-user-name {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sec-user-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.btn-audit-user {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-audit-user:hover {
+  background: rgba(0, 210, 255, 0.1);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
 
