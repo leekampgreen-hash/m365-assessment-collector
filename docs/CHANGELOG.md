@@ -1,5 +1,19 @@
 # Changelog
 
+## Collector Standardization & Operations Modernization (Phases 1-5)
+
+- **Phase 1: Scheduler & CLI Flag Standardization**: Resolved argument mismatch bugs between `collectors/scheduler.py` and `collectors/run_collector.py` (`--defender-devices` vs `--defender-summary`, `--entra-stale-devices`, `intune_compliance_policies`, `intune_mobile_apps`, `onedrive_audit`) with backward-compatibility aliases.
+- **Phase 2: SSOT API Inventory Registration**: Fully registered all 12 specialized script collectors into `config/api_inventory.json` (`OD-AUDIT`, `SP-A01`, `SP-SITES`, `INTUNE-001` through `004`, `ENTRA-GUESTS`, `ENTRA-AUTH`, `ENTRA-STALE`, `ENTRA-PIM`, `DEF-DEV`) with explicit schema fields (`collector_type: "specialized"`, `module`, `function`, `cli_flag`, `table`, `permission`, and `documented_permissions`), bringing total registered endpoints to 45 SSOT specs. Added deduplication guards to prevent double-counting.
+- **Phase 3: Unified Collector Runner & Checkpoint Synchronization**: Introduced unified `--collector <ID_OR_NAME>` CLI runner in `collectors/run_collector.py` supporting standard codes (`G01-001`, `OD-AUDIT`), specialized keys, short slugs, security rules, and batch-2 sources. Reconciled database checkpoint timestamps in `control.collector_checkpoint` and modernized `GET /api/admin/collector/status` with dual-key resolution and `slug` delivery.
+- **Phase 4: Operations Admin UI & Scheduler Modernization**: Enhanced `operations-ui/public/admin.html` with real-time collector search bar, workload domain filter dropdown (Entra, Intune, Defender, Purview, SharePoint, OneDrive, Usage), quick-action Copy CLI Command button, and manual refresh. Refactored scheduler dispatch loop to route all jobs via unified runner. Published comprehensive reference catalog in `docs/COLLECTORS_REFERENCE.md`.
+- **Phase 5: On-Demand Execution, Metric Cards & Inspector Modal**: Added authenticated `POST /api/admin/collector/trigger` endpoint with subprocess execution and safety timeout. Added 4 top-level collector health summary metric cards (Total Registered, Healthy <24h, Stale >24h, Pending/Inactive), inline row-level and modal "Run Now" buttons with live spinner, and an interactive Collector Inspector modal detailing workload, permissions, GMT+7 checkpoints, and copyable commands.
+
+## Architecture & Test Suite Resilience (TD-009 & TD-010)
+
+- **TD-009: Workload Registry vs Specialized Collector Invariant Alignment**: Formalized `collector_type: str = "declarative" | "specialized"` in `EndpointSpec` typed model and inventory loader. Aligned invariant assertions in `tests/workloads/test_registry.py` and `tests/architecture/test_security_wiring.py` so specialized script collectors are cleanly distinguished from declarative adapters.
+- **TD-010: Test Environment Dependencies & Namespace Shadowing**: Removed empty package file `tests/agent/__init__.py` that shadowed the root `agent` package during test discovery. Installed missing test runtime packages (`pytest`, `openai`, `psycopg3`, `pyotp`). Resolved DB connection mock in `test_operations_api.py` to adhere to standard cursor context manager protocols. All 1,360 test suite items now pass with 0 errors.
+- **Backlog Governance**: Sealed `LIC-OPTIMIZER-P01` in `docs/progress/backlog.md` and updated `docs/TECHNICAL_DEBT.md` with resolved status for TD-009 and TD-010.
+
 ## Operations UI: License FinOps Command Center & Identities Reclamation Redesign
 
 - **Command Center Layout**: Replaced fragmented and redundant cards with a unified 3-column Hero Command Center (`#license-command-center`) featuring Potential Annual Recovery ($/yr and $/mo run-rate), Cost Leakage Sources breakdown (Inactive Accounts, Zero Usage, Over-Licensed) with mini progress bars, and an Executive AI Advisory card with direct assistant consultation action.

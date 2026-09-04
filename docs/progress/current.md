@@ -32,17 +32,20 @@
 - API-CLEANUP-01: Dead code removal, exchange capacity caching, defensive security guard, dynamic KPI deltas, SKU pricing consolidation - SEALED
 - LIC-UX02: License FinOps Command Center & Identities Reclamation Redesign - SEALED
 - LIC-OPTIMIZER-P01: License optimizer advisory & reclamation recommendations (integrated in LIC-UX01/02) - SEALED
+- COLLECTOR-STD-P01-P05: Collector Standardization Phases 1-5 (CLI flags, SSOT inventory with 45 collectors, Unified Runner `--collector`, Admin UI search & filter, on-demand trigger API, 4 metric cards, inspector modal, and reference catalog) - SEALED
+- TD-009 & TD-010: Workload registry invariant alignment & test dependency / package shadowing resolution (100% test suite pass) - SEALED
 
 ## Active Task
-Planning next sprint & Technical Debt reduction
+Technical debt backlog reduction (TD-001/TD-002 retention metadata alignment) and next sprint planning
 
 ## Next Steps
 
-1. AGT-MULTI-P01 - Multi-tenant architecture design
-2. SAAS-P01 - Customer onboarding flow
-3. SAAS-P03 - Rate limiting
-4. UI-P01 - UI polish (mobile responsive, loading states)
-5. AGT-DEV01-UPDATE - Update agent test questions
+1. TD-001/TD-002 - Registry retention metadata alignment for G01-005, 006, 013, 014
+2. AGT-MULTI-P01 - Multi-tenant architecture design
+3. SAAS-P01 - Customer onboarding flow
+4. SAAS-P03 - Rate limiting
+5. UI-P01 - UI polish (mobile responsive, loading states)
+6. AGT-DEV01-UPDATE - Update agent test questions
 
 
 ## Available API Endpoints

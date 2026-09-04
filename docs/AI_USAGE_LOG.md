@@ -1,3 +1,21 @@
+## COLLECTOR-STANDARDIZATION-P01-P05-001
+
+- **Date:** 2026-09-04
+- **Model:** `Gemini 3.8 Flash`
+- **Result:** `COLLECTOR_STANDARDIZATION_SEALED`
+- **Scope:** Completed 5-phase collector standardization: (1) CLI & scheduler argument standardization; (2) Registered 12 specialized script collectors to `config/api_inventory.json` establishing SSOT (45 endpoints); (3) Unified CLI runner (`collectors/run_collector.py --collector <ID_OR_NAME>`) and dual-key checkpoint reconciliation; (4) Operations Admin UI enhancement with instant search, workload filtering, and CLI copy shortcuts; scheduler modernization; and publication of `docs/COLLECTORS_REFERENCE.md`; (5) On-demand execution API (`POST /api/admin/collector/trigger`), health metric cards, and interactive Collector Inspector modal.
+- **Validation:** Live API & UI tested on port 18080; scheduler jobs executed cleanly; 153 CLI and framework tests PASS; complete test suite passes 100%.
+- **Files changed:** `collectors/scheduler.py`, `collectors/run_collector.py`, `config/api_inventory.json`, `api/admin.py`, `operations-ui/public/admin.html`, `operations-ui/public/styles.css`, `docs/COLLECTORS_REFERENCE.md`, `docs/COLLECTOR_STANDARDIZATION_BACKLOG.md`.
+
+## TECH-DEBT-TD009-TD010-RESOLUTION-001
+
+- **Date:** 2026-09-04
+- **Model:** `Gemini 3.8 Flash`
+- **Result:** `TECH_DEBT_RESOLUTION_PASS`
+- **Scope:** Resolved TD-009 by formalizing `collector_type: "declarative" | "specialized"` in `EndpointSpec` and updating invariant tests (`test_registry.py`, `test_security_wiring.py`). Resolved TD-010 by removing shadowing `tests/agent/__init__.py`, installing system dependencies (`pytest`, `openai`, `psycopg3`, `pyotp`), and fixing DB cursor mock in `test_operations_api.py`. Marked `LIC-OPTIMIZER-P01` sealed in backlog.
+- **Validation:** 1,360 pytest and 730 unittest tests pass 100% with 0 errors.
+- **Files changed:** `collectors/core/inventory.py`, `collectors/core/models.py`, `tests/agent/__init__.py`, `tests/agent/test_research.py`, `tests/analytics/test_operations_api.py`, `tests/architecture/test_security_wiring.py`, `tests/security/test_security_findings.py`, `tests/workloads/test_registry.py`, `docs/TECHNICAL_DEBT.md`, `docs/progress/backlog.md`.
+
 ## OPS-UI-LICENSE-OPTIMIZATION-REDESIGN-001
 
 - **Date:** 2026-09-04
