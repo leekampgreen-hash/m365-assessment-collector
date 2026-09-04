@@ -3068,4 +3068,463 @@ th.drag-over-right {
   color: var(--accent-cyan);
 }
 
+/* ==========================================================================
+   LICENSE FINOPS & COST RECLAMATION HUB (ZERO-REDUNDANCY MODERN STYLING)
+   ========================================================================== */
+
+/* 1. FinOps Command Grid */
+.finops-command-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1.35fr;
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .finops-command-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+.finops-card {
+  background: var(--bg-card-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.finops-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.finops-card-label i {
+  font-size: 14px;
+}
+
+/* Hero Metric Card */
+.finops-hero-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent-emerald);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.finops-per-year {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.finops-hero-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.highlight-cyan {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.finops-pill-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.badge-flagged-count {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 2px 9px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.meta-subtext {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Waste Breakdown Card */
+.finops-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.breakdown-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+}
+
+.breakdown-item-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breakdown-item-val {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.finops-mini-bar {
+  background: var(--bg-hover);
+  height: 5px;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.finops-mini-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.fill-amber { background: var(--accent-amber); }
+.fill-red { background: var(--accent-red); }
+.fill-blue { background: var(--accent-blue); }
+
+.breakdown-item-over {
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+/* Executive Advisory Card */
+.finops-advisory-card {
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.03) 0%, rgba(18, 24, 37, 0.85) 100%);
+  border-color: rgba(0, 210, 255, 0.2);
+}
+
+[data-theme="light"] .finops-advisory-card {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.04) 0%, #ffffff 100%);
+  border-color: rgba(2, 132, 199, 0.2);
+}
+
+.finops-advisory-text {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.finops-advisory-action {
+  margin-top: auto;
+}
+
+.btn-ai-consult {
+  width: 100%;
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  color: var(--accent-cyan);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ai-consult:hover {
+  background: rgba(0, 210, 255, 0.16);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.2);
+}
+
+/* 2. Subscribed SKUs Section */
+.sku-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sku-code-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sku-table-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sku-table-row:hover {
+  background: var(--bg-hover) !important;
+}
+
+.sku-table-row.row-selected-sku {
+  background: rgba(0, 210, 255, 0.08) !important;
+  border-left: 3px solid var(--accent-cyan);
+}
+
+.sku-waste-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.efficiency-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.efficiency-bar-bg {
+  width: 75px;
+  height: 6px;
+  background: var(--bg-hover);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.efficiency-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.eff-good { background: var(--accent-emerald); color: var(--accent-emerald); }
+.eff-warning { background: var(--accent-amber); color: var(--accent-amber); }
+.eff-critical { background: var(--accent-red); color: #f87171; }
+
+.efficiency-text {
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.efficiency-pill-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 3. Filter Bar & Chips */
+.license-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.opt-filter-chip {
+  background: var(--bg-card-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.opt-filter-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.opt-filter-chip.active {
+  background: rgba(0, 210, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.opt-filter-chip .chip-count {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.opt-filter-chip.active .chip-count {
+  background: var(--accent-cyan);
+  color: #0a0e17;
+}
+
+[data-theme="light"] .opt-filter-chip.active .chip-count {
+  color: #ffffff;
+}
+
+/* 4. Identities Pipeline Table (1-user-1-row) */
+.user-identity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name-title {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.user-upn-sub {
+  font-size: 11px;
+}
+
+.license-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.license-pill {
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.license-pill-paid {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.license-pill-subtle {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.cost-waste-tag {
+  font-size: 13px;
+}
+
+.opt-tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.opt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.opt-tag.tag-inactive {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.opt-tag.tag-zero {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.opt-tag.tag-overlicensed {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.opt-tag.tag-duplicate {
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.opt-tag.tag-guest {
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.opt-tag.tag-blocked {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.opt-tag.tag-generic {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-license-audit {
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  color: var(--accent-cyan);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-license-audit:hover {
+  background: rgba(0, 210, 255, 0.18);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+}
 

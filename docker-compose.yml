@@ -125,7 +125,7 @@ services:
     container_name: graph-agent-operations-ui-dev
 
     ports:
-      - "127.0.0.1:18080:80"
+      - "18080:80"
 
     environment:
       API_KEY: ${API_KEY}

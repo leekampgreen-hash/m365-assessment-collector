@@ -1,5 +1,12 @@
 # Changelog
 
+## Operations UI: License FinOps Command Center & Identities Reclamation Redesign
+
+- **Command Center Layout**: Replaced fragmented and redundant cards with a unified 3-column Hero Command Center (`#license-command-center`) featuring Potential Annual Recovery ($/yr and $/mo run-rate), Cost Leakage Sources breakdown (Inactive Accounts, Zero Usage, Over-Licensed) with mini progress bars, and an Executive AI Advisory card with direct assistant consultation action.
+- **Subscribed SKUs Real Efficiency**: Enhanced the SKU inventory table (`#licenses`) with friendly product names, monthly per-seat pricing, active vs idle seat allocation, visual Real Efficiency progress bars (good/warning/critical or Free Tier unmetered badge), and interactive click-to-filter drill-down functionality.
+- **Identities Reclamation Pipeline (1 User = 1 Row)**: Redesigned the reclamation table (`#license-optimizer-table`) to eliminate duplicate rows by grouping multiple flags per identity into clean multi-badge tags (`Inactive`, `Zero Usage`, `Over-Licensed`, `Duplicate SKU`, `Guest Account`, `Blocked Account`). Added filter chips (`All Flagged`, `Inactive Accounts`, `Zero Usage`, `Over-Licensed`), instant client-side search, and per-user "Audit AI" actions.
+- **Docker Compose Port Binding**: Updated `operations-ui` host port binding in `docker-compose.yml` to `18080:80` for consistent accessibility across local interfaces and containers.
+
 ## API & Operations Optimization: Minimum-Impact Codebase Improvements
 
 - **Cleaned Up Unreachable Security Handlers**: Removed dead handler `if` blocks in `api/operations.py` for `/api/security/admin-roles`, `/api/security/mfa-coverage`, `/api/security/ca-policies`, `/api/security/signin-summary`, and `/api/security/mfa-registration`, which were previously intercepted by the telemetry caching handler. Kept reachable handlers such as `/api/security/signin-risk`.

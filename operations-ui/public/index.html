@@ -575,24 +575,50 @@
 
         <!-- =================== VIEW: LICENSE OPTIMIZER =================== -->
         <div id="view-license" class="view-panel hidden">
-          <section class="workstation-card mb-4">
-            <div class="panel-header">
+          <!-- 1. License FinOps Command Center (Hero Metric | Waste Breakdown | Executive Advisory) -->
+          <section class="workstation-card mb-4" id="license-command-center">
+            <div class="panel-header" style="margin-bottom: 14px;">
               <div>
-                <h2>License Optimization &amp; Cost Reclamation</h2>
-                <p class="section-desc">Identify inactive users, disabled accounts, and over-licensed seats to recover recurring licensing costs.</p>
+                <h2>License FinOps Command Center</h2>
+                <p class="section-desc">Audit and optimize assigned Microsoft 365 licensing costs across inactive and unutilized identities.</p>
+              </div>
+              <div class="panel-header-actions">
+                <span class="badge-pill-cyan"><i class="ti ti-activity"></i> FinOps Engine</span>
               </div>
             </div>
-            <div id="license-optimizer-summary" class="optimizer-summary"></div>
-            <div id="license-optimizer-savings"></div>
-            <div id="license-optimizer-controls" class="detail-controls"></div>
-            <div id="license-optimizer-table" class="table-wrap"></div>
+            <div id="license-finops-summary"></div>
           </section>
 
-          <section class="workstation-card">
-            <div class="panel-header">
-              <h2>Subscribed SKUs &amp; Utilization</h2>
+          <!-- 2. Subscribed SKUs Utilization & Real Efficiency -->
+          <section class="workstation-card mb-4" id="license-skus-section">
+            <div class="panel-header" style="margin-bottom: 12px;">
+              <div>
+                <h2>Subscribed SKUs &amp; Real Efficiency</h2>
+                <p class="section-desc">Inventory of subscribed cloud licenses, active vs idle seat allocation, and efficiency metrics.</p>
+              </div>
+              <div class="panel-header-actions">
+                <span id="sku-active-filter-badge" class="badge-pill-cyan hidden" style="cursor: pointer;" title="Click to clear SKU filter"><span id="sku-filter-text">Filtered by SKU</span> <i class="ti ti-x"></i></span>
+              </div>
             </div>
             <div id="licenses" class="table-wrap"></div>
+          </section>
+
+          <!-- 3 & 4. Quick Filter Tabs, Search & Identities Reclamation Pipeline (1 User = 1 Baris) -->
+          <section class="workstation-card" id="license-users-section">
+            <div class="panel-header" style="margin-bottom: 14px;">
+              <div>
+                <h2>Identities Reclamation Pipeline</h2>
+                <p class="section-desc">Actionable list of accounts eligible for license reclaim, downgrade, or unassignment without duplicate rows.</p>
+              </div>
+              <div class="panel-header-actions">
+                <div class="table-search-box">
+                  <i class="ti ti-search"></i>
+                  <input type="text" id="license-user-search" placeholder="Search user or UPN..." autocomplete="off">
+                </div>
+              </div>
+            </div>
+            <div id="license-category-filter-chips" class="license-filter-bar mb-3"></div>
+            <div id="license-optimizer-table" class="table-wrap"></div>
           </section>
         </div>
 

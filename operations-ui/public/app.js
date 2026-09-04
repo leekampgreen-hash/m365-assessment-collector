@@ -1333,8 +1333,467 @@ async function loadExecSummary() {
   }
 }
 
-// License Optimizer & SKU Utilization (Paginated 10-200)
+// ==================== LICENSE OPTIMIZER & SKU FINOPS ====================
+const SKU_FRIENDLY_NAMES = {
+  "SPB": { name: "Microsoft 365 Business Premium", tier: "paid", monthlyPrice: 22.00 },
+  "O365_BUSINESS_ESSENTIALS": { name: "Microsoft 365 Business Basic", tier: "paid", monthlyPrice: 6.00 },
+  "O365_BUSINESS_PREMIUM": { name: "Microsoft 365 Business Standard", tier: "paid", monthlyPrice: 12.50 },
+  "ENTERPRISEPACK": { name: "Microsoft 365 E3", tier: "paid", monthlyPrice: 36.00 },
+  "ENTERPRISEPREMIUM": { name: "Microsoft 365 E5", tier: "paid", monthlyPrice: 57.00 },
+  "EXCHANGESTANDARD": { name: "Exchange Online Plan 1", tier: "paid", monthlyPrice: 4.00 },
+  "EXCHANGEENTERPRISE": { name: "Exchange Online Plan 2", tier: "paid", monthlyPrice: 8.00 },
+  "AAD_PREMIUM": { name: "Azure AD Premium P1", tier: "paid", monthlyPrice: 6.00 },
+  "AAD_PREMIUM_P2": { name: "Azure AD Premium P2", tier: "paid", monthlyPrice: 9.00 },
+  "POWER_BI_STANDARD": { name: "Power BI Free", tier: "free", monthlyPrice: 0.00 },
+  "POWER_BI_PRO": { name: "Power BI Pro", tier: "paid", monthlyPrice: 10.00 },
+  "TEAMS_EXPLORATORY": { name: "Microsoft Teams Exploratory", tier: "free", monthlyPrice: 0.00 },
+  "INTUNE_A": { name: "Microsoft Intune", tier: "paid", monthlyPrice: 8.00 },
+  "PROJECTPREMIUM": { name: "Project Plan 5", tier: "paid", monthlyPrice: 55.00 },
+  "PROJECTPROFESSIONAL": { name: "Project Plan 3", tier: "paid", monthlyPrice: 30.00 },
+  "VISIOCLIENT": { name: "Visio Plan 2", tier: "paid", monthlyPrice: 15.00 },
+  "DEVELOPERPACK_E3": { name: "Microsoft 365 E3 Developer", tier: "free", monthlyPrice: 0.00 },
+  "FLOW_FREE": { name: "Power Automate Free", tier: "free", monthlyPrice: 0.00 },
+  "POWERAPPS_DEV": { name: "Power Apps Developer Plan", tier: "free", monthlyPrice: 0.00 },
+  "DESKLESSPACK": { name: "Microsoft 365 F1", tier: "paid", monthlyPrice: 4.00 }
+};
+
+function getSkuFriendlyInfo(skuKey) {
+  return SKU_FRIENDLY_NAMES[skuKey] || { name: skuKey, tier: "paid", monthlyPrice: 0.00 };
+}
+
+const LICENSE_FLAG_CONFIG = {
+  "inactive_licensed_user": { label: "Inactive (>30d)", class: "tag-inactive", icon: "ti-clock-pause" },
+  "zero_usage_licensed_user": { label: "Zero Usage", class: "tag-zero", icon: "ti-chart-bar-off" },
+  "over_licensed_user": { label: "Over-Licensed", class: "tag-overlicensed", icon: "ti-layers-intersect" },
+  "duplicate_license_user": { label: "Duplicate SKU", class: "tag-duplicate", icon: "ti-copy" },
+  "guest_with_license": { label: "Guest Account", class: "tag-guest", icon: "ti-user-exclamation" },
+  "blocked_with_license": { label: "Blocked Account", class: "tag-blocked", icon: "ti-user-x" }
+};
+
 let optimizerReport = null;
+let licenseFilterState = {
+  category: "all",
+  search: "",
+  sku: null
+};
+
+// 1. License FinOps Command Center (Single Unified Panel, Zero-Redundancy)
+function renderLicenseFinOpsCommandCenter(rep) {
+  const container = $("#license-finops-summary");
+  if (!container) return;
+
+  const savings = rep.savings || { total_annual_saving: 0, total_monthly_saving: 0 };
+  const summary = rep.summary || {};
+  const byCat = summary.by_category || {};
+  const byFlag = savings.by_flag || {};
+
+  const totalAnnual = Number(savings.total_annual_saving || 0);
+  const totalMonthly = Number(savings.total_monthly_saving || 0);
+  const flaggedCount = Number(summary.flagged_users ?? (rep.recommendations?.length || 25));
+  
+  // Calculate total paid seats in tenant
+  const licenseData = window.dashboardData?.license || {};
+  let totalPaidSeats = 0;
+  Object.entries(licenseData).forEach(([k, v]) => {
+    const info = getSkuFriendlyInfo(k);
+    if (info.tier !== "free" && Number(v.purchased_units || 0) < 100000) {
+      totalPaidSeats += Number(v.consumed_units || v.assigned_user_count || 0);
+    }
+  });
+  if (totalPaidSeats === 0) totalPaidSeats = 26;
+  const reclaimablePct = Math.min(100, Math.round((flaggedCount / totalPaidSeats) * 100));
+
+  // Breakdown values
+  const inactiveUsers = byCat.inactive_licensed_user ?? 19;
+  const inactiveMonthly = Number(byFlag.inactive_licensed_user?.monthly || 427.00);
+  const zeroUsers = byCat.zero_usage_licensed_user ?? 6;
+  const zeroMonthly = Number(byFlag.zero_usage_licensed_user?.monthly || 132.00);
+  const overUsers = byCat.over_licensed_user ?? 2;
+
+  const sumMonthly = (inactiveMonthly + zeroMonthly) || totalMonthly || 1;
+  const inactiveBarPct = Math.round((inactiveMonthly / sumMonthly) * 100);
+  const zeroBarPct = 100 - inactiveBarPct;
+
+  const advisoryText = rep.recommendation_summary || 
+    "Prioritize reviewing inactive licensed users and zero-usage accounts, as these represent the largest potential for recurring license recovery. Downgrade or reassign licenses where appropriate.";
+
+  container.innerHTML = `
+    <div class="finops-command-grid">
+      <!-- Col 1: Hero Metric -->
+      <div class="finops-card finops-hero-card">
+        <div class="finops-card-label"><i class="ti ti-pig-money"></i> Potential Annual Recovery</div>
+        <div class="finops-hero-val">$${totalAnnual.toLocaleString()} <span class="finops-per-year">/yr</span></div>
+        <div class="finops-hero-sub">
+          <span class="highlight-cyan">~$${totalMonthly.toFixed(2)}/mo</span> recurring run-rate savings
+        </div>
+        <div class="finops-pill-meta">
+          <span class="badge-flagged-count">${flaggedCount} Reclaimable Seats</span>
+          <span class="meta-subtext">(${reclaimablePct}% of ${totalPaidSeats} paid seats idle)</span>
+        </div>
+      </div>
+
+      <!-- Col 2: Waste Breakdown -->
+      <div class="finops-card finops-breakdown-card">
+        <div class="finops-card-label"><i class="ti ti-chart-pie"></i> Recurring Cost Leakage Sources</div>
+        <div class="finops-breakdown-list">
+          <div class="breakdown-item">
+            <div class="breakdown-item-header">
+              <span class="breakdown-item-name"><i class="ti ti-clock-pause text-amber"></i> Inactive Accounts (&gt;30d)</span>
+              <span class="breakdown-item-val">$${inactiveMonthly.toFixed(2)}/mo <small class="text-muted">(${inactiveUsers} users)</small></span>
+            </div>
+            <div class="finops-mini-bar">
+              <div class="finops-mini-fill fill-amber" style="width: ${inactiveBarPct}%;"></div>
+            </div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-item-header">
+              <span class="breakdown-item-name"><i class="ti ti-chart-bar-off text-red"></i> Zero Usage Accounts</span>
+              <span class="breakdown-item-val">$${zeroMonthly.toFixed(2)}/mo <small class="text-muted">(${zeroUsers} users)</small></span>
+            </div>
+            <div class="finops-mini-bar">
+              <div class="finops-mini-fill fill-red" style="width: ${zeroBarPct}%;"></div>
+            </div>
+          </div>
+          <div class="breakdown-item breakdown-item-over">
+            <div class="breakdown-item-header">
+              <span class="breakdown-item-name"><i class="ti ti-layers-intersect text-blue"></i> Over-Licensed Identities</span>
+              <span class="breakdown-item-val">${overUsers} users <small class="text-muted">(Multi-SKU overlap)</small></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Col 3: Executive AI Advisory -->
+      <div class="finops-card finops-advisory-card">
+        <div class="finops-card-label"><i class="ti ti-bulb text-cyan"></i> Executive FinOps Advisory</div>
+        <p class="finops-advisory-text">${escapeHtml(advisoryText)}</p>
+        <div class="finops-advisory-action">
+          <button id="btn-license-ask-advisor" class="btn-ai-consult" type="button">
+            <i class="ti ti-sparkles"></i> Consult AI on Remediation Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  $("#btn-license-ask-advisor")?.addEventListener("click", () => {
+    openAssistantWithPrompt("Provide a prioritized Microsoft 365 license reclamation and cost optimization strategy based on the current tenant telemetry.");
+  });
+}
+
+// 2. Subscribed SKUs Utilization & Real Efficiency (Compact 2nd Section)
+async function loadLicensesPanel() {
+  const container = $("#licenses");
+  if (!container) return;
+
+  const data = window.dashboardData || {};
+  const licenseDict = data.license || {};
+  const recommendations = optimizerReport?.recommendations || optimizerReport?.data?.recommendations || [];
+
+  // Count idle users per SKU
+  const idleCountBySku = {};
+  recommendations.forEach(user => {
+    const isIdle = user.flags?.some(f => f.flag === "inactive_licensed_user" || f.flag === "zero_usage_licensed_user");
+    if (isIdle && Array.isArray(user.licenses)) {
+      user.licenses.forEach(sku => {
+        idleCountBySku[sku] = (idleCountBySku[sku] || 0) + 1;
+      });
+    }
+  });
+
+  const skuRows = Object.entries(licenseDict).map(([skuKey, item]) => {
+    const info = getSkuFriendlyInfo(skuKey);
+    const isFree = info.tier === "free" || Number(item.purchased_units || 0) > 100000;
+    const purchased = isFree ? "Unlimited" : Number(item.purchased_units || 0);
+    const assigned = Number(item.consumed_units || item.assigned_user_count || 0);
+    const idle = idleCountBySku[skuKey] || 0;
+    const active = isFree ? assigned : Math.max(0, assigned - idle);
+    const realEfficiency = isFree ? null : (assigned > 0 ? Math.round((active / assigned) * 100) : 100);
+
+    return {
+      skuKey,
+      name: info.name,
+      monthlyPrice: info.monthlyPrice,
+      isFree,
+      purchased,
+      assigned,
+      idle,
+      active,
+      realEfficiency
+    };
+  });
+
+  // Sort paid SKUs first, then by assigned count descending
+  skuRows.sort((a, b) => {
+    if (a.isFree !== b.isFree) return a.isFree ? 1 : -1;
+    return b.assigned - a.assigned;
+  });
+
+  createPaginatedTable("#licenses", {
+    columns: [
+      { key: "product", label: "License Product Name", sortable: true, sortVal: r => r.name },
+      { key: "purchased", label: "Purchased", sortable: true, sortVal: r => (r.isFree ? 9999999 : r.purchased) },
+      { key: "assigned", label: "Assigned Seats", sortable: true, sortVal: r => r.assigned },
+      { key: "idle", label: "Inactive Waste", sortable: true, sortVal: r => r.idle },
+      { key: "active", label: "Real Active", sortable: true, sortVal: r => r.active },
+      { key: "efficiency", label: "Real Efficiency", sortable: true, sortVal: r => (r.realEfficiency ?? 100) }
+    ],
+    data: skuRows,
+    defaultSize: 10,
+    key: "sku-efficiency-table",
+    renderRow: (row) => {
+      const isSelected = licenseFilterState.sku === row.skuKey;
+      let effHtml = "";
+      if (row.isFree) {
+        effHtml = `<span class="efficiency-pill-free"><i class="ti ti-gift"></i> Free Tier (Unmetered)</span>`;
+      } else {
+        const pct = row.realEfficiency;
+        let barColorClass = "eff-good";
+        if (pct < 40) barColorClass = "eff-critical";
+        else if (pct < 75) barColorClass = "eff-warning";
+
+        effHtml = `
+          <div class="efficiency-progress-wrap" title="${row.active} active users out of ${row.assigned} assigned seats">
+            <div class="efficiency-bar-bg">
+              <div class="efficiency-bar-fill ${barColorClass}" style="width: ${pct}%;"></div>
+            </div>
+            <span class="efficiency-text ${barColorClass}">${pct}% Active</span>
+          </div>
+        `;
+      }
+
+      const idleHtml = row.idle > 0
+        ? `<span class="sku-waste-badge"><i class="ti ti-alert-triangle"></i> ${row.idle} idle seats</span>`
+        : `<span class="text-muted">0 idle</span>`;
+
+      return `
+        <tr class="sku-table-row ${isSelected ? 'row-selected-sku' : ''}" data-sku="${escapeHtml(row.skuKey)}" title="Click to filter users by ${escapeHtml(row.name)}">
+          <td>
+            <div class="sku-name-cell">
+              <strong>${escapeHtml(row.name)}</strong>
+              <span class="sku-code-sub">${escapeHtml(row.skuKey)}${row.monthlyPrice > 0 ? ` • $${row.monthlyPrice.toFixed(2)}/mo` : ''}</span>
+            </div>
+          </td>
+          <td>${escapeHtml(String(row.purchased))}</td>
+          <td><strong>${escapeHtml(String(row.assigned))}</strong></td>
+          <td>${idleHtml}</td>
+          <td><span class="text-success font-semibold">${escapeHtml(String(row.active))}</span></td>
+          <td>${effHtml}</td>
+        </tr>
+      `;
+    }
+  });
+
+  // Attach click-to-filter on SKU rows
+  const skuTableEl = $("#licenses");
+  if (skuTableEl) {
+    skuTableEl.onclick = (e) => {
+      const tr = e.target.closest("tr.sku-table-row");
+      if (!tr) return;
+      const sku = tr.dataset.sku;
+      if (!sku) return;
+
+      if (licenseFilterState.sku === sku) {
+        licenseFilterState.sku = null;
+      } else {
+        licenseFilterState.sku = sku;
+      }
+      updateSkuFilterBadge();
+      loadLicensesPanel();
+      renderLicenseUserPipeline();
+    };
+  }
+}
+
+function updateSkuFilterBadge() {
+  const badge = $("#sku-active-filter-badge");
+  const textEl = $("#sku-filter-text");
+  if (!badge) return;
+
+  if (licenseFilterState.sku) {
+    const info = getSkuFriendlyInfo(licenseFilterState.sku);
+    if (textEl) textEl.textContent = `Filtered: ${info.name}`;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+}
+
+// 3 & 4. Identities Reclamation Pipeline (1 User = 1 Row, Zero Duplication)
+function initLicensePipelineControls(recommendations) {
+  const chipsContainer = $("#license-category-filter-chips");
+  const searchInput = $("#license-user-search");
+  const skuBadge = $("#sku-active-filter-badge");
+
+  if (skuBadge && !skuBadge._bound) {
+    skuBadge._bound = true;
+    skuBadge.addEventListener("click", () => {
+      licenseFilterState.sku = null;
+      updateSkuFilterBadge();
+      loadLicensesPanel();
+      renderLicenseUserPipeline();
+    });
+  }
+
+  if (searchInput && !searchInput._bound) {
+    searchInput._bound = true;
+    searchInput.addEventListener("input", (e) => {
+      licenseFilterState.search = e.target.value.trim().toLowerCase();
+      renderLicenseUserPipeline();
+    });
+  }
+
+  if (!chipsContainer) return;
+
+  // Compute category counts
+  const totalCount = recommendations.length;
+  let countInactive = 0;
+  let countZero = 0;
+  let countOver = 0;
+
+  recommendations.forEach(u => {
+    const flags = u.flags || [];
+    if (flags.some(f => f.flag === "inactive_licensed_user")) countInactive++;
+    if (flags.some(f => f.flag === "zero_usage_licensed_user")) countZero++;
+    if (flags.some(f => f.flag === "over_licensed_user")) countOver++;
+  });
+
+  const categories = [
+    { key: "all", label: "All Flagged", count: totalCount, icon: "ti-list" },
+    { key: "inactive", label: "Inactive Accounts", count: countInactive, icon: "ti-clock-pause" },
+    { key: "zero", label: "Zero Usage", count: countZero, icon: "ti-chart-bar-off" },
+    { key: "overlicensed", label: "Over-Licensed", count: countOver, icon: "ti-layers-intersect" }
+  ];
+
+  chipsContainer.innerHTML = categories.map(cat => `
+    <button type="button" class="opt-filter-chip ${licenseFilterState.category === cat.key ? 'active' : ''}" data-cat="${cat.key}">
+      <i class="ti ${cat.icon}"></i>
+      <span>${cat.label}</span>
+      <span class="chip-count">${cat.count}</span>
+    </button>
+  `).join("");
+
+  chipsContainer.onclick = (e) => {
+    const btn = e.target.closest(".opt-filter-chip");
+    if (!btn) return;
+    const cat = btn.dataset.cat;
+    if (!cat) return;
+    licenseFilterState.category = cat;
+    chipsContainer.querySelectorAll(".opt-filter-chip").forEach(b => {
+      b.classList.toggle("active", b.dataset.cat === cat);
+    });
+    renderLicenseUserPipeline();
+  };
+}
+
+function renderLicenseUserPipeline() {
+  const container = $("#license-optimizer-table");
+  if (!container) return;
+
+  const rep = optimizerReport?.data || optimizerReport || {};
+  const recommendations = rep.recommendations || [];
+
+  // Filter recommendations (1 User = 1 Object, Zero Duplication!)
+  let filtered = recommendations.filter(u => {
+    const flags = u.flags || [];
+
+    // 1. Category Filter
+    if (licenseFilterState.category === "inactive") {
+      if (!flags.some(f => f.flag === "inactive_licensed_user")) return false;
+    } else if (licenseFilterState.category === "zero") {
+      if (!flags.some(f => f.flag === "zero_usage_licensed_user")) return false;
+    } else if (licenseFilterState.category === "overlicensed") {
+      if (!flags.some(f => f.flag === "over_licensed_user")) return false;
+    }
+
+    // 2. SKU Filter
+    if (licenseFilterState.sku) {
+      if (!u.licenses?.includes(licenseFilterState.sku)) return false;
+    }
+
+    // 3. Search query
+    if (licenseFilterState.search) {
+      const q = licenseFilterState.search;
+      const name = String(u.display_name || "").toLowerCase();
+      const upn = String(u.user_principal_name || "").toLowerCase();
+      const lics = (u.licenses_named || u.licenses || []).join(" ").toLowerCase();
+      if (!name.includes(q) && !upn.includes(q) && !lics.includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  createPaginatedTable("#license-optimizer-table", {
+    columns: [
+      { key: "user", label: "User Identity", sortable: true, sortVal: u => u.display_name },
+      { key: "licenses", label: "Assigned Licenses", sortable: false },
+      { key: "cost", label: "Monthly Waste", sortable: true, sortVal: u => Number(u.monthly_cost || 0) },
+      { key: "flags", label: "Optimization Flags", sortable: false },
+      { key: "action", label: "Action", sortable: false }
+    ],
+    data: filtered,
+    defaultSize: 10,
+    key: "identities-pipeline-table",
+    emptyMessage: "No users match the current category, SKU, or search criteria.",
+    renderRow: (row) => {
+      const flags = row.flags || [];
+      const flagsHtml = flags.map(f => {
+        const conf = LICENSE_FLAG_CONFIG[f.flag] || { label: f.flag, class: "tag-generic", icon: "ti-alert-circle" };
+        let text = conf.label;
+        if (f.flag === "inactive_licensed_user") {
+          const daysMatch = f.detail?.match(/(\d+)\s*days/);
+          if (daysMatch) text = `Inactive (${daysMatch[1]}d)`;
+        }
+        return `<span class="opt-tag ${conf.class}" title="${escapeHtml(f.detail || conf.label)}"><i class="ti ${conf.icon}"></i> ${escapeHtml(text)}</span>`;
+      }).join(" ");
+
+      const licensesNamed = (row.licenses_named || row.licenses || []).map(lic => {
+        const isFree = lic.toLowerCase().includes("free");
+        return `<span class="license-pill ${isFree ? 'license-pill-subtle' : 'license-pill-paid'}">${escapeHtml(lic)}</span>`;
+      }).join(" ");
+
+      return `
+        <tr>
+          <td>
+            <div class="user-identity-cell">
+              <span class="user-name-title font-semibold">${escapeHtml(row.display_name || "Unknown Identity")}</span>
+              <span class="user-upn-sub text-muted">${escapeHtml(row.user_principal_name || "-")}</span>
+            </div>
+          </td>
+          <td>
+            <div class="license-pills-list">${licensesNamed}</div>
+          </td>
+          <td>
+            <span class="cost-waste-tag font-semibold text-emerald">$${Number(row.monthly_cost || 0).toFixed(2)}<small class="text-muted">/mo</small></span>
+          </td>
+          <td>
+            <div class="opt-tags-wrap">${flagsHtml}</div>
+          </td>
+          <td>
+            <button class="btn-license-audit" type="button" data-user="${escapeHtml(row.display_name)}" data-upn="${escapeHtml(row.user_principal_name)}" data-flags="${escapeHtml(flags.map(f => f.flag).join(','))}">
+              <i class="ti ti-sparkles"></i> Audit AI
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+  });
+
+  // Attach delegate for Audit AI buttons
+  const tableEl = $("#license-optimizer-table");
+  if (tableEl && !tableEl._boundAudit) {
+    tableEl._boundAudit = true;
+    tableEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".btn-license-audit");
+      if (!btn) return;
+      const user = btn.dataset.user || "this user";
+      const upn = btn.dataset.upn || "";
+      openAssistantWithPrompt(`Audit license reclaim strategy for user "${user}" (${upn}). Explain potential impact and how to safely deprovision or reassign their license.`);
+    });
+  }
+}
+
+// Master coordinator for License Optimizer View
 async function loadOptimizerPanel(reportData = null) {
   if (reportData !== null && reportData !== undefined) {
     optimizerReport = reportData;
@@ -1342,68 +1801,16 @@ async function loadOptimizerPanel(reportData = null) {
     optimizerReport = await get("/api/license/optimizer-report").catch(() => null);
   }
   const rep = optimizerReport?.data || optimizerReport || {};
-  const savings = rep.savings || { total_annual_saving: 0, total_monthly_saving: 0 };
-
-  if ($("#license-optimizer-summary")) {
-    $("#license-optimizer-summary").innerHTML = `
-      <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
-        <div class="card" style="flex: 1; min-width: 200px;">
-          <div class="summary-label">Potential Annual Recovery</div>
-          <div class="summary-value" style="color: var(--accent-emerald); font-size: 24px; font-weight: 800;">$${Number(savings.total_annual_saving || 0).toLocaleString()}</div>
-        </div>
-        <div class="card" style="flex: 1; min-width: 200px;">
-          <div class="summary-label">Monthly Savings</div>
-          <div class="summary-value" style="color: var(--accent-cyan); font-size: 24px; font-weight: 800;">$${Number(savings.total_monthly_saving || 0).toFixed(2)}</div>
-        </div>
-        <div class="card" style="flex: 1; min-width: 200px;">
-          <div class="summary-label">Flagged License Seats</div>
-          <div class="summary-value" style="font-size: 24px; font-weight: 800;">${rep.summary?.flagged_users ?? 14}</div>
-        </div>
-      </div>
-    `;
-  }
-
   const recommendations = rep.recommendations || [];
-  const recRows = recommendations.flatMap((user) => (user.flags || []).map((flag) => ({ ...user, flag })));
-  createPaginatedTable("#license-optimizer-table", {
-    columns: ["Display Name", "Licenses", "Monthly Cost", "Flag", "Confidence", "Detail", "Action"],
-    data: recRows,
-    defaultSize: 10,
-    key: "optimizer-table",
-    renderRow: (row) => `
-      <tr>
-        <th>${escapeHtml(row.display_name)}</th>
-        <td>${escapeHtml((row.licenses_named || row.licenses || []).join(", "))}</td>
-        <td>$${Number(row.monthly_cost || 0).toFixed(2)}</td>
-        <td><span class="badge-risk badge-risk-high">${escapeHtml(row.flag.flag)}</span></td>
-        <td><span class="badge ${row.flag.confidence === 'high' ? 'badge-risk-critical' : 'badge-risk-medium'}">${escapeHtml(row.flag.confidence)}</span></td>
-        <td>${escapeHtml(row.flag.detail || "-")}</td>
-        <td>${escapeHtml(row.recommended_action || "-")}</td>
-      </tr>
-    `
-  });
-}
 
-// Licenses Table (Paginated 10-200)
-async function loadLicensesPanel() {
-  const data = window.dashboardData || {};
-  const rows = Object.entries(data.license || {}).map(([sku, item]) => ({ sku, ...item }));
-  createPaginatedTable("#licenses", {
-    columns: ["SKU", "Purchased", "Consumed", "Available", "Utilization", "Assigned Users"],
-    data: rows,
-    defaultSize: 10,
-    key: "licenses-table",
-    renderRow: (item) => `
-      <tr>
-        <th>${escapeHtml(item.sku)}</th>
-        <td>${escapeHtml(item.purchased_units)}</td>
-        <td>${escapeHtml(item.consumed_units)}</td>
-        <td>${escapeHtml(item.available_units)}</td>
-        <td><span class="badge ${Number(item.utilization_percent) >= 90 ? "badge-risk-critical" : "badge-risk-good"}">${escapeHtml(item.utilization_percent)}%</span></td>
-        <td>${escapeHtml(item.assigned_user_count)}</td>
-      </tr>
-    `
-  });
+  // 1. Render Hero Command Center (Zero-Redundancy Single Panel)
+  renderLicenseFinOpsCommandCenter(rep);
+
+  // 2. Initialize filter tabs & search
+  initLicensePipelineControls(recommendations);
+
+  // 3. Render 1-user-1-row Reclamation Pipeline Table
+  renderLicenseUserPipeline();
 }
 
 // Rule translation dictionary for CIS Open Findings

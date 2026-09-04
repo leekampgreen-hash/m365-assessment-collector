@@ -30,6 +30,7 @@
 - UI-BATCH-01: Font hierarchy, token format badge, Tailwind CDN fix - SEALED
 - INFRA-P02: Scheduled email report - SEALED
 - API-CLEANUP-01: Dead code removal, exchange capacity caching, defensive security guard, dynamic KPI deltas, SKU pricing consolidation - SEALED
+- LIC-UX02: License FinOps Command Center & Identities Reclamation Redesign - SEALED
 
 ## Active Task
 Planning next sprint
