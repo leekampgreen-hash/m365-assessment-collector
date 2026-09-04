@@ -53,7 +53,7 @@ class CollectorHttpOpener:
             if spec.method != "GET" or spec.auth_type != "application":
                 raise ValueError("collector inventory must contain app-only GET endpoints")
             parsed = urlsplit(spec.path)
-            if parsed.scheme or parsed.netloc or parsed.query or parsed.fragment:
+            if parsed.scheme or parsed.netloc or parsed.fragment:
                 raise ValueError("collector endpoint paths must be relative paths")
             if not parsed.path.startswith("/v1.0/"):
                 raise ValueError("collector endpoint paths must target /v1.0")

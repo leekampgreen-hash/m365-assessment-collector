@@ -71,10 +71,192 @@ def _database_tenant_resolver(connection):
     return lambda config: _trusted_tenant_resolver(config, connection)
 
 
+SPECIALIZED_ENDPOINT_MAP = {
+    "OD-AUDIT": "onedrive_audit",
+    "onedrive_audit": "onedrive_audit",
+    "SP-A01": "sharepoint_audit",
+    "sharepoint_audit": "sharepoint_audit",
+    "SP-SITES": "sharepoint_sites",
+    "sharepoint_sites": "sharepoint_sites",
+    "INTUNE-001": "intune_compliance",
+    "intune_compliance": "intune_compliance",
+    "INTUNE-002": "intune_enrollment",
+    "intune_enrollment": "intune_enrollment",
+    "INTUNE-003": "intune_compliance_policies",
+    "intune_compliance_policies": "intune_compliance_policies",
+    "INTUNE-004": "intune_mobile_apps",
+    "intune_mobile_apps": "intune_mobile_apps",
+    "ENTRA-GUESTS": "entra_guests",
+    "entra_guests": "entra_guests",
+    "ENTRA-AUTH": "entra_auth_methods",
+    "entra_auth_methods": "entra_auth_methods",
+    "ENTRA-STALE": "entra_stale_devices",
+    "entra_stale_devices": "entra_stale_devices",
+    "ENTRA-PIM": "entra_pim",
+    "entra_pim": "entra_pim",
+    "DEF-DEV": "defender_devices",
+    "defender_devices": "defender_devices",
+}
+
+COLLECTOR_ALIASES = {
+    # Entra shortcuts
+    "users": ("endpoint", "G01-001"),
+    "entra_users": ("endpoint", "G01-001"),
+    "groups": ("endpoint", "G01-002"),
+    "entra_groups": ("endpoint", "G01-002"),
+    "organization": ("endpoint", "G01-003"),
+    "entra_org": ("endpoint", "G01-003"),
+    "entra_organization": ("endpoint", "G01-003"),
+    "subscribedskus": ("endpoint", "G01-004"),
+    "subscribed_skus": ("endpoint", "G01-004"),
+    "directoryauditlogs": ("endpoint", "G01-005"),
+    "directory_audit_logs": ("endpoint", "G01-005"),
+    "signins": ("endpoint", "G01-006"),
+    "sign_ins": ("endpoint", "G01-006"),
+    "applications": ("endpoint", "G01-007"),
+    "serviceprincipals": ("endpoint", "G01-008"),
+    "service_principals": ("endpoint", "G01-008"),
+    "devices": ("endpoint", "G01-009"),
+    "administrativeunits": ("endpoint", "G01-010"),
+    "administrative_units": ("endpoint", "G01-010"),
+    "conditionalaccesspolicies": ("endpoint", "G01-011"),
+    "conditional_access_policies": ("endpoint", "G01-011"),
+    "namedlocations": ("endpoint", "G01-012"),
+    "named_locations": ("endpoint", "G01-012"),
+    "riskyusers": ("endpoint", "G01-013"),
+    "risky_users": ("endpoint", "G01-013"),
+    "riskdetections": ("endpoint", "G01-014"),
+    "risk_detections": ("endpoint", "G01-014"),
+    "servicehealthoverview": ("endpoint", "G01-015"),
+    "service_health_overview": ("endpoint", "G01-015"),
+    "servicehealthissues": ("endpoint", "G01-016"),
+    "service_health_issues": ("endpoint", "G01-016"),
+    "serviceupdatemessages": ("endpoint", "G01-017"),
+    "service_update_messages": ("endpoint", "G01-017"),
+    "directoryroles": ("endpoint", "G01-018"),
+    "directory_roles": ("endpoint", "G01-018"),
+    "directoryroledefinitions": ("endpoint", "G01-018"),
+    "directory_role_definitions": ("endpoint", "G01-018"),
+    "entra_roles": ("endpoint", "G01-018"),
+    "directoryroleassignments": ("endpoint", "G01-019"),
+    "directory_role_assignments": ("endpoint", "G01-019"),
+    "entra_role_assignments": ("endpoint", "G01-019"),
+    "userregistrationdetails": ("endpoint", "G01-021"),
+    "user_registration_details": ("endpoint", "G01-021"),
+    "mfa_registration": ("endpoint", "G01-021"),
+    # SharePoint tenant settings
+    "g01_020": ("sharepoint_settings", True),
+    "sp_settings": ("sharepoint_settings", True),
+    "sharepoint_settings": ("sharepoint_settings", True),
+    "sharepointtenantsettings": ("sharepoint_settings", True),
+    # Usage reports
+    "office365_active_user": ("endpoint", "USAGE-001"),
+    "usage_001": ("endpoint", "USAGE-001"),
+    "teams_user_activity": ("endpoint", "TM-001"),
+    "tm_001": ("endpoint", "TM-001"),
+    "exchange_email_activity": ("endpoint", "USAGE-002"),
+    "usage_002": ("endpoint", "USAGE-002"),
+    "exchange_mailbox_usage": ("endpoint", "USAGE-003"),
+    "usage_003": ("endpoint", "USAGE-003"),
+    "onedrive_activity": ("endpoint", "USAGE-004"),
+    "usage_004": ("endpoint", "USAGE-004"),
+    "onedrive_account_usage": ("endpoint", "USAGE-005"),
+    "usage_005": ("endpoint", "USAGE-005"),
+    "sharepoint_user_activity": ("endpoint", "USAGE-006"),
+    "usage_006": ("endpoint", "USAGE-006"),
+    "sharepoint_site_usage": ("endpoint", "USAGE-007"),
+    "usage_007": ("endpoint", "USAGE-007"),
+    # Batch2
+    "def_p02": ("batch2", "DEF-P02"),
+    "defender_alerts": ("batch2", "DEF-P02"),
+    "defender_o365": ("batch2", "DEF-P02"),
+    "def_p03": ("batch2", "DEF-P03"),
+    "defender_cloud_app": ("batch2", "DEF-P03"),
+    "dlp_p01": ("batch2", "DLP-P01"),
+    "dlp_alerts": ("batch2", "DLP-P01"),
+    "dlp_p02": ("batch2", "DLP-P02"),
+    "dlp_labels": ("batch2", "DLP-P02"),
+    # Specialized
+    "od_audit": ("specialized", "onedrive_audit"),
+    "onedrive_audit": ("specialized", "onedrive_audit"),
+    "sp_a01": ("specialized", "sharepoint_audit"),
+    "sp_audit": ("specialized", "sharepoint_audit"),
+    "sharepoint_audit": ("specialized", "sharepoint_audit"),
+    "sp_sites": ("specialized", "sharepoint_sites"),
+    "sharepoint_sites": ("specialized", "sharepoint_sites"),
+    "intune_001": ("specialized", "intune_compliance"),
+    "intune_compliance": ("specialized", "intune_compliance"),
+    "intune_002": ("specialized", "intune_enrollment"),
+    "intune_enrollment": ("specialized", "intune_enrollment"),
+    "intune_003": ("specialized", "intune_compliance_policies"),
+    "intune_compliance_policies": ("specialized", "intune_compliance_policies"),
+    "intune_004": ("specialized", "intune_mobile_apps"),
+    "intune_mobile_apps": ("specialized", "intune_mobile_apps"),
+    "entra_guests": ("specialized", "entra_guests"),
+    "entra_auth": ("specialized", "entra_auth_methods"),
+    "entra_auth_methods": ("specialized", "entra_auth_methods"),
+    "entra_stale": ("specialized", "entra_stale_devices"),
+    "entra_stale_devices": ("specialized", "entra_stale_devices"),
+    "entra_pim": ("specialized", "entra_pim"),
+    "def_dev": ("specialized", "defender_devices"),
+    "defender_devices": ("specialized", "defender_devices"),
+}
+
+
+def _resolve_collector(name: str, inventory_path: Optional[Path] = None) -> Optional[dict]:
+    """Resolve a unified collector name, ID, alias, or slug to runtime parameters."""
+    token = name.strip()
+    upper_token = token.upper()
+    norm_token = token.lower().replace("-", "_")
+
+    # 1. Security rules (e.g. SEC-*, M365-*)
+    if upper_token.startswith("SEC-") or upper_token.startswith("M365-"):
+        return {"type": "security_rule", "rule_id": upper_token}
+
+    # 2. Known aliases
+    if norm_token in COLLECTOR_ALIASES:
+        kind, val = COLLECTOR_ALIASES[norm_token]
+        if kind == "endpoint":
+            return {"type": "endpoint", "endpoint_id": val}
+        if kind == "specialized":
+            return {"type": "specialized", "flag": val}
+        if kind == "batch2":
+            return {"type": "batch2", "source": val}
+        if kind == "sharepoint_settings":
+            return {"type": "sharepoint_settings"}
+
+    # 3. Dynamic lookup against inventory
+    inv_file = inventory_path or DEFAULT_INVENTORY
+    if inv_file and Path(inv_file).exists():
+        try:
+            items = json.loads(Path(inv_file).read_text(encoding="utf-8"))
+            for ep in items:
+                ep_id = ep.get("id", "")
+                ep_key = ep.get("key", "")
+                if upper_token == ep_id.upper() or norm_token == ep_key.lower().replace("-", "_"):
+                    ctype = ep.get("collector_type")
+                    if ctype == "BATCH2" or ep_id in ("DEF-P02", "DEF-P03", "DLP-P01", "DLP-P02"):
+                        return {"type": "batch2", "source": ep_id}
+                    if ctype == "SHAREPOINT_SETTING" or ep_id == "G01-020":
+                        return {"type": "sharepoint_settings"}
+                    if ctype == "SPECIALIZED" or ep_id in SPECIALIZED_ENDPOINT_MAP:
+                        spec_flag = SPECIALIZED_ENDPOINT_MAP.get(ep_id, ep_key)
+                        return {"type": "specialized", "flag": spec_flag}
+                    return {"type": "endpoint", "endpoint_id": ep_id}
+        except Exception:
+            pass
+
+    return None
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="collectors.run_collector",
         description="Run a Collector framework workload (offline-safe in --dry-run mode).",
+    )
+    parser.add_argument(
+        "--collector",
+        help="Unified collector identifier, alias, or slug (e.g. users, ENTRA-GUESTS, DEF-P02, OD-AUDIT, SEC-E01).",
     )
     parser.add_argument("--endpoint", help="Single endpoint id (e.g. G01-001).")
     parser.add_argument("--security-rule", help="Registered deterministic Security rule id.")
@@ -94,9 +276,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--entra-guests", action="store_true", help="Collect Entra guest users.")
     parser.add_argument("--entra-auth-methods", action="store_true", help="Collect Entra authentication methods.")
     parser.add_argument("--intune-enrollment", action="store_true", help="Collect stale Intune devices.")
-    parser.add_argument("--entra-stale-devices", action="store_true", help="Collect stale Entra devices.")
+    parser.add_argument("--entra-stale-devices", "--entra-stale", action="store_true", dest="entra_stale_devices", help="Collect stale Entra devices.")
     parser.add_argument("--entra-pim", action="store_true", help="Collect Entra PIM assignments.")
-    parser.add_argument("--defender-devices", action="store_true", help="Collect Defender device threat state.")
+    parser.add_argument("--defender-devices", "--defender-summary", action="store_true", dest="defender_devices", help="Collect Defender device threat state.")
     parser.add_argument("--entra-named-locations", action="store_true", help="Collect Entra named locations.")
     parser.add_argument("--intune-compliance-policies", action="store_true", help="Collect Intune compliance policies.")
     parser.add_argument("--intune-mobile-apps", action="store_true", help="Collect Intune mobile apps.")
@@ -286,7 +468,31 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except SystemExit:
         return 2
 
+    auth_source = _select_auth_source(args)
+
+    if args.collector:
+        resolved = _resolve_collector(args.collector, Path(args.inventory))
+        if not resolved:
+            print("ERROR: unknown collector '{}'".format(args.collector), file=sys.stderr)
+            return 2
+        rtype = resolved["type"]
+        if rtype == "endpoint":
+            args.endpoint = resolved["endpoint_id"]
+        elif rtype == "specialized":
+            setattr(args, resolved["flag"], True)
+        elif rtype == "batch2":
+            args.batch2_source = resolved["source"]
+        elif rtype == "sharepoint_settings":
+            args.sharepoint_settings = True
+        elif rtype == "security_rule":
+            args.security_rule = resolved["rule_id"]
+
     selected_count = int(bool(args.endpoint)) + int(bool(args.endpoints)) + int(bool(args.all)) + int(bool(args.security_rule)) + int(args.onedrive_audit) + int(args.sharepoint_settings) + int(args.sharepoint_audit) + int(args.sharepoint_sites) + int(args.intune_compliance) + int(args.entra_guests) + int(args.entra_auth_methods) + int(args.intune_enrollment) + int(args.entra_stale_devices) + int(args.entra_pim) + int(args.defender_devices) + int(args.entra_named_locations) + int(args.intune_compliance_policies) + int(args.intune_mobile_apps) + int(bool(args.batch2_source))
+
+    if args.security_rule and args.dry_run:
+        print(safe_dumps({"mode": "dry-run", "security_rule": args.security_rule, "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: security_rule={} no_token_requested=True no_graph_requested=True".format(args.security_rule))
+        return 0
+
     if args.batch2_source:
         if args.dry_run:
             print(safe_dumps({"mode": "dry-run", "collector": args.batch2_source, "no_token_requested": True, "no_graph_requested": True}) if args.json else "dry-run: collector={} no_token_requested=True no_graph_requested=True".format(args.batch2_source))
@@ -315,6 +521,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, --sharepoint-audit, or --sharepoint-sites is required")
     if selected_count > 1:
         parser.error("only one of --endpoint, --endpoints, --all, --security-rule, --onedrive-audit, --sharepoint-settings, --sharepoint-audit, or --sharepoint-sites may be provided")
+
+    if args.endpoint in SPECIALIZED_ENDPOINT_MAP:
+        setattr(args, SPECIALIZED_ENDPOINT_MAP[args.endpoint], True)
+        args.endpoint = None
+
     if args.sharepoint_settings:
         args.endpoint = "G01-020"
     if args.sharepoint_audit:
@@ -327,8 +538,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             file=sys.stderr,
         )
         return 2
-
-    auth_source = _select_auth_source(args)
 
     options = RuntimeOptions(max_retries=args.max_retries, tenant_resolver=_trusted_tenant_resolver)
     specialized = {

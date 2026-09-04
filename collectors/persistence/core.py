@@ -1026,16 +1026,29 @@ class CollectionWriter:
         classification = result.error_classification or "UNKNOWN"
         if classification not in allowed_classifications:
             raise PersistenceError("Unknown endpoint error classification")
-        self._connection.cursor().execute(
+        cursor = self._connection.cursor()
+        now_utc = datetime.now(timezone.utc)
+        cursor.execute(
             "UPDATE control.endpoint_run SET completed_at = %s, status = %s, "
             "pages = %s, rows = %s, http_status = %s, error_classification = %s, "
             "error_message_safe = %s, retry_count = %s, graph_error_code = %s "
-            "WHERE endpoint_run_id = %s",
-            (datetime.now(timezone.utc), status, result.pages, result.rows,
+            "WHERE endpoint_run_id = %s "
+            "RETURNING tenant_id, endpoint_id",
+            (now_utc, status, result.pages, result.rows,
              result.http_status, classification,
              classification if status == "ERROR" else None,
              result.retry_count, result.graph_error_code, endpoint_run_id),
         )
+        row = cursor.fetchone() if hasattr(cursor, "fetchone") else None
+        if row and status == "PASS":
+            tenant_id, endpoint_id = row[0], row[1]
+            cursor.execute(
+                "INSERT INTO control.collector_checkpoint (tenant_id, collector_id, checkpoint_at, updated_at) "
+                "VALUES (%s, %s, %s, %s) "
+                "ON CONFLICT (tenant_id, collector_id) DO UPDATE SET "
+                "checkpoint_at = EXCLUDED.checkpoint_at, updated_at = EXCLUDED.updated_at",
+                (tenant_id, endpoint_id, now_utc, now_utc),
+            )
         self._connection.commit()
 
     def complete_collection_run(self, *, collection_run_id: int, results: Sequence[Any]) -> None:

@@ -1270,6 +1270,19 @@ function initAssistantChat() {
     $("#floating-assistant-window")?.classList.remove("show");
   });
 
+  // Floating Assistant Expand / Restore Logic
+  const expandBtn = $("#floating-assistant-expand");
+  expandBtn?.addEventListener("click", () => {
+    const win = $("#floating-assistant-window");
+    if (!win) return;
+    const isExpanded = win.classList.toggle("expanded");
+    const icon = expandBtn.querySelector("i");
+    if (icon) {
+      icon.className = isExpanded ? "ti ti-arrows-minimize" : "ti ti-arrows-maximize";
+    }
+    expandBtn.setAttribute("title", isExpanded ? "Perkecil Ukuran" : "Perbesar Ukuran");
+  });
+
   // One-Click Executive PDF Export
   $("#btn-export-pdf")?.addEventListener("click", () => {
     const timestampEl = $("#print-timestamp");

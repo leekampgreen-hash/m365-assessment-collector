@@ -58,7 +58,7 @@ class CollectionScheduler:
         try:
             connection = open_database_connection()
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM core.signin_log WHERE tenant_id = %s AND observed_at < NOW() - INTERVAL '90 days'", (2,))
+                cursor.execute("DELETE FROM core.signin_log WHERE tenant_id = %s AND collected_at < NOW() - INTERVAL '90 days'", (2,))
                 deleted = cursor.rowcount
             connection.commit()
             logger.info("Event cleanup complete - deleted %s rows", deleted)
@@ -78,33 +78,18 @@ class CollectionScheduler:
             return
         permissions = schedule.get("granted_permissions", [])
         for endpoint_id in schedule.get("endpoints", []):
-            self._run_command(f"Endpoint {endpoint_id}", ["--endpoint", endpoint_id], permissions)
+            self._run_command(f"Endpoint {endpoint_id}", ["--collector", endpoint_id], permissions)
         for rule_id in schedule.get("security_rules", []):
-            self._run_command(f"Rule {rule_id}", ["--security-rule", rule_id], permissions)
+            self._run_command(f"Rule {rule_id}", ["--collector", rule_id], permissions)
         if schedule.get("special") == "usage_reports":
             self._run_command("Usage reports", ["--all"], permissions)
-        if schedule.get("special") == "sharepoint_audit":
-            self._run_command("SharePoint audit", ["--sharepoint-audit"], permissions)
-        if schedule.get("special") == "sharepoint_sites":
-            self._run_command("SharePoint sites", ["--sharepoint-sites"], permissions)
-        if schedule.get("special") == "intune_compliance":
-            self._run_command("Intune compliance", ["--intune-compliance"], permissions)
-        if schedule.get("special") == "entra_guests":
-            self._run_command("Entra guests", ["--entra-guests"], permissions)
-        if schedule.get("special") == "entra_auth_methods":
-            self._run_command("Entra authentication methods", ["--entra-auth-methods"], permissions)
-        if schedule.get("special") == "batch2":
+        elif schedule.get("special") == "batch2":
             for source in ("DEF-P02", "DEF-P03", "DLP-P01", "DLP-P02"):
-                self._run_command(source, ["--batch2-source", source], permissions)
-        special_flags = {
-            "intune_enrollment": ("Intune enrollment", "--intune-enrollment"),
-            "entra_stale_devices": ("Entra stale devices", "--entra-stale"),
-            "entra_pim": ("Entra PIM", "--entra-pim"),
-            "defender_devices": ("Defender devices", "--defender-summary"),
-        }
-        if schedule.get("special") in special_flags:
-            label, flag = special_flags[schedule["special"]]
-            self._run_command(label, [flag], permissions)
+                self._run_command(source, ["--collector", source], permissions)
+        elif schedule.get("special"):
+            special_name = schedule["special"]
+            label = special_name.replace("_", " ").title()
+            self._run_command(label, ["--collector", special_name], permissions)
         logger.info("Schedule %s complete", name)
 
     def _run_initial_phases(self) -> None:

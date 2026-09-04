@@ -4,12 +4,31 @@ from __future__ import annotations
 import json
 import secrets
 import string
+import subprocess
+import sys
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler
 
 import bcrypt
 
 from api.auth import session_id
 from collectors import auth_service
+
+GMT7 = timezone(timedelta(hours=7))
+
+
+def _to_gmt7_iso(dt: datetime | str | None) -> str | None:
+    if dt is None:
+        return None
+    if isinstance(dt, str):
+        try:
+            dt = datetime.fromisoformat(dt.replace("Z", "+00:00"))
+        except Exception:
+            return dt
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(GMT7).strftime("%Y-%m-%d %H:%M:%S+07:00")
 
 
 def _write(handler: BaseHTTPRequestHandler, status: int, payload: dict) -> None:
@@ -492,14 +511,151 @@ def handle_admin(handler: BaseHTTPRequestHandler, method: str, path: str) -> boo
         # Collector status
         # ------------------------------------------------------------------ #
         if method == "GET" and path == "/api/admin/collector/status":
+            inv_path = Path("config/api_inventory.json")
+            inventory = []
+            if inv_path.exists():
+                try:
+                    inventory = json.loads(inv_path.read_text(encoding="utf-8"))
+                except Exception:
+                    inventory = []
+
             with connection.cursor() as cur:
+                cur.execute("SELECT tenant_id FROM core.tenant WHERE enabled = TRUE ORDER BY tenant_id")
+                tenant_ids = [r[0] for r in cur.fetchall()]
+                if not tenant_ids:
+                    cur.execute("SELECT tenant_id FROM core.tenant ORDER BY tenant_id")
+                    tenant_ids = [r[0] for r in cur.fetchall()] or [2]
+
+                cur.execute("SELECT tenant_id, collector_id, checkpoint_at, updated_at FROM control.collector_checkpoint")
+                checkpoints = {(r[0], r[1]): (r[2], r[3]) for r in cur.fetchall()}
+
                 cur.execute(
-                    "SELECT collector_id, tenant_id, checkpoint_at, updated_at"
-                    " FROM control.collector_checkpoint ORDER BY collector_id, tenant_id"
+                    """
+                    SELECT DISTINCT ON (tenant_id, endpoint_id)
+                        tenant_id, endpoint_id, endpoint_name, completed_at, status, rows
+                    FROM control.endpoint_run
+                    WHERE completed_at IS NOT NULL
+                    ORDER BY tenant_id, endpoint_id, completed_at DESC
+                    """
                 )
-                cols = ["collector_id", "tenant_id", "checkpoint_at", "updated_at"]
-                rows = [dict(zip(cols, row)) for row in cur.fetchall()]
+                endpoint_runs = {(r[0], r[1]): (r[3], r[4], r[5], r[2]) for r in cur.fetchall()}
+
+            rows = []
+            seen_keys = set()
+
+            # 1. Inventory endpoints (Single Source of Truth)
+            for ep in inventory:
+                ep_id = ep["id"]
+                ep_key = ep.get("key", "")
+                name = ep.get("name", ep_id)
+                workload = ep.get("workload", "Microsoft 365")
+
+                for tid in tenant_ids:
+                    if (tid, ep_id) in seen_keys or (ep_key and (tid, ep_key) in seen_keys):
+                        continue
+
+                    # Dual-lookup for checkpoints (matches either standardized ID or legacy slug)
+                    cp_candidates = [c for c in [checkpoints.get((tid, ep_id)), checkpoints.get((tid, ep_key)) if ep_key else None] if c]
+                    cp = max(cp_candidates, key=lambda x: x[0] if x[0] is not None else datetime.min.replace(tzinfo=timezone.utc)) if cp_candidates else None
+
+                    # Dual-lookup for endpoint runs
+                    run_candidates = [r for r in [endpoint_runs.get((tid, ep_id)), endpoint_runs.get((tid, ep_key)) if ep_key else None] if r]
+                    ep_run = max(run_candidates, key=lambda x: x[0] if x[0] is not None else datetime.min.replace(tzinfo=timezone.utc)) if run_candidates else None
+
+                    cp_at = cp[0] if cp else (ep_run[0] if ep_run else None)
+                    up_at = cp[1] if cp else (ep_run[0] if ep_run else None)
+                    st = "Ready" if cp_at else ("Error" if ep_run and ep_run[1] == "ERROR" else "Pending")
+
+                    perm = ep.get("permission") or (ep.get("documented_permissions", [""])[0] if ep.get("documented_permissions") else "")
+                    tbl = ep.get("table", "")
+                    endpoint_route = ep.get("endpoint", "")
+
+                    rows.append({
+                        "collector_id": ep_id,
+                        "slug": ep_key or ep_id,
+                        "name": name,
+                        "workload": workload,
+                        "tenant_id": tid,
+                        "permission": perm,
+                        "table": tbl,
+                        "endpoint_route": endpoint_route,
+                        "checkpoint_at": _to_gmt7_iso(cp_at),
+                        "updated_at": _to_gmt7_iso(up_at),
+                        "status": st,
+                    })
+                    seen_keys.add((tid, ep_id))
+                    if ep_key:
+                        seen_keys.add((tid, ep_key))
+
+            # 2. Any extra checkpoints directly recorded in control.collector_checkpoint
+            for (tid, cid), (cp_at, up_at) in checkpoints.items():
+                if (tid, cid) not in seen_keys:
+                    rows.append({
+                        "collector_id": cid,
+                        "slug": cid,
+                        "name": cid.replace("_", " ").title(),
+                        "workload": "System / Database Checkpoint",
+                        "tenant_id": tid,
+                        "permission": "-",
+                        "table": "-",
+                        "endpoint_route": "-",
+                        "checkpoint_at": _to_gmt7_iso(cp_at),
+                        "updated_at": _to_gmt7_iso(up_at),
+                        "status": "Ready" if cp_at else "Pending",
+                    })
+                    seen_keys.add((tid, cid))
+
             _write(handler, 200, {"collector_status": rows})
+            return True
+
+        # ------------------------------------------------------------------ #
+        # Collector on-demand trigger
+        # ------------------------------------------------------------------ #
+        if method == "POST" and path == "/api/admin/collector/trigger":
+            body = _read_body(handler)
+            cid = body.get("collector_id", "").strip()
+            if not cid:
+                _write(handler, 400, {"error": "Missing collector_id parameter"})
+                return True
+
+            inv_path = Path("config/api_inventory.json")
+            inventory = []
+            if inv_path.exists():
+                try:
+                    inventory = json.loads(inv_path.read_text(encoding="utf-8"))
+                except Exception:
+                    inventory = []
+
+            valid_ids = {ep["id"].upper() for ep in inventory} | {ep.get("key", "").lower().replace("-", "_") for ep in inventory if ep.get("key")}
+            norm_cid = cid.lower().replace("-", "_")
+            if cid.upper() not in valid_ids and norm_cid not in valid_ids and not (cid.startswith("SEC-") or cid.startswith("M365-")):
+                _write(handler, 400, {"error": f"Unknown collector identifier: '{cid}'"})
+                return True
+
+            is_dry_run = bool(body.get("dry_run", False))
+            cmd = [sys.executable, "-m", "collectors.run_collector", "--collector", cid]
+            if is_dry_run:
+                cmd.append("--dry-run")
+
+            try:
+                res = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                output = (res.stdout or res.stderr or "").strip()
+                success = (res.returncode == 0)
+                _write(handler, 200 if success else 500, {
+                    "success": success,
+                    "collector_id": cid,
+                    "returncode": res.returncode,
+                    "output": output,
+                })
+            except subprocess.TimeoutExpired:
+                _write(handler, 504, {"error": "Collector execution timed out (60s budget exceeded)"})
+            except Exception as exc:
+                _write(handler, 500, {"error": f"Failed to execute collector: {type(exc).__name__}: {exc}"})
             return True
 
         _write(handler, 404, {"error": "Not found"})
