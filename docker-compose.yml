@@ -32,6 +32,7 @@ services:
       REPORT_EMAIL_TO: ${REPORT_EMAIL_TO:-}
       REPORT_SCHEDULE: ${REPORT_SCHEDULE:-daily}
       REPORT_ENABLED: ${REPORT_ENABLED:-false}
+      API_KEY: ${API_KEY:-}
 
     volumes:
       - ./agent:/workspace/agent
@@ -92,7 +93,7 @@ services:
       AGENT_MODE: ${AGENT_MODE}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       KRYPTONLAB_API_KEY: ${KRYPTONLAB_API_KEY}
-      MODEL: ${MODEL:-kl/claude-sonnet-4-6}
+      MODEL: ${MODEL:-kl/gpt-5.4}
 
     volumes:
       - ./agent:/workspace/agent

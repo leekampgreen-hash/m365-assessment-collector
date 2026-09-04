@@ -17,10 +17,17 @@ def _mock_tools():
         get_adoption_sharepoint=DEFAULT,
         get_inactivity=DEFAULT,
         get_license_utilization=DEFAULT,
+        get_license_parking=DEFAULT,
         get_correlation_users=DEFAULT,
+        get_signin_summary=DEFAULT,
         get_signin_risk=DEFAULT,
+        get_signin_detail=DEFAULT,
+        get_risk_score=DEFAULT,
         get_mfa_coverage=DEFAULT,
+        get_mfa_registration=DEFAULT,
         get_ca_policies=DEFAULT,
+        get_admin_roles=DEFAULT,
+        run_security_analysis=DEFAULT,
     )
 
 
@@ -32,6 +39,22 @@ def test_mock_chat_shape():
     assert set(result) == {"reply", "tools_used"}
     assert isinstance(result["reply"], str)
     assert result["tools_used"] == ["get_mfa_coverage"]
+
+
+@pytest.mark.parametrize("query,expected_tool", [
+    ("Show me our license parking report", "get_license_parking"),
+    ("Run a comprehensive security assessment", "run_security_analysis"),
+    ("Who has administrator roles in the tenant?", "get_admin_roles"),
+    ("What is the MFA registration status?", "get_mfa_registration"),
+    ("Who has the highest risk score?", "get_risk_score"),
+    ("Show signin detail per user", "get_signin_detail"),
+])
+def test_mock_chat_new_tools(query, expected_tool):
+    with patch.dict(orchestrator.config.__dict__, {"AGENT_MODE": "mock"}), _mock_tools() as mocked:
+        for tool in mocked.values():
+            tool.return_value = {"ok": True}
+        result = orchestrator.chat(query)
+    assert expected_tool in result["tools_used"]
 
 
 def test_mock_mode_does_not_call_openai():

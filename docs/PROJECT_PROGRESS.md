@@ -23,7 +23,7 @@ Detailed progress is split by workload to reduce worker-session token usage.
 ## Summary Counts
 
 - Registered collectors (SSOT): 45 total
-- Test suite pass rate: 100% (1,400 pytest / 733 unittest)
-- Agent tools: 19 total
+- Test suite pass rate: 100% (1,413 pytest / 733 unittest)
+- Agent tools: 20 total
 - Security endpoints: 9 total
-- Agent test score: 100% (30/30)
+- Agent test dataset: 42 questions covering 20 tools (100% pass)

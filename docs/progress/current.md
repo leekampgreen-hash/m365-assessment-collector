@@ -37,9 +37,10 @@
 - TD-001 & TD-002: Workload registry retention metadata drift resolution (G01-005, 006, 013, 014 aligned to `LONG` & closed vocabulary enforcement) - SEALED
 - TD-005 & TD-006: Collector rejection metrics & retry recovery hardening (bounded vocabulary, secret redaction, RetryPolicy hardening, RecoveryEvidence, operations analytics) - SEALED
 - TD-003, TD-004, TD-007, TD-008: Live Microsoft Graph Validation (PASS 4/4), Live PostgreSQL Validation (PASS 7/7), Controlled Validation Environment Certification, and Foundation Security Certification (FULL PASS) - SEALED (All 10/10 Technical Debt items RESOLVED)
+- AGT-DEV01-UPDATE: 42-question agent auto-tester dataset covering 20 tools, model routing fix (kl/gpt-5.4), and complete test coverage - SEALED
 
 ## Active Task
-Technical Debt Register (TD-001 through TD-010) 100% resolved and certified; ready for next feature roadmap items
+AGT-DEV01-UPDATE completed and sealed; technical debt 100% certified; proceeding with SaaS and UI roadmap
 
 ## Next Steps
 
@@ -47,7 +48,6 @@ Technical Debt Register (TD-001 through TD-010) 100% resolved and certified; rea
 2. SAAS-P01 - Customer onboarding flow
 3. SAAS-P03 - Rate limiting
 4. UI-P01 - UI polish (mobile responsive, loading states)
-5. AGT-DEV01-UPDATE - Update agent test questions
 
 
 ## Available API Endpoints

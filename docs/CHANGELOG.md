@@ -1,5 +1,12 @@
 # Changelog
 
+## Agent Auto-Tester Update & Model Routing Hardening (AGT-DEV01-UPDATE)
+
+- **20-Tool Comprehensive Evaluation Dataset**: Expanded `scripts/agent_test_questions.json` to 42 structured questions covering all 20 internal operational and security tools (adding questions for `get_license_parking`, `run_security_analysis`, `get_signin_detail`, `get_risk_score`, `get_admin_roles`, and `get_mfa_registration`).
+- **KryptonLab Model Routing & Defensive Extraction**: Standardized agent model to `kl/gpt-5.4`, delivering fast and highly accurate function calling. Added defensive choices check in `agent/orchestrator.py` preventing unhandled exceptions when providers stream empty response objects.
+- **Auto-Tester Runner Robustness**: Added automatic `.env` discovery in `scripts/test_agent.py` and mounted `API_KEY` to collector container environment in `docker-compose.yml`.
+- **Test Suite Coverage Expansion**: Updated `tests/agent/test_tools.py` and `tests/agent/test_orchestrator.py` to cover all 20 tools across parametrization and mock mode, increasing pytest passing count to 1,413 tests (100% pass). Verified live evaluation passes cleanly across all tool categories.
+
 ## Technical Debt Elimination & Foundation Security Certification (TD-001 through TD-008)
 
 - **TD-001 & TD-002: Registry Retention Metadata Drift & Closed Vocabulary Enforcement**: Reconciled all endpoint retention classes in `collectors/workloads/registry.py` (aligning G01-005, G01-006, G01-013, and G01-014 to authoritative schema retention class `LONG`). Enforced closed retention vocabulary `('SHORT', 'STANDARD', 'LONG', 'REFERENCE')` and fail-closed runtime validation via `validate_registry()`. Added comprehensive unit tests in `tests/workloads/test_registry.py`.

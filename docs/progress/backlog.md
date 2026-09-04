@@ -101,17 +101,11 @@ Support multiple customer tenants — each with own credentials, data isolation,
 Full architecture redesign required.
 
 ## AGT-DEV01-UPDATE — Update Agent Test Questions
-**Status:** PLANNED
+**Status:** SEALED  
 **Priority:** MEDIUM
 
 **Description:**
-Update scripts/agent_test_questions.json to cover 20 tools (currently covers 19). Add questions for:
-- get_license_parking
-- run_security_analysis
-- get_signin_detail
-- get_risk_score
-- get_admin_roles
-- get_mfa_registration
+Updated `scripts/agent_test_questions.json` to 42 questions covering all 20 internal operational and security tools (including `get_license_parking`, `run_security_analysis`, `get_signin_detail`, `get_risk_score`, `get_admin_roles`, `get_mfa_registration`). Added test parametrization and mock tests across all 20 tools in `tests/agent/test_tools.py` and `tests/agent/test_orchestrator.py`. Hardened agent model routing to `kl/gpt-5.4` and verified 100% PASS across live question evaluation and unit tests.
 
 ## UI-P01 — UI Polish
 **Status:** PLANNED

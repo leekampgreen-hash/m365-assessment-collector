@@ -1,3 +1,17 @@
+## AGT-DEV01-UPDATE-001
+
+- **Date:** 2026-09-05
+- **Model:** `Gemini 3.8 Flash`
+- **Result:** `AGT_DEV01_UPDATE_SEALED`
+- **Scope:** Completed update of the Agent Auto-Tester:
+  - Expanded `scripts/agent_test_questions.json` to 42 questions covering all 20 internal operational and security tools (added questions for `get_license_parking`, `run_security_analysis`, `get_signin_detail`, `get_risk_score`, `get_admin_roles`, and `get_mfa_registration`).
+  - Standardized model routing to `kl/gpt-5.4` on KryptonLab, ensuring robust tool function calling and plain-language synthesis.
+  - Added defensive handling in `agent/orchestrator.py` against empty response choices.
+  - Enhanced `scripts/test_agent.py` with multi-path `.env` API key discovery, and exposed `API_KEY` in collector container environment in `docker-compose.yml`.
+  - Expanded unit test coverage in `tests/agent/test_tools.py` and `tests/agent/test_orchestrator.py` to cover all 20 tools.
+- **Validation:** Live execution of new tools verified 100% PASS with 0 failures; out-of-scope requests properly rejected; entire pytest suite passes at 1,413 tests (100% pass).
+- **Files changed:** `agent/config.py`, `agent/orchestrator.py`, `.env`, `docker-compose.yml`, `scripts/agent_test_questions.json`, `scripts/test_agent.py`, `tests/agent/test_tools.py`, `tests/agent/test_orchestrator.py`, `docs/progress/backlog.md`, `docs/progress/current.md`, `docs/PROJECT_PROGRESS.md`, `docs/CHANGELOG.md`.
+
 ## TECH-DEBT-TD001-TD008-RESOLUTION-001
 
 - **Date:** 2026-09-05

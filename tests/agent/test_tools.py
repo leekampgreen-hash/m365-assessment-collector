@@ -12,8 +12,12 @@ from agent import tools
     ("get_capabilities", ()), ("get_adoption_exchange", ()),
     ("get_adoption_onedrive", ()), ("get_adoption_sharepoint", ()),
     ("get_inactivity", (30,)), ("get_license_utilization", ()),
-    ("get_correlation_users", ()), ("get_signin_risk", ()),
-    ("get_mfa_coverage", ()), ("get_ca_policies", ()),
+    ("get_license_parking", ()), ("get_correlation_users", ()),
+    ("get_signin_summary", ()), ("get_signin_risk", ()),
+    ("get_signin_detail", ()), ("get_risk_score", ()),
+    ("get_mfa_coverage", ()), ("get_mfa_registration", ()),
+    ("get_ca_policies", ()), ("get_admin_roles", ()),
+    ("run_security_analysis", ()),
 ])
 def test_tools_return_dict(name, args):
     class Response:

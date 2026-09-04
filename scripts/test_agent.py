@@ -13,8 +13,20 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+def _load_api_key() -> str:
+    key = os.getenv("API_KEY", "")
+    if key:
+        return key
+    for env_path in [Path(".env"), Path("/workspace/.env"), Path(__file__).parent.parent / ".env"]:
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                if line.startswith("API_KEY="):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
 AGENT_URL = os.getenv("AGENT_URL", "http://graph-agent-operations-api-dev:8080/api/agent/chat")
-API_KEY = os.getenv("API_KEY", "")
+API_KEY = _load_api_key()
 DELAY_SECONDS = int(os.getenv("TEST_DELAY", "8"))
 QUESTIONS_FILE = Path(__file__).parent / "agent_test_questions.json"
 

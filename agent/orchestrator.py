@@ -239,6 +239,8 @@ def _live(message: str, history: list[dict[str, Any]]) -> tuple[str, list[str]]:
         total_tokens = getattr(usage, "total_tokens", None) if usage else None
         if total_tokens is not None:
             logger.info("agent token usage: %s", total_tokens)
+        if not getattr(response, "choices", None):
+            break
         choice = response.choices[0].message
         messages.append(choice)
         calls = getattr(choice, "tool_calls", None) or []
@@ -255,7 +257,8 @@ def _live(message: str, history: list[dict[str, Any]]) -> tuple[str, list[str]]:
                         tools=_schema(),
                         max_tokens=400,
                     )
-                    reply = final.choices[0].message.content or reply
+                    if getattr(final, "choices", None):
+                        reply = final.choices[0].message.content or reply
 
             return reply, used
         for call in calls:
